@@ -552,15 +552,41 @@ def upload_csv():
 
             # Process CSV with pandas first to validate and transform data
             import pandas as pd
+            from datetime import datetime
             df = pd.read_csv(filepath)
             
-            # Validate required columns
-            required_columns = ['_time', 'sender', 'subject']
-            missing_columns = [col for col in required_columns if col not in df.columns]
+            # Validate required columns - be flexible with column names
+            possible_time_cols = ['_time', 'time', 'timestamp', 'date', 'sent_time']
+            possible_sender_cols = ['sender', 'from', 'email_from', 'from_address']
+            possible_subject_cols = ['subject', 'title', 'email_subject']
             
-            if missing_columns:
+            # Find the actual column names
+            time_col = None
+            sender_col = None
+            subject_col = None
+            
+            for col in df.columns:
+                if col.lower() in [c.lower() for c in possible_time_cols]:
+                    time_col = col
+                if col.lower() in [c.lower() for c in possible_sender_cols]:
+                    sender_col = col
+                if col.lower() in [c.lower() for c in possible_subject_cols]:
+                    subject_col = col
+            
+            if not time_col or not sender_col or not subject_col:
                 os.remove(filepath)
-                return jsonify({'error': f'Missing required columns: {", ".join(missing_columns)}'}), 400
+                return jsonify({'error': f'Required columns not found. Please ensure your CSV has time/date, sender, and subject columns.'}), 400
+            
+            # Rename columns to standard names
+            column_mapping = {}
+            if time_col != '_time':
+                column_mapping[time_col] = '_time'
+            if sender_col != 'sender':
+                column_mapping[sender_col] = 'sender'
+            if subject_col != 'subject':
+                column_mapping[subject_col] = 'subject'
+            
+            df = df.rename(columns=column_mapping)
             
             # Ensure required columns exist with defaults
             default_columns = {
@@ -580,6 +606,55 @@ def upload_csv():
             for col, default_val in default_columns.items():
                 if col not in df.columns:
                     df[col] = default_val
+            
+            # Fix date formats - convert various date formats to YYYY-MM-DD HH:MM:SS
+            def fix_date_format(date_str):
+                if pd.isna(date_str) or str(date_str).strip() == '-' or str(date_str).strip() == '':
+                    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                date_str = str(date_str).strip()
+                
+                # Try different date formats
+                formats = [
+                    '%Y-%m-%d %H:%M:%S',  # Already correct
+                    '%Y-%m-%d',           # Date only
+                    '%m/%d/%Y',           # MM/DD/YYYY
+                    '%m/%d/%Y %H:%M:%S',  # MM/DD/YYYY HH:MM:SS
+                    '%d/%m/%Y',           # DD/MM/YYYY
+                    '%Y/%m/%d',           # YYYY/MM/DD
+                ]
+                
+                for fmt in formats:
+                    try:
+                        parsed_date = datetime.strptime(date_str, fmt)
+                        return parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        continue
+                
+                # If no format matches, use current time
+                return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Apply date fixing to _time column
+            df['_time'] = df['_time'].apply(fix_date_format)
+            
+            # Fix termination_date column if it exists
+            if 'termination_date' in df.columns:
+                def fix_termination_date(date_str):
+                    if pd.isna(date_str) or str(date_str).strip() == '-' or str(date_str).strip() == '':
+                        return None
+                    
+                    date_str = str(date_str).strip()
+                    
+                    formats = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%Y/%m/%d']
+                    for fmt in formats:
+                        try:
+                            parsed_date = datetime.strptime(date_str, fmt)
+                            return parsed_date.strftime('%Y-%m-%d')
+                        except ValueError:
+                            continue
+                    return None
+                
+                df['termination_date'] = df['termination_date'].apply(fix_termination_date)
             
             # Process CSV with DuckDB for high performance
             conn = get_db_connection()

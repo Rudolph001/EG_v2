@@ -20,7 +20,7 @@ def init_database():
         # Create emails table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS emails (
-                id INTEGER DEFAULT nextval('email_id_seq'),
+                id INTEGER PRIMARY KEY DEFAULT nextval('email_id_seq'),
                 _time TIMESTAMP,
                 sender VARCHAR,
                 subject VARCHAR,
