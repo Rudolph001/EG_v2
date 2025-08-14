@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}Escalated Emails - Email Guardian{% endblock %}
@@ -143,7 +142,7 @@
                                     <strong>{{ email[2] or 'Unknown' }}</strong>
                                 </td>
                                 <td>
-                                    <span class="text-truncate d-inline-block" style="max-width: 250px;" 
+                                    <span class="text-truncate d-inline-block" style="max-width: 250px;"
                                           title="{{ email[3] }}">
                                         {{ email[3] or 'No Subject' }}
                                     </span>
@@ -194,7 +193,7 @@
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Pagination -->
                 {% if has_prev or has_next %}
                 <nav aria-label="Email pagination">
@@ -215,7 +214,7 @@
                     </ul>
                 </nav>
                 {% endif %}
-                
+
                 {% else %}
                 <div class="text-center text-muted py-5">
                     <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
@@ -246,15 +245,49 @@
                         <label for="followupBody" class="form-label">Email Body</label>
                         <textarea class="form-control" id="followupBody" rows="10"></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label for="followupToAddresses" class="form-label">To Addresses</label>
+                        <input type="text" class="form-control" id="followupToAddresses" placeholder="Comma-separated email addresses">
+                    </div>
+                    <div class="mb-3">
+                        <label for="followupCcAddresses" class="form-label">CC Addresses</label>
+                        <input type="text" class="form-control" id="followupCcAddresses" placeholder="Comma-separated email addresses">
+                    </div>
+                    <div class="mb-3">
+                        <label for="followupType" class="form-label">Follow-up Type</label>
+                        <select class="form-select" id="followupType">
+                            <option value="reminder">Reminder</option>
+                            <option value="clarification">Clarification</option>
+                            <option value="action_required">Action Required</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Send Method:</h6>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="sendMethod" id="sendOutlook" value="outlook" checked>
+                            <label class="form-check-label" for="sendOutlook">Outlook</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="sendMethod" id="sendInternal" value="internal">
+                            <label class="form-check-label" for="sendInternal">Internal System</label>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="openInOutlook()">
-                    <i class="fas fa-external-link-alt"></i> Open in Outlook
+                <button type="button" class="btn btn-outline-info btn-sm" onclick="showFollowupHistory()">
+                    <i class="fas fa-history"></i> History
                 </button>
-                <button type="button" class="btn btn-success" onclick="copyToClipboard()">
-                    <i class="fas fa-copy"></i> Copy to Clipboard
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="copyToClipboard()">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button type="button" class="btn btn-success" onclick="sendFollowupEmail()">
+                    <i class="fas fa-paper-plane"></i> Send Email
+                </button>
+                <button type="button" class="btn btn-primary" onclick="openInOutlook()">
+                    <i class="fas fa-external-link-alt"></i> Open in Email Client
                 </button>
             </div>
         </div>
@@ -263,13 +296,12 @@
 
 <script>
 let currentOutlookLink = '';
+let currentEmailId = null;
 
 function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.email-select');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = selectAll.checked;
-    });
+    const masterCheckbox = document.getElementById('selectAll');
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
 }
 
 function showEmailDetails(emailId) {
@@ -296,7 +328,7 @@ function showEmailDetails(emailId) {
                 `;
                 document.body.appendChild(modal.firstElementChild);
             }
-            
+
             document.getElementById('emailDetailsContent').innerHTML = `
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -342,6 +374,7 @@ function showEmailDetails(emailId) {
 }
 
 function generateFollowup(emailId) {
+    currentEmailId = emailId; // Store the current email ID
     fetch(`/api/generate-followup/${emailId}`, {
         method: 'POST',
         headers: {
@@ -353,6 +386,12 @@ function generateFollowup(emailId) {
         if (result.success) {
             document.getElementById('followupSubject').value = result.subject;
             document.getElementById('followupBody').value = result.body;
+            document.getElementById('followupToAddresses').value = result.to_addresses || '';
+            document.getElementById('followupCcAddresses').value = result.cc_addresses || '';
+            document.getElementById('followupType').value = result.followup_type || 'reminder';
+            if (result.method) {
+                document.querySelector(`input[name="sendMethod"][value="${result.method}"]`).checked = true;
+            }
             currentOutlookLink = result.outlook_link;
             new bootstrap.Modal(document.getElementById('followupModal')).show();
         } else {
@@ -367,12 +406,17 @@ function generateFollowup(emailId) {
 
 function bulkGenerateFollowups() {
     const selectedEmails = Array.from(document.querySelectorAll('.email-select:checked')).map(cb => cb.value);
-    
+
     if (selectedEmails.length === 0) {
         window.EmailGuardian.showNotification('Please select emails to generate follow-ups', 'warning');
         return;
     }
-    
+
+    // For bulk operations, we might not have a single email ID or specific details.
+    // This function will prepare the modal for a generalized bulk follow-up.
+    // The 'currentEmailId' might be set to null or a special identifier if needed for backend logic.
+    currentEmailId = null; // Reset or set to a bulk identifier
+
     const subject = `Bulk Follow-up: ${selectedEmails.length} Escalated Emails Require Attention`;
     const body = `Dear Team,
 
@@ -384,37 +428,167 @@ Please review these emails in the Email Guardian system and take appropriate act
 
 Best regards,
 Email Guardian System`;
-    
+
     document.getElementById('followupSubject').value = subject;
     document.getElementById('followupBody').value = body;
-    currentOutlookLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    document.getElementById('followupToAddresses').value = ''; // Clear for bulk
+    document.getElementById('followupCcAddresses').value = ''; // Clear for bulk
+    document.getElementById('followupType').value = 'bulk_action'; // Indicate bulk action
+    document.getElementById('sendInternal').checked = true; // Default to internal for bulk
+
+    // For bulk, we don't pre-generate an outlook link that would include all emails.
+    // The 'Open in Email Client' button will construct a mailto link from the current modal content.
+    currentOutlookLink = null;
     new bootstrap.Modal(document.getElementById('followupModal')).show();
 }
 
+
 function openInOutlook() {
-    if (currentOutlookLink) {
-        window.open(currentOutlookLink, '_blank');
-    } else {
-        // Generate link from form content
-        const subject = document.getElementById('followupSubject').value;
-        const body = document.getElementById('followupBody').value;
-        const link = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(link, '_blank');
-    }
+    const subject = document.getElementById('followupSubject').value;
+    const body = document.getElementById('followupBody').value;
+    const to = document.getElementById('followupToAddresses').value;
+    const cc = document.getElementById('followupCcAddresses').value;
+
+    let mailtoLink = 'mailto:';
+    if (to) mailtoLink += `?to=${encodeURIComponent(to)}`;
+    if (cc) mailtoLink += `${to ? '&' : '?'}cc=${encodeURIComponent(cc)}`;
+    mailtoLink += `${(to || cc) ? '&' : '?'}subject=${encodeURIComponent(subject)}`;
+    mailtoLink += `&body=${encodeURIComponent(body)}`;
+
+    window.open(mailtoLink, '_blank');
 }
 
 function copyToClipboard() {
     const subject = document.getElementById('followupSubject').value;
     const body = document.getElementById('followupBody').value;
-    const text = `Subject: ${subject}\n\n${body}`;
-    
+    const to = document.getElementById('followupToAddresses').value;
+    const cc = document.getElementById('followupCcAddresses').value;
+
+    let text = `To: ${to}\n`;
+    if (cc) text += `CC: ${cc}\n`;
+    text += `Subject: ${subject}\n\n${body}`;
+
     navigator.clipboard.writeText(text).then(() => {
-        window.EmailGuardian.showNotification('Email content copied to clipboard', 'success');
-    }).catch(err => {
-        console.error('Error copying to clipboard:', err);
+        window.EmailGuardian.showNotification('Follow-up content copied to clipboard', 'success');
+    }).catch(() => {
         window.EmailGuardian.showNotification('Failed to copy to clipboard', 'error');
     });
 }
+
+function sendFollowupEmail() {
+    if (!currentEmailId) {
+        window.EmailGuardian.showNotification('No email ID available for sending', 'error');
+        return;
+    }
+
+    const sendMethod = document.querySelector('input[name="sendMethod"]:checked').value;
+    const sendData = {
+        subject: document.getElementById('followupSubject').value,
+        body: document.getElementById('followupBody').value,
+        to_addresses: document.getElementById('followupToAddresses').value,
+        cc_addresses: document.getElementById('followupCcAddresses').value,
+        type: document.getElementById('followupType').value,
+        method: sendMethod
+    };
+
+    // Show loading state
+    const sendBtn = event.target;
+    const originalText = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+    fetch(`/api/send-followup/${currentEmailId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sendData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            window.EmailGuardian.showNotification('Follow-up email sent successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('followupModal')).hide();
+        } else {
+            window.EmailGuardian.showNotification(result.error || 'Failed to send email', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending follow-up:', error);
+        window.EmailGuardian.showNotification('Failed to send follow-up email', 'error');
+    })
+    .finally(() => {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalText;
+    });
+}
+
+function showFollowupHistory() {
+    if (!currentEmailId) {
+        window.EmailGuardian.showNotification('No email ID available to show history', 'error');
+        return;
+    }
+
+    fetch(`/api/followup-history/${currentEmailId}`)
+    .then(response => response.json())
+    .then(history => {
+        let historyHtml = '<div class="list-group">';
+
+        if (history.length === 0) {
+            historyHtml += '<div class="alert alert-info">No follow-up history found for this email.</div>';
+        } else {
+            history.forEach(entry => {
+                const date = new Date(entry.timestamp).toLocaleString();
+                historyHtml += `
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${entry.followup_type} - ${entry.status}</h6>
+                            <small>${date}</small>
+                        </div>
+                        <p class="mb-1">To: ${entry.to_addresses}</p>
+                        <small>Method: ${entry.method}</small>
+                    </div>
+                `;
+            });
+        }
+
+        historyHtml += '</div>';
+
+        // Create a temporary modal for history
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
+            <div class="modal fade" id="historyModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Follow-up History - Case #${currentEmailId}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${historyHtml}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(tempDiv);
+        new bootstrap.Modal(document.getElementById('historyModal')).show();
+
+        // Clean up the temporary modal after it's hidden
+        document.getElementById('historyModal').addEventListener('hidden.bs.modal', function () {
+            document.body.removeChild(tempDiv);
+        });
+    })
+    .catch(error => {
+        console.error('Error loading history:', error);
+        window.EmailGuardian.showNotification('Failed to load follow-up history', 'error');
+    });
+}
+
 
 function updateEmailStatus(emailId, status) {
     fetch(`/api/update-email-status/${emailId}`, {

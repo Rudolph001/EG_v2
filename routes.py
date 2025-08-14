@@ -10,6 +10,7 @@ from ml_models import train_advanced_models, predict_email_risk, get_ml_insights
 from report_generator import generate_pdf_report, generate_excel_report
 from csv_ingest import CSVIngestor
 from processor import EmailProcessor
+from outlook_followup import generate_followup_email, send_followup_email, get_followup_history, bulk_generate_followups
 import logging
 from datetime import datetime, timedelta
 import json
@@ -1088,45 +1089,28 @@ def api_update_email_status(email_id):
 def api_generate_followup(email_id):
     """Generate follow-up email for Outlook"""
     try:
-        conn = get_db_connection()
-        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
-        conn.close()
-
-        if not email_data:
-            return jsonify({'error': 'Email not found'}), 404
-
-        # Generate follow-up email content
-        sender = email_data[2]  # sender field
-        subject = email_data[3]  # subject field
-        department = email_data[10]  # department field
-
-        followup_subject = f"Follow-up Required: {subject}"
-        followup_body = f"""
-Dear Team,
-
-This email requires follow-up action regarding a potential policy violation.
-
-Original Email Details:
-- Sender: {sender}
-- Subject: {subject}
-- Department: {department or 'Unknown'}
-- Date: {email_data[1]}
-
-Please review and take appropriate action.
-
-Best regards,
-Email Guardian System
-        """
-
-        # Create Outlook mailto link
-        outlook_link = f"mailto:?subject={followup_subject}&body={followup_body.replace(chr(10), '%0D%0A')}"
-
-        return jsonify({
-            'success': True,
-            'outlook_link': outlook_link,
-            'subject': followup_subject,
-            'body': followup_body
-        })
+        data = request.json or {}
+        followup_type = data.get('type', 'escalation')
+        to_addresses = data.get('to_addresses', 'security@company.com')
+        cc_addresses = data.get('cc_addresses', '')
+        
+        # Generate follow-up using Outlook integration
+        result = generate_followup_email(email_id, followup_type, to_addresses)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'outlook_link': result['mailto_link'],
+                'subject': result['subject'],
+                'body': result['body'],
+                'followup_type': followup_type,
+                'to_addresses': to_addresses,
+                'cc_addresses': cc_addresses,
+                'email_context': result['email_context']
+            })
+        else:
+            return jsonify({'error': result.get('error', 'Failed to generate follow-up')}), 500
+            
     except Exception as e:
         logging.error(f"Generate follow-up error: {e}")
         return jsonify({'error': 'Failed to generate follow-up email'}), 500
@@ -1237,6 +1221,80 @@ def api_advanced_analytics():
     except Exception as e:
         logging.error(f"Advanced analytics error: {e}")
         return jsonify({'error': 'Failed to generate analytics report'}), 500
+
+@app.route('/api/send-followup/<int:email_id>', methods=['POST'])
+def api_send_followup(email_id):
+    """Send follow-up email using Outlook integration"""
+    try:
+        data = request.json or {}
+        method = data.get('method', 'mailto')  # 'mailto' or 'outlook_windows'
+        
+        # First generate the follow-up
+        followup_result = generate_followup_email(
+            email_id, 
+            data.get('type', 'escalation'),
+            data.get('to_addresses', 'security@company.com')
+        )
+        
+        if not followup_result.get('success'):
+            return jsonify({'error': followup_result.get('error')}), 500
+        
+        # Update with any custom content
+        if data.get('subject'):
+            followup_result['subject'] = data['subject']
+        if data.get('body'):
+            followup_result['body'] = data['body']
+        if data.get('cc_addresses'):
+            followup_result['cc_addresses'] = data['cc_addresses']
+        
+        # Send the follow-up
+        send_result = send_followup_email(email_id, followup_result, method)
+        
+        return jsonify(send_result)
+        
+    except Exception as e:
+        logging.error(f"Send follow-up error: {e}")
+        return jsonify({'error': 'Failed to send follow-up email'}), 500
+
+@app.route('/api/bulk-generate-followups', methods=['POST'])
+def api_bulk_generate_followups():
+    """Generate follow-up emails for multiple cases"""
+    try:
+        data = request.json or {}
+        email_ids = data.get('email_ids', [])
+        followup_type = data.get('type', 'escalation')
+        to_addresses = data.get('to_addresses', 'security@company.com')
+        
+        if not email_ids:
+            return jsonify({'error': 'No email IDs provided'}), 400
+        
+        result = bulk_generate_followups(email_ids, followup_type, to_addresses)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"Bulk generate followups error: {e}")
+        return jsonify({'error': 'Failed to generate bulk follow-ups'}), 500
+
+@app.route('/api/followup-history/<int:email_id>')
+def api_followup_history(email_id):
+    """Get follow-up history for specific email"""
+    try:
+        history = get_followup_history(email_id)
+        return jsonify(history)
+    except Exception as e:
+        logging.error(f"Followup history error: {e}")
+        return jsonify({'error': 'Failed to load follow-up history'}), 500
+
+@app.route('/api/followup-history')
+def api_all_followup_history():
+    """Get all follow-up history"""
+    try:
+        history = get_followup_history()
+        return jsonify(history)
+    except Exception as e:
+        logging.error(f"All followup history error: {e}")
+        return jsonify({'error': 'Failed to load follow-up history'}), 500
 
 @app.route('/api/export-cleared')
 def api_export_cleared():
