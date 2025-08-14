@@ -671,8 +671,8 @@ footer {
 }
 
 .email-table-container .table th {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: #f1f5f9;
+    background: linear-gradient(135deg, #edf2f7 0%, #f7fafc 100%);
+    color: #4a5568;
     border: none;
     padding: 1.25rem 1rem;
     font-size: 0.8rem;
