@@ -33,18 +33,18 @@ const ChartUtils = {
         const b = parseInt(hex.substr(4, 2), 16);
         return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     },
-    
+
     // Generate gradient
     createGradient(ctx, color1, color2, vertical = true) {
-        const gradient = vertical ? 
+        const gradient = vertical ?
             ctx.createLinearGradient(0, 0, 0, ctx.canvas.height) :
             ctx.createLinearGradient(0, 0, ctx.canvas.width, 0);
-        
+
         gradient.addColorStop(0, color1);
         gradient.addColorStop(1, color2);
         return gradient;
     },
-    
+
     // Format numbers for display
     formatNumber(value) {
         if (value >= 1000000) {
@@ -54,7 +54,7 @@ const ChartUtils = {
         }
         return value.toString();
     },
-    
+
     // Generate time series labels
     generateTimeLabels(days = 30) {
         const labels = [];
@@ -93,14 +93,16 @@ const ChartConfigs = {
                 x: {
                     display: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     }
                 },
                 y: {
                     display: true,
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     },
                     ticks: {
                         callback: function(value) {
@@ -120,7 +122,7 @@ const ChartConfigs = {
             }
         }
     },
-    
+
     // Doughnut chart for categorical data
     doughnut: {
         type: 'doughnut',
@@ -158,7 +160,7 @@ const ChartConfigs = {
             }
         }
     },
-    
+
     // Bar chart for comparisons
     bar: {
         type: 'bar',
@@ -184,7 +186,8 @@ const ChartConfigs = {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     },
                     ticks: {
                         callback: function(value) {
@@ -199,7 +202,7 @@ const ChartConfigs = {
             }
         }
     },
-    
+
     // Area chart for volume data
     area: {
         type: 'line',
@@ -219,14 +222,16 @@ const ChartConfigs = {
                 x: {
                     display: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     }
                 },
                 y: {
                     display: true,
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     }
                 }
             },
@@ -267,12 +272,12 @@ function createTimeSeriesChart(ctx, data, options = {}) {
             pointHoverRadius: 6
         }]
     };
-    
+
     // Merge custom options
     if (options.scales) {
         config.options.scales = { ...config.options.scales, ...options.scales };
     }
-    
+
     return new Chart(ctx, config);
 }
 
@@ -288,7 +293,7 @@ function createDoughnutChart(ctx, data, options = {}) {
             hoverBorderWidth: 3
         }]
     };
-    
+
     return new Chart(ctx, config);
 }
 
@@ -306,7 +311,7 @@ function createBarChart(ctx, data, options = {}) {
             borderSkipped: false
         }]
     };
-    
+
     return new Chart(ctx, config);
 }
 
@@ -318,7 +323,7 @@ function createAreaChart(ctx, data, options = {}) {
             label: data.label || 'Data',
             data: data.values,
             borderColor: data.color || chartColors.primary,
-            backgroundColor: ChartUtils.createGradient(ctx, 
+            backgroundColor: ChartUtils.createGradient(ctx,
                 ChartUtils.colorWithOpacity(data.color || chartColors.primary, 0.3),
                 ChartUtils.colorWithOpacity(data.color || chartColors.primary, 0.05)
             ),
@@ -330,7 +335,7 @@ function createAreaChart(ctx, data, options = {}) {
             pointHoverRadius: 6
         }]
     };
-    
+
     return new Chart(ctx, config);
 }
 
@@ -380,20 +385,21 @@ function createRiskAnalysisChart(ctx, riskData) {
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     }
                 }
             }
         }
     };
-    
+
     return new Chart(ctx, config);
 }
 
 // Department comparison chart
 function createDepartmentChart(ctx, departmentData) {
     const sortedData = departmentData.sort((a, b) => b.count - a.count).slice(0, 8);
-    
+
     const config = {
         type: 'horizontalBar',
         data: {
@@ -419,7 +425,8 @@ function createDepartmentChart(ctx, departmentData) {
                 x: {
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(51, 65, 85, 0.2)',
+                        lineWidth: 1
                     }
                 },
                 y: {
@@ -430,7 +437,7 @@ function createDepartmentChart(ctx, departmentData) {
             }
         }
     };
-    
+
     return new Chart(ctx, config);
 }
 
@@ -447,21 +454,21 @@ window.createDepartmentChart = createDepartmentChart;
 // Common chart data processing functions
 function processTimeSeriesData(rawData, dateField = '_time', valueField = 'count') {
     const processedData = {};
-    
+
     rawData.forEach(record => {
         const date = new Date(record[dateField]).toISOString().split('T')[0];
         processedData[date] = (processedData[date] || 0) + (record[valueField] || 1);
     });
-    
+
     const labels = Object.keys(processedData).sort();
     const values = labels.map(label => processedData[label]);
-    
+
     return { labels, values };
 }
 
 function processCategoryData(rawData, categoryField, valueField = null) {
     const categoryCount = {};
-    
+
     rawData.forEach(record => {
         const category = record[categoryField] || 'Unknown';
         if (valueField) {
@@ -470,10 +477,10 @@ function processCategoryData(rawData, categoryField, valueField = null) {
             categoryCount[category] = (categoryCount[category] || 0) + 1;
         }
     });
-    
+
     const labels = Object.keys(categoryCount);
     const values = labels.map(label => categoryCount[label]);
-    
+
     return { labels, values };
 }
 

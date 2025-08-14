@@ -12,7 +12,7 @@
     --warning-orange: #ea580c;
     --success-green: #16a34a;
     --info-cyan: #0891b2;
-    
+
     /* Neutral Grays */
     --gray-50: #f8fafc;
     --gray-100: #f1f5f9;
@@ -24,14 +24,14 @@
     --gray-700: #334155;
     --gray-800: #1e293b;
     --gray-900: #0f172a;
-    
+
     /* Professional Backgrounds */
     --bg-primary: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 100%);
     --bg-secondary: linear-gradient(135deg, var(--secondary-slate) 0%, var(--gray-600) 100%);
     --bg-success: linear-gradient(135deg, var(--accent-emerald) 0%, var(--success-green) 100%);
     --bg-warning: linear-gradient(135deg, var(--accent-amber) 0%, var(--warning-orange) 100%);
     --bg-danger: linear-gradient(135deg, var(--danger-red) 0%, #b91c1c 100%);
-    
+
     /* Shadows and Effects */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -267,16 +267,16 @@
 }
 
 /* Professional Risk Level Indicators */
-.risk-high { 
-    color: var(--danger-red) !important; 
+.risk-high {
+    color: var(--danger-red) !important;
     font-weight: 600;
 }
-.risk-medium { 
-    color: var(--accent-amber) !important; 
+.risk-medium {
+    color: var(--accent-amber) !important;
     font-weight: 600;
 }
-.risk-low { 
-    color: var(--success-green) !important; 
+.risk-low {
+    color: var(--success-green) !important;
     font-weight: 600;
 }
 
@@ -539,12 +539,12 @@ footer {
     .no-print {
         display: none !important;
     }
-    
+
     .container {
         width: 100% !important;
         max-width: none !important;
     }
-    
+
     .card {
         border: 1px solid #ddd !important;
         box-shadow: none !important;
@@ -566,11 +566,11 @@ footer {
     .card {
         border-width: 2px;
     }
-    
+
     .btn {
         border-width: 2px;
     }
-    
+
     .badge {
         border: 1px solid currentColor;
     }
@@ -581,15 +581,260 @@ footer {
     .loading-spinner {
         animation: none;
     }
-    
+
     .card-clickable:hover {
         transform: none;
         transition: none;
     }
-    
+
     * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* Dashboard-specific improvements for better visibility */
+.dashboard-container {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* Enhanced search filters styling */
+.search-filters {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.search-filters .form-control {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+}
+
+.search-filters .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background: white;
+}
+
+.search-filters .form-select {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #1e293b;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+}
+
+.search-filters .form-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Enhanced button styling for better visibility */
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-size: 0.875rem;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+/* Enhanced email table styling */
+.email-table-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.email-table-container .table {
+    margin-bottom: 0;
+    border: none;
+}
+
+.email-table-container .table th {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #f1f5f9;
+    border: none;
+    padding: 1.25rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.email-table-container .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: 500;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.email-table-container .table tbody tr:hover {
+    background-color: #f8fafc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+/* Professional status badges with better contrast */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 2px solid transparent;
+}
+
+.status-badge.status-finance {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-color: #1e40af;
+}
+
+.status-badge.status-legal {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    border-color: #065f46;
+}
+
+.status-badge.status-normal {
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    color: white;
+    border-color: #14532d;
+}
+
+.status-badge.status-escalated {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    border-color: #991b1b;
+}
+
+/* Action buttons with better visibility */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn.btn-info {
+    background: #0369a1;
+    color: white;
+    border-color: #0284c7;
+}
+
+.action-btn.btn-warning {
+    background: #d97706;
+    color: white;
+    border-color: #b45309;
+}
+
+.action-btn.btn-danger {
+    background: #dc2626;
+    color: white;
+    border-color: #b91c1c;
+}
+
+/* Enhanced ML Analysis badges */
+.ml-analysis-badge {
+    background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 2px solid #0ea5e9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ml-analysis-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3);
+}
+
+/* High contrast theme toggle */
+.high-contrast-mode .card {
+    border: 3px solid #000 !important;
+}
+
+.high-contrast-mode .btn {
+    border: 2px solid #000 !important;
+    font-weight: 700 !important;
+}
+
+.high-contrast-mode .badge {
+    border: 2px solid #000 !important;
+    font-weight: 700 !important;
+}
+
+/* Professional card header styling */
+.card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.card-header h5 {
+    color: #1e293b;
+    font-weight: 700;
+    margin: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Enhanced accessibility for screen readers */
+.sr-only-focusable:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0.5rem 1rem !important;
+    overflow: visible !important;
+    clip: auto !important;
+    background: #2563eb !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
 }
