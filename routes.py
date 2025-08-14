@@ -661,8 +661,12 @@ def upload_csv():
             
             # Insert records one by one to handle any schema mismatches
             rows_inserted = 0
-            for _, row in df.iterrows():
+            for idx, row in df.iterrows():
                 try:
+                    # Debug log first few rows
+                    if idx < 3:
+                        logging.info(f"Inserting row {idx}: {row['sender']}, {row['subject'][:30]}...")
+                    
                     conn.execute("""
                         INSERT INTO emails (
                             _time, sender, subject, attachments, recipients, 
@@ -678,8 +682,13 @@ def upload_csv():
                     ])
                     rows_inserted += 1
                 except Exception as e:
-                    logging.warning(f"Skipped row due to error: {e}")
+                    logging.error(f"Failed to insert row {idx}: {e}")
+                    logging.error(f"Row data: sender='{row.get('sender', 'N/A')}', subject='{row.get('subject', 'N/A')}'")
                     continue
+            
+            # Verify the inserts worked
+            verification_count = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
+            logging.info(f"Database verification: {verification_count} total emails in database after insert")
             
             conn.close()
 
@@ -688,7 +697,14 @@ def upload_csv():
                 try:
                     from processor import EmailProcessor
                     processor = EmailProcessor()
-                    # Process the newly imported emails (those with empty final_outcome)
+                    
+                    # Clear final_outcome for newly imported emails to force reprocessing
+                    conn_reprocess = get_db_connection()
+                    conn_reprocess.execute("UPDATE emails SET final_outcome = NULL WHERE final_outcome IS NOT NULL")
+                    conn_reprocess.close()
+                    logging.info(f"Cleared final_outcome for reprocessing of {rows_inserted} emails")
+                    
+                    # Process the newly imported emails
                     processing_results = processor.process_batch(limit=rows_inserted)
                     processing_message = f" - {processing_results['processed']} emails analyzed, {processing_results['escalated']} escalated to cases"
                 except Exception as e:

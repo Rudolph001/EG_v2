@@ -549,7 +549,7 @@ class EmailProcessor:
             # Get emails to process (those not already processed or needing reprocessing)
             emails = conn.execute("""
                 SELECT * FROM emails 
-                WHERE final_outcome IS NULL OR final_outcome = 'Pending'
+                WHERE final_outcome IS NULL OR final_outcome = 'Pending' OR final_outcome = '' OR final_outcome = '-'
                 ORDER BY _time DESC 
                 LIMIT ? OFFSET ?
             """, [limit, offset]).fetchall()
