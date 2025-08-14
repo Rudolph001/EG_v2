@@ -414,5 +414,37 @@ function showAlert(message, type) {
                 }
             });
         });
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle"></i> Processing Complete</h5>
+                            <ul class="mb-0">
+                                <li>Files processed: ${response.files_processed}</li>
+                                <li>Total records found: ${response.total_records}</li>
+                                <li>Successfully imported: ${response.successful_inserts}</li>
+                                ${response.errors.length > 0 ? `<li>Errors: ${response.errors.length}</li>` : ''}
+                            </ul>
+                        </div>
+                    `;
+                    $('#uploadResults').html(results).show();
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Processing failed';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    showAlert(errorMsg, 'danger');
+
+                    const errorResults = `
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Processing Failed</h5>
+                            <p class="mb-0">${errorMsg}</p>
+                        </div>
+                    `;
+                    $('#uploadResults').html(errorResults).show();
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html('<i class="fas fa-play"></i> Process CSV files from data directory');
+                }
+            });
+        });
 </script>
 {% endblock %}
