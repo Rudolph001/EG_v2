@@ -220,7 +220,7 @@ def render_admin_panel_html():
                 <h2>Rule Management</h2>
                 <ul>
                     <li><a href="{{ url_for('admin_panel') }}">Exclusion Rules</a></li>
-                    <li><a href="{{ url_for('manage_whitelist') }}">Whitelist Filtering</a></li>
+                    <li><a href="{{ url_for('admin_panel') }}#whitelist">Whitelist Filtering</a></li>
                     <li><a href="{{ url_for('manage_security_rules') }}">Security Rules</a></li>
                     <li><a href="{{ url_for('manage_risk_keywords') }}">Risk Keywords</a></li>
                     <li><a href="{{ url_for('manage_exclusion_keywords') }}">Exclusion Keywords</a></li>
@@ -826,7 +826,7 @@ if __name__ == '__main__':
                 <h2>Rule Management</h2>
                 <ul>
                     <li><a href="{{ url_for('admin_panel') }}">Exclusion Rules</a></li>
-                    <li><a href="{{ url_for('manage_whitelist') }}">Whitelist Filtering</a></li>
+                    <li><a href="{{ url_for('admin_panel') }}#whitelist">Whitelist Filtering</a></li>
                     <li><a href="{{ url_for('manage_security_rules') }}">Security Rules</a></li>
                     <li><a href="{{ url_for('manage_risk_keywords') }}">Risk Keywords</a></li>
                     <li><a href="{{ url_for('manage_exclusion_keywords') }}">Exclusion Keywords</a></li>

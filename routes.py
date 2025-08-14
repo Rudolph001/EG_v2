@@ -7,7 +7,7 @@ from app import app
 from database import get_db_connection, get_dashboard_stats, execute_query
 from ml_processor import classify_email, train_model
 from ml_models import train_advanced_models, predict_email_risk, get_ml_insights, get_analytics_report
-from report_generator import generate_pdf_report, generate_excel_report
+from reports import generate_pdf_report, generate_excel_report, generate_summary_report
 from csv_ingest import CSVIngestor
 from processor import EmailProcessor
 from outlook_followup import generate_followup_email, send_followup_email, get_followup_history, bulk_generate_followups
@@ -919,13 +919,30 @@ def api_generate_report():
     try:
         if report_type == 'pdf':
             filename = generate_pdf_report(date_from, date_to)
-        else:
+        elif report_type == 'excel':
             filename = generate_excel_report(date_from, date_to)
+        else:
+            return jsonify({'error': 'Invalid report type'}), 400
 
         return send_file(filename, as_attachment=True)
     except Exception as e:
         logging.error(f"Report generation error: {e}")
         return jsonify({'error': 'Report generation failed'}), 500
+
+@app.route('/api/generate-summary-report', methods=['POST'])
+def api_generate_summary_report():
+    """Generate focused summary reports"""
+    data = request.json or {}
+    summary_type = data.get('summary_type', 'escalated')
+    date_from = data.get('date_from')
+    date_to = data.get('date_to')
+
+    try:
+        filename = generate_summary_report(summary_type, date_from, date_to)
+        return send_file(filename, as_attachment=True)
+    except Exception as e:
+        logging.error(f"Summary report generation error: {e}")
+        return jsonify({'error': 'Summary report generation failed'}), 500
 
 @app.route('/api/train-model', methods=['POST'])
 def api_train_model():

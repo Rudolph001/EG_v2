@@ -27,7 +27,7 @@
             </div>
             <div class="card-body">
                 <p>Generate professional PDF reports with charts and tables for executive summaries.</p>
-                
+
                 <form id="pdfReportForm">
                     <div class="row">
                         <div class="col-md-6">
@@ -43,7 +43,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-file-pdf"></i>
                         Generate PDF Report
@@ -52,7 +52,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-6">
         <div class="card h-100 border-success">
             <div class="card-header bg-success text-white">
@@ -63,7 +63,7 @@
             </div>
             <div class="card-body">
                 <p>Export detailed data to Excel with multiple sheets for in-depth analysis.</p>
-                
+
                 <form id="excelReportForm">
                     <div class="row">
                         <div class="col-md-6">
@@ -79,7 +79,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-file-excel"></i>
                         Generate Excel Report
@@ -114,7 +114,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card border-warning">
                             <div class="card-body text-center">
@@ -127,7 +127,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card border-primary">
                             <div class="card-body text-center">
@@ -140,7 +140,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card border-danger">
                             <div class="card-body text-center">
@@ -174,7 +174,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
@@ -185,7 +185,7 @@
             </div>
             <div class="card-body">
                 <canvas id="riskDistributionChart"></canvas>
-                
+
                 <div class="mt-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small">High Risk</span>
@@ -346,7 +346,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-6">
         <div class="card border-success">
             <div class="card-header bg-success text-white">
@@ -380,12 +380,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date();
     const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     document.getElementById('pdfDateTo').value = today.toISOString().split('T')[0];
     document.getElementById('pdfDateFrom').value = lastWeek.toISOString().split('T')[0];
     document.getElementById('excelDateTo').value = today.toISOString().split('T')[0];
     document.getElementById('excelDateFrom').value = lastWeek.toISOString().split('T')[0];
-    
+
     // Initialize charts
     initializeCharts();
 });
@@ -409,12 +409,12 @@ function generateReport(type, form) {
         date_from: formData.get('date_from'),
         date_to: formData.get('date_to')
     };
-    
+
     const button = form.querySelector('button[type="submit"]');
     const originalText = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-    
+
     fetch('/api/generate-report', {
         method: 'POST',
         headers: {
@@ -438,10 +438,10 @@ function generateReport(type, form) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
+
         button.disabled = false;
         button.innerHTML = originalText;
-        
+
         // Show success message
         alert(`${type.toUpperCase()} report generated and downloaded successfully!`);
     })
@@ -453,13 +453,13 @@ function generateReport(type, form) {
     });
 }
 
-function generateQuickReport(period) {
+function generateQuickReport(type) {
     const today = new Date();
     let fromDate, toDate = today.toISOString().split('T')[0];
-    
-    switch(period) {
+
+    switch(type) {
         case 'daily':
-            fromDate = toDate;
+            fromDate = today.toISOString().split('T')[0];
             break;
         case 'weekly':
             const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -474,11 +474,64 @@ function generateQuickReport(period) {
             fromDate = last30Days.toISOString().split('T')[0];
             break;
     }
-    
+
     // Set form values and trigger PDF generation
     document.getElementById('pdfDateFrom').value = fromDate;
     document.getElementById('pdfDateTo').value = toDate;
     document.getElementById('pdfReportForm').dispatchEvent(new Event('submit'));
+}
+
+function generateSummaryReport(summaryType) {
+    const today = new Date();
+    const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const data = {
+        summary_type: summaryType,
+        date_from: lastMonth.toISOString().split('T')[0],
+        date_to: today.toISOString().split('T')[0]
+    };
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    fetch('/api/generate-summary-report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Report generation failed');
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${summaryType}_summary_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        // Show success message
+        showAlert('success', `${summaryType.charAt(0).toUpperCase() + summaryType.slice(1)} summary report generated successfully!`);
+    })
+    .catch(error => {
+        console.error('Error generating summary report:', error);
+        showAlert('danger', 'Failed to generate summary report. Please try again.');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
 }
 
 function initializeCharts() {
@@ -507,7 +560,7 @@ function initializeCharts() {
             }
         }
     });
-    
+
     // Risk Distribution Chart
     const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
     new Chart(riskCtx, {
@@ -543,7 +596,7 @@ function retrainModel() {
     if (!confirm('This will retrain the ML model with current data. Continue?')) {
         return;
     }
-    
+
     fetch('/api/train-model', { method: 'POST' })
     .then(response => response.json())
     .then(result => {
@@ -573,6 +626,18 @@ function exportChartData() {
 
 function scheduleReport() {
     alert('Scheduled reporting functionality would be implemented here');
+}
+
+// Helper function to show alerts
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.querySelector('.content').prepend(alertDiv);
 }
 </script>
 {% endblock %}
