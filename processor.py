@@ -202,6 +202,29 @@ class EmailProcessor:
             extensions = conditions.get('extensions', [])
             return any(ext.lower() in attachments.lower() for ext in extensions)
         
+        elif rule_type == 'attachment_whitelist':
+            # Check if ALL attachments are whitelisted
+            attachments = email.get('attachments', '')
+            if not attachments or attachments.strip() == '-':
+                return True  # No attachments = safe
+            
+            whitelisted_extensions = conditions.get('extensions', [])
+            attachment_list = [att.strip() for att in attachments.split(';') if att.strip()]
+            
+            # Check if all attachments have whitelisted extensions
+            for attachment in attachment_list:
+                if not any(ext.lower() in attachment.lower() for ext in whitelisted_extensions):
+                    return False  # Found non-whitelisted attachment
+            return True  # All attachments are whitelisted
+        
+        elif rule_type == 'recipient_domain':
+            recipients = email.get('recipients', '')
+            if not recipients:
+                return False
+            domains = conditions.get('domains', [])
+            # Check if ANY recipient matches the domain
+            return any(domain.lower() in recipients.lower() for domain in domains)
+        
         elif rule_type == 'keyword_match':
             # Search across multiple fields
             search_text = ' '.join([
