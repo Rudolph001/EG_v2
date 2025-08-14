@@ -8,6 +8,7 @@ from database import get_db_connection, get_dashboard_stats, execute_query
 from ml_processor import classify_email, train_model
 from report_generator import generate_pdf_report, generate_excel_report
 from csv_ingest import CSVIngestor
+from processor import EmailProcessor
 import logging
 from datetime import datetime, timedelta
 import json
@@ -333,3 +334,74 @@ def api_ingest_csv():
     except Exception as e:
         logging.error(f"CSV ingestion error: {e}")
         return jsonify({'error': f'CSV ingestion failed: {str(e)}'}), 500
+
+@app.route('/api/process-emails', methods=['POST'])
+def api_process_emails():
+    """Process emails through analysis pipeline"""
+    try:
+        data = request.json or {}
+        limit = data.get('limit', 100)
+        offset = data.get('offset', 0)
+        
+        processor = EmailProcessor()
+        results = processor.process_batch(limit=limit, offset=offset)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Processed {results["processed"]} emails',
+            'results': results
+        })
+    except Exception as e:
+        logging.error(f"Email processing error: {e}")
+        return jsonify({'error': f'Email processing failed: {str(e)}'}), 500
+
+@app.route('/api/process-single-email/<int:email_id>', methods=['POST'])
+def api_process_single_email(email_id):
+    """Process a single email by ID"""
+    try:
+        conn = get_db_connection()
+        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
+        conn.close()
+        
+        if not email_data:
+            return jsonify({'error': 'Email not found'}), 404
+        
+        # Convert to dict
+        email_dict = {
+            'id': email_data[0], '_time': email_data[1], 'sender': email_data[2],
+            'subject': email_data[3], 'attachments': email_data[4], 'recipients': email_data[5],
+            'time_month': email_data[6], 'leaver': email_data[7], 'termination_date': email_data[8],
+            'bunit': email_data[9], 'department': email_data[10], 'user_response': email_data[11],
+            'final_outcome': email_data[12], 'policy_name': email_data[13], 'justifications': email_data[14]
+        }
+        
+        processor = EmailProcessor()
+        result = processor.process_email(email_dict)
+        
+        # Update database
+        processor.update_email_status(email_id, result)
+        
+        # Create case if needed
+        case_id = None
+        if result.final_status.value in ['escalated', 'pending_review']:
+            case_id = processor.create_case_if_needed(email_id, result)
+        
+        return jsonify({
+            'success': True,
+            'email_id': email_id,
+            'final_status': result.final_status.value,
+            'risk_level': result.risk_level.value,
+            'ml_classification': result.ml_classification,
+            'actions_count': len(result.actions_taken),
+            'case_id': case_id,
+            'actions': [
+                {
+                    'type': action.action_type,
+                    'reason': action.reason,
+                    'confidence': action.confidence
+                } for action in result.actions_taken
+            ]
+        })
+    except Exception as e:
+        logging.error(f"Single email processing error: {e}")
+        return jsonify({'error': f'Email processing failed: {str(e)}'}), 500
