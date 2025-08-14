@@ -21,9 +21,78 @@ def allowed_file(filename):
 
 @app.route('/')
 def dashboard():
-    """Main dashboard with analytics"""
+    """Main Dashboard: shows all emails not excluded or whitelisted"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    search = request.args.get('search', '')
+    department = request.args.get('department', '')
+    risk_level = request.args.get('risk_level', '')
+    
+    conn = get_db_connection()
+    
+    # Build query for non-excluded/whitelisted emails
+    where_conditions = ["(final_outcome IS NULL OR final_outcome NOT IN ('excluded', 'whitelisted'))"]
+    params = []
+    
+    if search:
+        where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
+        params.extend([f'%{search}%', f'%{search}%'])
+    
+    if department:
+        where_conditions.append("department = ?")
+        params.append(department)
+    
+    if risk_level:
+        where_conditions.append("final_outcome = ?")
+        params.append(risk_level)
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+    
+    # Get total count
+    count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
+    total = conn.execute(count_query, params).fetchone()[0]
+    
+    # Get paginated results with ML insights
+    offset = (page - 1) * per_page
+    query = f"""
+        SELECT e.*, 
+               CASE 
+                   WHEN e.final_outcome IN ('high_risk', 'suspicious') THEN 'High Risk'
+                   WHEN e.final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
+                   ELSE 'Normal'
+               END as risk_assessment
+        FROM emails e {where_clause}
+        ORDER BY e._time DESC
+        LIMIT {per_page} OFFSET {offset}
+    """
+    
+    emails = conn.execute(query, params).fetchall()
+    
+    # Get filter options
+    departments = conn.execute("SELECT DISTINCT department FROM emails WHERE department IS NOT NULL ORDER BY department").fetchall()
+    risk_levels = conn.execute("SELECT DISTINCT final_outcome FROM emails WHERE final_outcome IS NOT NULL ORDER BY final_outcome").fetchall()
+    
+    # Get dashboard stats
     stats = get_dashboard_stats()
-    return render_template('dashboard.html', stats=stats)
+    
+    conn.close()
+    
+    # Calculate pagination
+    has_prev = page > 1
+    has_next = offset + per_page < total
+    
+    return render_template('main_dashboard.html', 
+                         emails=emails, 
+                         stats=stats,
+                         page=page, 
+                         has_prev=has_prev, 
+                         has_next=has_next,
+                         departments=departments,
+                         risk_levels=risk_levels,
+                         search=search,
+                         department=department,
+                         risk_level=risk_level,
+                         total=total)
 
 @app.route('/emails')
 def emails():
@@ -110,14 +179,314 @@ def cases():
     
     return render_template('cases.html', cases=cases, status_filter=status_filter)
 
-@app.route('/flagged-senders')
-def flagged_senders():
-    """Flagged senders management"""
+@app.route('/excluded-whitelisted')
+def excluded_whitelisted():
+    """Excluded/Whitelisted Dashboard: shows filtered emails"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    filter_type = request.args.get('filter_type', 'excluded')
+    search = request.args.get('search', '')
+    
     conn = get_db_connection()
-    senders = conn.execute("SELECT * FROM flagged_senders ORDER BY flagged_at DESC").fetchall()
+    
+    # Build query for excluded/whitelisted emails
+    where_conditions = [f"final_outcome = '{filter_type}'"]
+    params = []
+    
+    if search:
+        where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
+        params.extend([f'%{search}%', f'%{search}%'])
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+    
+    # Get total count
+    count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
+    total = conn.execute(count_query, params).fetchone()[0]
+    
+    # Get paginated results
+    offset = (page - 1) * per_page
+    query = f"""
+        SELECT * FROM emails {where_clause}
+        ORDER BY _time DESC
+        LIMIT {per_page} OFFSET {offset}
+    """
+    
+    emails = conn.execute(query, params).fetchall()
     conn.close()
     
-    return render_template('flagged_senders.html', senders=senders)
+    # Calculate pagination
+    has_prev = page > 1
+    has_next = offset + per_page < total
+    
+    return render_template('excluded_whitelisted.html', 
+                         emails=emails,
+                         page=page, 
+                         has_prev=has_prev, 
+                         has_next=has_next,
+                         filter_type=filter_type,
+                         search=search,
+                         total=total)
+
+@app.route('/escalated-emails')
+def escalated_emails():
+    """Escalated Emails Dashboard: filter by date, sender, department, policy, risk"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+    sender = request.args.get('sender', '')
+    department = request.args.get('department', '')
+    policy = request.args.get('policy', '')
+    risk = request.args.get('risk', '')
+    
+    conn = get_db_connection()
+    
+    # Build query for escalated emails
+    where_conditions = ["final_outcome IN ('escalated', 'high_risk', 'pending_review')"]
+    params = []
+    
+    if date_from:
+        where_conditions.append("DATE(_time) >= ?")
+        params.append(date_from)
+    
+    if date_to:
+        where_conditions.append("DATE(_time) <= ?")
+        params.append(date_to)
+    
+    if sender:
+        where_conditions.append("sender LIKE ?")
+        params.append(f'%{sender}%')
+    
+    if department:
+        where_conditions.append("department = ?")
+        params.append(department)
+    
+    if policy:
+        where_conditions.append("policy_name = ?")
+        params.append(policy)
+    
+    if risk:
+        where_conditions.append("final_outcome = ?")
+        params.append(risk)
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+    
+    # Get total count
+    count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
+    total = conn.execute(count_query, params).fetchone()[0]
+    
+    # Get paginated results
+    offset = (page - 1) * per_page
+    query = f"""
+        SELECT e.*, c.status as case_status, c.id as case_id
+        FROM emails e
+        LEFT JOIN cases c ON e.id = c.email_id
+        {where_clause}
+        ORDER BY e._time DESC
+        LIMIT {per_page} OFFSET {offset}
+    """
+    
+    emails = conn.execute(query, params).fetchall()
+    
+    # Get filter options
+    departments = conn.execute("SELECT DISTINCT department FROM emails WHERE department IS NOT NULL ORDER BY department").fetchall()
+    policies = conn.execute("SELECT DISTINCT policy_name FROM emails WHERE policy_name IS NOT NULL ORDER BY policy_name").fetchall()
+    risks = conn.execute("SELECT DISTINCT final_outcome FROM emails WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review') ORDER BY final_outcome").fetchall()
+    
+    conn.close()
+    
+    # Calculate pagination
+    has_prev = page > 1
+    has_next = offset + per_page < total
+    
+    return render_template('escalated_emails.html', 
+                         emails=emails,
+                         page=page, 
+                         has_prev=has_prev, 
+                         has_next=has_next,
+                         departments=departments,
+                         policies=policies,
+                         risks=risks,
+                         date_from=date_from,
+                         date_to=date_to,
+                         sender=sender,
+                         department=department,
+                         policy=policy,
+                         risk=risk,
+                         total=total)
+
+@app.route('/cleared-emails')
+def cleared_emails():
+    """Cleared Emails Dashboard: lists cleared emails"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 25
+    search = request.args.get('search', '')
+    department = request.args.get('department', '')
+    
+    conn = get_db_connection()
+    
+    # Build query for cleared emails
+    where_conditions = ["final_outcome IN ('cleared', 'approved', 'resolved')"]
+    params = []
+    
+    if search:
+        where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
+        params.extend([f'%{search}%', f'%{search}%'])
+    
+    if department:
+        where_conditions.append("department = ?")
+        params.append(department)
+    
+    where_clause = "WHERE " + " AND ".join(where_conditions)
+    
+    # Get total count
+    count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
+    total = conn.execute(count_query, params).fetchone()[0]
+    
+    # Get paginated results
+    offset = (page - 1) * per_page
+    query = f"""
+        SELECT * FROM emails {where_clause}
+        ORDER BY _time DESC
+        LIMIT {per_page} OFFSET {offset}
+    """
+    
+    emails = conn.execute(query, params).fetchall()
+    
+    # Get departments for filter
+    departments = conn.execute("SELECT DISTINCT department FROM emails WHERE department IS NOT NULL ORDER BY department").fetchall()
+    
+    conn.close()
+    
+    # Calculate pagination
+    has_prev = page > 1
+    has_next = offset + per_page < total
+    
+    return render_template('cleared_emails.html', 
+                         emails=emails,
+                         page=page, 
+                         has_prev=has_prev, 
+                         has_next=has_next,
+                         departments=departments,
+                         search=search,
+                         department=department,
+                         total=total)
+
+@app.route('/flagged-senders')
+def flagged_senders():
+    """Flagged Senders Dashboard: monitor flagged senders across imports"""
+    conn = get_db_connection()
+    
+    # Get flagged senders with email counts
+    senders = conn.execute("""
+        SELECT fs.*, 
+               COUNT(e.id) as email_count,
+               MAX(e._time) as last_email_date,
+               COUNT(CASE WHEN e.final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count
+        FROM flagged_senders fs
+        LEFT JOIN emails e ON fs.sender = e.sender
+        GROUP BY fs.id, fs.sender, fs.reason, fs.flagged_at
+        ORDER BY fs.flagged_at DESC
+    """).fetchall()
+    
+    # Get domain statistics
+    domain_stats = conn.execute("""
+        SELECT 
+            SUBSTR(sender, POSITION('@' IN sender) + 1) as domain,
+            COUNT(*) as count
+        FROM emails e
+        JOIN flagged_senders fs ON e.sender = fs.sender
+        WHERE POSITION('@' IN sender) > 0
+        GROUP BY SUBSTR(sender, POSITION('@' IN sender) + 1)
+        ORDER BY count DESC
+        LIMIT 10
+    """).fetchall()
+    
+    conn.close()
+    
+    return render_template('flagged_senders.html', 
+                         senders=senders,
+                         domain_stats=dict(domain_stats))
+
+@app.route('/analytics')
+def analytics():
+    """Analytics Dashboard: charts for policy violations, escalations, risk categories"""
+    conn = get_db_connection()
+    
+    # Policy violations data
+    policy_violations = conn.execute("""
+        SELECT policy_name, COUNT(*) as count
+        FROM emails 
+        WHERE policy_name IS NOT NULL
+        GROUP BY policy_name
+        ORDER BY count DESC
+        LIMIT 10
+    """).fetchall()
+    
+    # Escalations over time (last 30 days)
+    escalations_timeline = conn.execute("""
+        SELECT DATE(_time) as date, COUNT(*) as count
+        FROM emails 
+        WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
+        AND _time >= CURRENT_DATE - INTERVAL 30 DAY
+        GROUP BY DATE(_time)
+        ORDER BY date
+    """).fetchall()
+    
+    # Risk categories distribution
+    risk_categories = conn.execute("""
+        SELECT 
+            CASE 
+                WHEN final_outcome IN ('high_risk', 'escalated') THEN 'High Risk'
+                WHEN final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
+                WHEN final_outcome IN ('cleared', 'approved') THEN 'Low Risk'
+                ELSE 'Unknown'
+            END as risk_level,
+            COUNT(*) as count
+        FROM emails
+        WHERE final_outcome IS NOT NULL
+        GROUP BY risk_level
+        ORDER BY count DESC
+    """).fetchall()
+    
+    # Department risk analysis
+    dept_risk = conn.execute("""
+        SELECT 
+            department,
+            COUNT(*) as total_emails,
+            COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count,
+            ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) * 100.0 / COUNT(*), 2) as risk_percentage
+        FROM emails
+        WHERE department IS NOT NULL
+        GROUP BY department
+        HAVING COUNT(*) > 10
+        ORDER BY risk_percentage DESC
+        LIMIT 10
+    """).fetchall()
+    
+    # Monthly trend data
+    monthly_trends = conn.execute("""
+        SELECT 
+            strftime('%Y-%m', _time) as month,
+            COUNT(*) as total_emails,
+            COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
+        FROM emails
+        WHERE _time >= DATE('now', '-12 months')
+        GROUP BY strftime('%Y-%m', _time)
+        ORDER BY month
+    """).fetchall()
+    
+    conn.close()
+    
+    analytics_data = {
+        'policy_violations': policy_violations,
+        'escalations_timeline': escalations_timeline,
+        'risk_categories': risk_categories,
+        'dept_risk': dept_risk,
+        'monthly_trends': monthly_trends
+    }
+    
+    return render_template('analytics.html', analytics=analytics_data)
 
 @app.route('/admin-rules')
 def admin_rules():
@@ -405,3 +774,288 @@ def api_process_single_email(email_id):
     except Exception as e:
         logging.error(f"Single email processing error: {e}")
         return jsonify({'error': f'Email processing failed: {str(e)}'}), 500
+
+@app.route('/api/move-to-main/<int:email_id>', methods=['POST'])
+def api_move_to_main(email_id):
+    """Move email from excluded/whitelisted back to main dashboard"""
+    try:
+        conn = get_db_connection()
+        conn.execute("""
+            UPDATE emails 
+            SET final_outcome = NULL, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        """, [email_id])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Email moved to main dashboard'})
+    except Exception as e:
+        logging.error(f"Move email error: {e}")
+        return jsonify({'error': 'Failed to move email'}), 500
+
+@app.route('/api/update-email-status/<int:email_id>', methods=['POST'])
+def api_update_email_status(email_id):
+    """Update email status"""
+    data = request.json or {}
+    status = data.get('status')
+    
+    try:
+        conn = get_db_connection()
+        conn.execute("""
+            UPDATE emails 
+            SET final_outcome = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        """, [status, email_id])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Email status updated'})
+    except Exception as e:
+        logging.error(f"Update email status error: {e}")
+        return jsonify({'error': 'Failed to update email status'}), 500
+
+@app.route('/api/generate-followup/<int:email_id>', methods=['POST'])
+def api_generate_followup(email_id):
+    """Generate follow-up email for Outlook"""
+    try:
+        conn = get_db_connection()
+        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
+        conn.close()
+        
+        if not email_data:
+            return jsonify({'error': 'Email not found'}), 404
+        
+        # Generate follow-up email content
+        sender = email_data[2]  # sender field
+        subject = email_data[3]  # subject field
+        department = email_data[10]  # department field
+        
+        followup_subject = f"Follow-up Required: {subject}"
+        followup_body = f"""
+Dear Team,
+
+This email requires follow-up action regarding a potential policy violation.
+
+Original Email Details:
+- Sender: {sender}
+- Subject: {subject}
+- Department: {department or 'Unknown'}
+- Date: {email_data[1]}
+
+Please review and take appropriate action.
+
+Best regards,
+Email Guardian System
+        """
+        
+        # Create Outlook mailto link
+        outlook_link = f"mailto:?subject={followup_subject}&body={followup_body.replace(chr(10), '%0D%0A')}"
+        
+        return jsonify({
+            'success': True,
+            'outlook_link': outlook_link,
+            'subject': followup_subject,
+            'body': followup_body
+        })
+    except Exception as e:
+        logging.error(f"Generate follow-up error: {e}")
+        return jsonify({'error': 'Failed to generate follow-up email'}), 500
+
+@app.route('/api/email-details/<int:email_id>')
+def api_email_details(email_id):
+    """Get detailed email information"""
+    try:
+        conn = get_db_connection()
+        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
+        conn.close()
+        
+        if not email_data:
+            return jsonify({'error': 'Email not found'}), 404
+        
+        # Convert to dict for JSON response
+        email_dict = {
+            'id': email_data[0],
+            '_time': email_data[1].isoformat() if email_data[1] else None,
+            'sender': email_data[2],
+            'subject': email_data[3],
+            'attachments': email_data[4],
+            'recipients': email_data[5],
+            'time_month': email_data[6],
+            'leaver': email_data[7],
+            'termination_date': email_data[8].isoformat() if email_data[8] else None,
+            'bunit': email_data[9],
+            'department': email_data[10],
+            'user_response': email_data[11],
+            'final_outcome': email_data[12],
+            'policy_name': email_data[13],
+            'justifications': email_data[14]
+        }
+        
+        return jsonify(email_dict)
+    except Exception as e:
+        logging.error(f"Email details error: {e}")
+        return jsonify({'error': 'Failed to load email details'}), 500
+
+@app.route('/api/ml-insights/<int:email_id>')
+def api_ml_insights(email_id):
+    """Get ML analysis insights for an email"""
+    try:
+        conn = get_db_connection()
+        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
+        conn.close()
+        
+        if not email_data:
+            return jsonify({'error': 'Email not found'}), 404
+        
+        # Get ML classification
+        text = f"{email_data[3] or ''} {email_data[14] or ''}"
+        classification = classify_email(text)
+        
+        # Mock ML insights (in real implementation, this would come from your ML model)
+        insights = {
+            'classification': classification,
+            'confidence': 0.85,  # Mock confidence score
+            'explanation': f"Email classified as '{classification}' based on content analysis",
+            'risk_factors': [
+                {'name': 'External Recipient', 'severity': 'medium'},
+                {'name': 'Attachment Present', 'severity': 'low'},
+                {'name': 'Policy Keyword Match', 'severity': 'high'}
+            ],
+            'recommendations': f"Based on the '{classification}' classification, recommend {'immediate review' if classification in ['high_risk', 'suspicious'] else 'standard processing'}."
+        }
+        
+        return jsonify(insights)
+    except Exception as e:
+        logging.error(f"ML insights error: {e}")
+        return jsonify({'error': 'Failed to load ML insights'}), 500
+
+@app.route('/api/analytics-data')
+def api_analytics_data():
+    """Get fresh analytics data for dashboard refresh"""
+    try:
+        conn = get_db_connection()
+        
+        # Policy violations data
+        policy_violations = conn.execute("""
+            SELECT policy_name, COUNT(*) as count
+            FROM emails 
+            WHERE policy_name IS NOT NULL
+            GROUP BY policy_name
+            ORDER BY count DESC
+            LIMIT 10
+        """).fetchall()
+        
+        # Escalations over time (last 30 days)
+        escalations_timeline = conn.execute("""
+            SELECT DATE(_time) as date, COUNT(*) as count
+            FROM emails 
+            WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
+            AND _time >= CURRENT_DATE - INTERVAL 30 DAY
+            GROUP BY DATE(_time)
+            ORDER BY date
+        """).fetchall()
+        
+        # Risk categories distribution
+        risk_categories = conn.execute("""
+            SELECT 
+                CASE 
+                    WHEN final_outcome IN ('high_risk', 'escalated') THEN 'High Risk'
+                    WHEN final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
+                    WHEN final_outcome IN ('cleared', 'approved') THEN 'Low Risk'
+                    ELSE 'Unknown'
+                END as risk_level,
+                COUNT(*) as count
+            FROM emails
+            WHERE final_outcome IS NOT NULL
+            GROUP BY risk_level
+            ORDER BY count DESC
+        """).fetchall()
+        
+        # Department risk analysis
+        dept_risk = conn.execute("""
+            SELECT 
+                department,
+                COUNT(*) as total_emails,
+                COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count,
+                ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) * 100.0 / COUNT(*), 2) as risk_percentage
+            FROM emails
+            WHERE department IS NOT NULL
+            GROUP BY department
+            HAVING COUNT(*) > 10
+            ORDER BY risk_percentage DESC
+            LIMIT 10
+        """).fetchall()
+        
+        # Monthly trend data
+        monthly_trends = conn.execute("""
+            SELECT 
+                strftime('%Y-%m', _time) as month,
+                COUNT(*) as total_emails,
+                COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
+            FROM emails
+            WHERE _time >= DATE('now', '-12 months')
+            GROUP BY strftime('%Y-%m', _time)
+            ORDER BY month
+        """).fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'policy_violations': policy_violations,
+            'escalations_timeline': escalations_timeline,
+            'risk_categories': risk_categories,
+            'dept_risk': dept_risk,
+            'monthly_trends': monthly_trends
+        })
+    except Exception as e:
+        logging.error(f"Analytics data error: {e}")
+        return jsonify({'error': 'Failed to load analytics data'}), 500
+
+@app.route('/api/export-cleared')
+def api_export_cleared():
+    """Export cleared emails to Excel"""
+    try:
+        search = request.args.get('search', '')
+        department = request.args.get('department', '')
+        
+        conn = get_db_connection()
+        
+        where_conditions = ["final_outcome IN ('cleared', 'approved', 'resolved')"]
+        params = []
+        
+        if search:
+            where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
+            params.extend([f'%{search}%', f'%{search}%'])
+        
+        if department:
+            where_conditions.append("department = ?")
+            params.append(department)
+        
+        where_clause = "WHERE " + " AND ".join(where_conditions)
+        
+        query = f"""
+            SELECT _time, sender, subject, department, final_outcome, justifications
+            FROM emails {where_clause}
+            ORDER BY _time DESC
+        """
+        
+        df = conn.execute(query, params).df()
+        conn.close()
+        
+        # Generate Excel file
+        from io import BytesIO
+        import pandas as pd
+        
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Cleared Emails', index=False)
+        
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'cleared_emails_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        )
+    except Exception as e:
+        logging.error(f"Export cleared emails error: {e}")
+        return jsonify({'error': 'Failed to export data'}), 500

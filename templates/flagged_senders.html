@@ -208,7 +208,7 @@
                 <hr>
                 <h6>Top Flagged Domains:</h6>
                 <div class="row">
-                    {% for domain, count in domain_stats.items()|sort(attribute=1, reverse=true)[:6] %}
+                    {% for domain, count in (domain_stats.items()|list|sort(attribute=1, reverse=true))[:6] %}
                     <div class="col-md-2">
                         <div class="text-center p-2 border rounded">
                             <strong>{{ domain }}</strong>
