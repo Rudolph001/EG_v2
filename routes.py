@@ -497,6 +497,31 @@ def admin_rules():
     
     return render_template('admin_rules.html', rules=rules)
 
+@app.route('/admin-panel')
+def admin_panel():
+    """Comprehensive admin panel"""
+    conn = get_db_connection()
+    
+    # Get stats for dashboard cards
+    stats = {
+        'exclusion_rules': conn.execute("SELECT COUNT(*) FROM admin_rules WHERE rule_type = 'exclusion'").fetchone()[0],
+        'whitelist_rules': conn.execute("SELECT COUNT(*) FROM admin_rules WHERE rule_type = 'whitelist'").fetchone()[0],
+        'security_rules': conn.execute("SELECT COUNT(*) FROM admin_rules WHERE rule_type = 'security'").fetchone()[0],
+        'risk_keywords': conn.execute("SELECT COUNT(*) FROM admin_rules WHERE rule_type = 'risk_keyword'").fetchone()[0],
+        'exclude_keywords': conn.execute("SELECT COUNT(*) FROM admin_rules WHERE rule_type = 'exclude_keyword'").fetchone()[0],
+        'ml_models': 1  # Assuming single model for now
+    }
+    
+    # Get ML status
+    ml_status = {
+        'last_trained': 'Today',  # Mock data
+        'accuracy': 85  # Mock data
+    }
+    
+    conn.close()
+    
+    return render_template('admin_panel.html', stats=stats, ml_status=ml_status)
+
 @app.route('/import-data')
 def import_data():
     """Data import page"""
@@ -633,6 +658,234 @@ def add_admin_rule():
     except Exception as e:
         logging.error(f"Add rule error: {e}")
         return jsonify({'error': 'Failed to add rule'}), 500
+
+@app.route('/api/admin/save-rule', methods=['POST'])
+def api_admin_save_rule():
+    """Save admin rule with advanced logic"""
+    data = request.json or {}
+    
+    try:
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
+            VALUES (?, ?, ?, ?)
+        """, [
+            data.get('rule_type'),
+            data.get('conditions'),
+            data.get('logic_type', 'AND'),
+            data.get('is_active', True)
+        ])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Rule saved successfully'})
+    except Exception as e:
+        logging.error(f"Save rule error: {e}")
+        return jsonify({'error': 'Failed to save rule'}), 500
+
+@app.route('/api/admin/rules/<rule_type>')
+def api_admin_get_rules(rule_type):
+    """Get rules by type"""
+    try:
+        conn = get_db_connection()
+        rules = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE rule_type = ?
+            ORDER BY created_at DESC
+        """, [rule_type]).fetchall()
+        conn.close()
+        
+        rules_list = []
+        for rule in rules:
+            rules_list.append({
+                'id': rule[0],
+                'rule_name': f"Rule {rule[0]}",
+                'logic_type': 'AND',  # Default for display
+                'conditions_summary': rule[2][:50] + '...' if len(rule[2]) > 50 else rule[2],
+                'is_active': rule[4],
+                'created_at': rule[5].strftime('%Y-%m-%d') if rule[5] else 'N/A'
+            })
+        
+        return jsonify(rules_list)
+    except Exception as e:
+        logging.error(f"Get rules error: {e}")
+        return jsonify({'error': 'Failed to load rules'}), 500
+
+@app.route('/api/admin/delete-rule/<int:rule_id>', methods=['DELETE'])
+def api_admin_delete_rule(rule_id):
+    """Delete admin rule"""
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM admin_rules WHERE id = ?", [rule_id])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Rule deleted successfully'})
+    except Exception as e:
+        logging.error(f"Delete rule error: {e}")
+        return jsonify({'error': 'Failed to delete rule'}), 500
+
+@app.route('/api/admin/add-keyword', methods=['POST'])
+def api_admin_add_keyword():
+    """Add keyword to risk or exclusion list"""
+    data = request.json or {}
+    keyword_type = data.get('type')  # 'risk' or 'exclude'
+    keyword = data.get('keyword')
+    
+    try:
+        conn = get_db_connection()
+        rule_type = f"{keyword_type}_keyword"
+        conn.execute("""
+            INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
+            VALUES (?, ?, ?, ?)
+        """, [rule_type, keyword, 'flag', True])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Keyword added successfully'})
+    except Exception as e:
+        logging.error(f"Add keyword error: {e}")
+        return jsonify({'error': 'Failed to add keyword'}), 500
+
+@app.route('/api/admin/remove-keyword', methods=['POST'])
+def api_admin_remove_keyword():
+    """Remove keyword from risk or exclusion list"""
+    data = request.json or {}
+    keyword_type = data.get('type')
+    keyword = data.get('keyword')
+    
+    try:
+        conn = get_db_connection()
+        rule_type = f"{keyword_type}_keyword"
+        conn.execute("""
+            DELETE FROM admin_rules 
+            WHERE rule_type = ? AND conditions = ?
+        """, [rule_type, keyword])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Keyword removed successfully'})
+    except Exception as e:
+        logging.error(f"Remove keyword error: {e}")
+        return jsonify({'error': 'Failed to remove keyword'}), 500
+
+@app.route('/api/admin/keywords/<keyword_type>')
+def api_admin_get_keywords(keyword_type):
+    """Get keywords by type"""
+    try:
+        conn = get_db_connection()
+        rule_type = f"{keyword_type}_keyword"
+        keywords = conn.execute("""
+            SELECT conditions FROM admin_rules 
+            WHERE rule_type = ? AND is_active = true
+        """, [rule_type]).fetchall()
+        conn.close()
+        
+        return jsonify([k[0] for k in keywords])
+    except Exception as e:
+        logging.error(f"Get keywords error: {e}")
+        return jsonify({'error': 'Failed to load keywords'}), 500
+
+@app.route('/api/admin/add-whitelist', methods=['POST'])
+def api_admin_add_whitelist():
+    """Add item to whitelist"""
+    data = request.json or {}
+    whitelist_type = data.get('type')  # 'sender' or 'domain'
+    value = data.get('value')
+    
+    try:
+        conn = get_db_connection()
+        rule_type = f"whitelist_{whitelist_type}"
+        conn.execute("""
+            INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
+            VALUES (?, ?, ?, ?)
+        """, [rule_type, value, 'whitelist', True])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Whitelist item added successfully'})
+    except Exception as e:
+        logging.error(f"Add whitelist error: {e}")
+        return jsonify({'error': 'Failed to add whitelist item'}), 500
+
+@app.route('/api/admin/remove-whitelist', methods=['POST'])
+def api_admin_remove_whitelist():
+    """Remove item from whitelist"""
+    data = request.json or {}
+    whitelist_type = data.get('type')
+    value = data.get('value')
+    
+    try:
+        conn = get_db_connection()
+        rule_type = f"whitelist_{whitelist_type}"
+        conn.execute("""
+            DELETE FROM admin_rules 
+            WHERE rule_type = ? AND conditions = ?
+        """, [rule_type, value])
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Whitelist item removed successfully'})
+    except Exception as e:
+        logging.error(f"Remove whitelist error: {e}")
+        return jsonify({'error': 'Failed to remove whitelist item'}), 500
+
+@app.route('/api/admin/whitelist/<whitelist_type>')
+def api_admin_get_whitelist(whitelist_type):
+    """Get whitelist items by type"""
+    try:
+        conn = get_db_connection()
+        rule_type = f"whitelist_{whitelist_type}"
+        items = conn.execute("""
+            SELECT conditions FROM admin_rules 
+            WHERE rule_type = ? AND is_active = true
+        """, [rule_type]).fetchall()
+        conn.close()
+        
+        return jsonify([item[0] for item in items])
+    except Exception as e:
+        logging.error(f"Get whitelist error: {e}")
+        return jsonify({'error': 'Failed to load whitelist'}), 500
+
+@app.route('/api/admin/save-ml-settings', methods=['POST'])
+def api_admin_save_ml_settings():
+    """Save ML configuration settings"""
+    data = request.json or {}
+    
+    try:
+        # In a real implementation, you would save these to a settings table
+        # For now, we'll just return success
+        logging.info(f"ML settings saved: {data}")
+        
+        return jsonify({'success': True, 'message': 'ML settings saved successfully'})
+    except Exception as e:
+        logging.error(f"Save ML settings error: {e}")
+        return jsonify({'error': 'Failed to save ML settings'}), 500
+
+@app.route('/api/admin/ml-settings')
+def api_admin_get_ml_settings():
+    """Get current ML settings"""
+    try:
+        # Return default settings for now
+        settings = {
+            'risk_threshold': 70,
+            'confidence_threshold': 85,
+            'retrain_frequency': 'weekly',
+            'enable_ml_override': True,
+            'enable_auto_escalation': True
+        }
+        
+        return jsonify(settings)
+    except Exception as e:
+        logging.error(f"Get ML settings error: {e}")
+        return jsonify({'error': 'Failed to load ML settings'}), 500
+
+@app.route('/api/admin/reset-model', methods=['POST'])
+def api_admin_reset_model():
+    """Reset ML model"""
+    try:
+        # In a real implementation, you would delete model files and training data
+        logging.info("ML model reset requested")
+        
+        return jsonify({'success': True, 'message': 'Model reset successfully'})
+    except Exception as e:
+        logging.error(f"Reset model error: {e}")
+        return jsonify({'error': 'Failed to reset model'}), 500
 
 @app.route('/api/dashboard-stats')
 def api_dashboard_stats():

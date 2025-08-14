@@ -67,8 +67,11 @@ def init_database():
             CREATE TABLE IF NOT EXISTS admin_rules (
                 id INTEGER PRIMARY KEY,
                 rule_type VARCHAR,
+                rule_name VARCHAR,
+                logic_type VARCHAR DEFAULT 'AND',
                 conditions TEXT,
                 action VARCHAR,
+                risk_level VARCHAR,
                 is_active BOOLEAN DEFAULT true,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

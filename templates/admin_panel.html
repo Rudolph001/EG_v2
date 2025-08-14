@@ -1,0 +1,997 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Email Guardian{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cogs"></i>
+            Admin Panel
+            <small class="text-muted">System Configuration & Rule Management</small>
+        </h1>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-ban fa-2x mb-2"></i>
+                <h6>Exclusion Rules</h6>
+                <h4 id="exclusionCount">{{ stats.exclusion_rules or 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h6>Whitelist Rules</h6>
+                <h4 id="whitelistCount">{{ stats.whitelist_rules or 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                <h6>Security Rules</h6>
+                <h4 id="securityCount">{{ stats.security_rules or 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                <h6>Risk Keywords</h6>
+                <h4 id="riskKeywordCount">{{ stats.risk_keywords or 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-times-circle fa-2x mb-2"></i>
+                <h6>Exclude Keywords</h6>
+                <h4 id="excludeKeywordCount">{{ stats.exclude_keywords or 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-secondary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-robot fa-2x mb-2"></i>
+                <h6>ML Models</h6>
+                <h4 id="mlModelCount">{{ stats.ml_models or 1 }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Tabs -->
+<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="exclusion-tab" data-bs-toggle="tab" data-bs-target="#exclusion" type="button">
+            <i class="fas fa-ban"></i> Exclusion Rules
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist" type="button">
+            <i class="fas fa-check-circle"></i> Whitelist Filtering
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+            <i class="fas fa-shield-alt"></i> Security Rules
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="keywords-tab" data-bs-toggle="tab" data-bs-target="#keywords" type="button">
+            <i class="fas fa-tags"></i> Keyword Management
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="ml-tab" data-bs-toggle="tab" data-bs-target="#ml" type="button">
+            <i class="fas fa-robot"></i> ML Settings
+        </button>
+    </li>
+</ul>
+
+<!-- Tab Content -->
+<div class="tab-content" id="adminTabContent">
+    
+    <!-- Exclusion Rules Tab -->
+    <div class="tab-pane fade show active" id="exclusion" role="tabpanel">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-ban"></i>
+                    Exclusion Rules
+                </h5>
+                <button class="btn btn-primary" onclick="showRuleModal('exclusion')">
+                    <i class="fas fa-plus"></i> Add Exclusion Rule
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped" id="exclusionRulesTable">
+                        <thead>
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Logic</th>
+                                <th>Conditions</th>
+                                <th>Active</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exclusionRulesBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Whitelist Filtering Tab -->
+    <div class="tab-pane fade" id="whitelist" role="tabpanel">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle"></i>
+                    Whitelist Filtering
+                </h5>
+                <button class="btn btn-success" onclick="showRuleModal('whitelist')">
+                    <i class="fas fa-plus"></i> Add Whitelist Rule
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6>Whitelisted Senders</h6>
+                        <div class="input-group mb-2">
+                            <input type="email" class="form-control" id="newSender" placeholder="Enter email address">
+                            <button class="btn btn-success" onclick="addWhitelistItem('sender')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="whitelistSenders" class="border p-2" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Whitelisted Domains</h6>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" id="newDomain" placeholder="Enter domain (e.g., company.com)">
+                            <button class="btn btn-success" onclick="addWhitelistItem('domain')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="whitelistDomains" class="border p-2" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped" id="whitelistRulesTable">
+                        <thead>
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Logic</th>
+                                <th>Conditions</th>
+                                <th>Active</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="whitelistRulesBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Rules Tab -->
+    <div class="tab-pane fade" id="security" role="tabpanel">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt"></i>
+                    Security Rules
+                </h5>
+                <button class="btn btn-warning" onclick="showRuleModal('security')">
+                    <i class="fas fa-plus"></i> Add Security Rule
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Security rules help identify potentially dangerous emails based on attachments, external domains, and suspicious patterns.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped" id="securityRulesTable">
+                        <thead>
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Logic</th>
+                                <th>Conditions</th>
+                                <th>Risk Level</th>
+                                <th>Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="securityRulesBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyword Management Tab -->
+    <div class="tab-pane fade" id="keywords" role="tabpanel">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Risk Keywords
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="newRiskKeyword" placeholder="Enter risk keyword">
+                            <button class="btn btn-danger" onclick="addKeyword('risk')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="riskKeywords" class="keyword-container">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-times-circle"></i>
+                            Exclusion Keywords
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="newExcludeKeyword" placeholder="Enter exclusion keyword">
+                            <button class="btn btn-info" onclick="addKeyword('exclude')">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="excludeKeywords" class="keyword-container">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ML Settings Tab -->
+    <div class="tab-pane fade" id="ml" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-robot"></i>
+                            Machine Learning Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="mlSettingsForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Risk Threshold</label>
+                                        <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70">
+                                        <div class="d-flex justify-content-between">
+                                            <small>Low (0)</small>
+                                            <small id="riskThresholdValue">70</small>
+                                            <small>High (100)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Confidence Threshold</label>
+                                        <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85">
+                                        <div class="d-flex justify-content-between">
+                                            <small>Low (0)</small>
+                                            <small id="confidenceThresholdValue">85</small>
+                                            <small>High (100)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Auto-Retrain Frequency</label>
+                                <select class="form-select" id="retrainFrequency">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="manual">Manual Only</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
+                                    <label class="form-check-label" for="enableMLOverride">
+                                        Allow manual override of ML results
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
+                                    <label class="form-check-label" for="enableAutoEscalation">
+                                        Enable automatic escalation for high-risk emails
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveMLSettings()">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Model Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Current Model Status</label>
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                Model Active
+                                <br><small>Last trained: {{ ml_status.last_trained or 'Never' }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Model Accuracy</label>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" style="width: {{ ml_status.accuracy or 0 }}%">
+                                    {{ ml_status.accuracy or 0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-warning" onclick="retrainModel()">
+                                <i class="fas fa-sync"></i> Retrain Model
+                            </button>
+                            <button class="btn btn-info" onclick="testModel()">
+                                <i class="fas fa-vial"></i> Test Model
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="resetModel()">
+                                <i class="fas fa-trash"></i> Reset Model
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rule Modal -->
+<div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ruleModalTitle">Add Rule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ruleForm">
+                    <input type="hidden" id="ruleType" name="rule_type">
+                    <input type="hidden" id="ruleId" name="rule_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rule Name</label>
+                        <input type="text" class="form-control" id="ruleName" name="rule_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Logic Type</label>
+                        <select class="form-select" id="ruleLogic" name="logic_type" required>
+                            <option value="AND">AND (All conditions must match)</option>
+                            <option value="OR">OR (Any condition can match)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Conditions</label>
+                        <div id="conditionsContainer">
+                            <!-- Dynamic conditions will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCondition()">
+                            <i class="fas fa-plus"></i> Add Condition
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3" id="riskLevelContainer" style="display: none;">
+                        <label class="form-label">Risk Level</label>
+                        <select class="form-select" id="riskLevel" name="risk_level">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="ruleActive" name="is_active" checked>
+                            <label class="form-check-label" for="ruleActive">
+                                Enable rule immediately
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRule()">
+                    <i class="fas fa-save"></i> Save Rule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.keyword-container {
+    min-height: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+}
+
+.keyword-tag {
+    display: inline-block;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    margin: 0.125rem;
+    font-size: 0.875rem;
+}
+
+.keyword-tag .remove-keyword {
+    margin-left: 0.5rem;
+    color: #dc3545;
+    cursor: pointer;
+}
+
+.condition-row {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.whitelist-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+.whitelist-item .remove-item {
+    color: #dc3545;
+    cursor: pointer;
+    margin-left: auto;
+}
+</style>
+
+<script>
+let conditionCounter = 0;
+let currentRuleType = '';
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadRules();
+    loadKeywords();
+    loadWhitelist();
+    loadMLSettings();
+    
+    // Setup threshold value displays
+    document.getElementById('riskThreshold').addEventListener('input', function() {
+        document.getElementById('riskThresholdValue').textContent = this.value;
+    });
+    
+    document.getElementById('confidenceThreshold').addEventListener('input', function() {
+        document.getElementById('confidenceThresholdValue').textContent = this.value;
+    });
+});
+
+function showRuleModal(ruleType) {
+    currentRuleType = ruleType;
+    document.getElementById('ruleType').value = ruleType;
+    document.getElementById('ruleModalTitle').textContent = `Add ${ruleType.charAt(0).toUpperCase() + ruleType.slice(1)} Rule`;
+    
+    // Show/hide risk level for security rules
+    if (ruleType === 'security') {
+        document.getElementById('riskLevelContainer').style.display = 'block';
+    } else {
+        document.getElementById('riskLevelContainer').style.display = 'none';
+    }
+    
+    // Clear form
+    document.getElementById('ruleForm').reset();
+    document.getElementById('conditionsContainer').innerHTML = '';
+    conditionCounter = 0;
+    addCondition();
+    
+    new bootstrap.Modal(document.getElementById('ruleModal')).show();
+}
+
+function addCondition() {
+    const container = document.getElementById('conditionsContainer');
+    const conditionId = `condition_${conditionCounter++}`;
+    
+    const conditionHtml = `
+        <div class="condition-row" id="${conditionId}">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Field</label>
+                    <select class="form-select condition-field" onchange="updateOperators('${conditionId}')">
+                        <option value="sender">Sender</option>
+                        <option value="subject">Subject</option>
+                        <option value="domain">Domain</option>
+                        <option value="attachment">Attachment</option>
+                        <option value="department">Department</option>
+                        <option value="recipient">Recipient</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Operator</label>
+                    <select class="form-select condition-operator">
+                        <option value="contains">Contains</option>
+                        <option value="equals">Equals</option>
+                        <option value="starts_with">Starts With</option>
+                        <option value="ends_with">Ends With</option>
+                        <option value="regex">Regex Match</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Value</label>
+                    <input type="text" class="form-control condition-value" placeholder="Enter value">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeCondition('${conditionId}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', conditionHtml);
+}
+
+function removeCondition(conditionId) {
+    document.getElementById(conditionId).remove();
+}
+
+function updateOperators(conditionId) {
+    const field = document.querySelector(`#${conditionId} .condition-field`).value;
+    const operatorSelect = document.querySelector(`#${conditionId} .condition-operator`);
+    
+    // Reset operators
+    operatorSelect.innerHTML = `
+        <option value="contains">Contains</option>
+        <option value="equals">Equals</option>
+        <option value="starts_with">Starts With</option>
+        <option value="ends_with">Ends With</option>
+        <option value="regex">Regex Match</option>
+    `;
+    
+    // Add field-specific operators
+    if (field === 'attachment') {
+        operatorSelect.innerHTML += `
+            <option value="has_extension">Has Extension</option>
+            <option value="file_size_gt">File Size Greater Than</option>
+            <option value="file_size_lt">File Size Less Than</option>
+        `;
+    }
+}
+
+function saveRule() {
+    const form = document.getElementById('ruleForm');
+    const formData = new FormData(form);
+    
+    // Collect conditions
+    const conditions = [];
+    document.querySelectorAll('.condition-row').forEach(row => {
+        const field = row.querySelector('.condition-field').value;
+        const operator = row.querySelector('.condition-operator').value;
+        const value = row.querySelector('.condition-value').value;
+        
+        if (field && operator && value) {
+            conditions.push({ field, operator, value });
+        }
+    });
+    
+    const ruleData = {
+        rule_type: formData.get('rule_type'),
+        rule_name: formData.get('rule_name'),
+        logic_type: formData.get('logic_type'),
+        conditions: JSON.stringify(conditions),
+        risk_level: formData.get('risk_level'),
+        is_active: formData.get('is_active') ? true : false
+    };
+    
+    fetch('/api/admin/save-rule', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ruleData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('ruleModal')).hide();
+            loadRules();
+            showAlert('Rule saved successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while saving the rule.', 'danger');
+    });
+}
+
+function addKeyword(type) {
+    const inputId = type === 'risk' ? 'newRiskKeyword' : 'newExcludeKeyword';
+    const keyword = document.getElementById(inputId).value.trim();
+    
+    if (!keyword) return;
+    
+    fetch('/api/admin/add-keyword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: type, keyword: keyword })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            document.getElementById(inputId).value = '';
+            loadKeywords();
+            showAlert('Keyword added successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function removeKeyword(type, keyword) {
+    fetch('/api/admin/remove-keyword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: type, keyword: keyword })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            loadKeywords();
+            showAlert('Keyword removed successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function addWhitelistItem(type) {
+    const inputId = type === 'sender' ? 'newSender' : 'newDomain';
+    const value = document.getElementById(inputId).value.trim();
+    
+    if (!value) return;
+    
+    fetch('/api/admin/add-whitelist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: type, value: value })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            document.getElementById(inputId).value = '';
+            loadWhitelist();
+            showAlert('Whitelist item added successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function removeWhitelistItem(type, value) {
+    fetch('/api/admin/remove-whitelist', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: type, value: value })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            loadWhitelist();
+            showAlert('Whitelist item removed successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function saveMLSettings() {
+    const settings = {
+        risk_threshold: document.getElementById('riskThreshold').value,
+        confidence_threshold: document.getElementById('confidenceThreshold').value,
+        retrain_frequency: document.getElementById('retrainFrequency').value,
+        enable_ml_override: document.getElementById('enableMLOverride').checked,
+        enable_auto_escalation: document.getElementById('enableAutoEscalation').checked
+    };
+    
+    fetch('/api/admin/save-ml-settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('ML settings saved successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function retrainModel() {
+    if (!confirm('Are you sure you want to retrain the ML model? This may take several minutes.')) {
+        return;
+    }
+    
+    const button = event.target;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+    
+    fetch('/api/train-model', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('Model retrained successfully', 'success');
+            loadMLSettings();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sync"></i> Retrain Model';
+    });
+}
+
+function testModel() {
+    // Implementation for model testing
+    showAlert('Model testing functionality would be implemented here', 'info');
+}
+
+function resetModel() {
+    if (!confirm('Are you sure you want to reset the ML model? This will delete all training data and model files.')) {
+        return;
+    }
+    
+    fetch('/api/admin/reset-model', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('Model reset successfully', 'success');
+            loadMLSettings();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function loadRules() {
+    // Load rules for all types
+    ['exclusion', 'whitelist', 'security'].forEach(type => {
+        fetch(`/api/admin/rules/${type}`)
+        .then(response => response.json())
+        .then(rules => {
+            const tbody = document.getElementById(`${type}RulesBody`);
+            tbody.innerHTML = '';
+            
+            rules.forEach(rule => {
+                const row = createRuleRow(rule, type);
+                tbody.appendChild(row);
+            });
+        });
+    });
+}
+
+function createRuleRow(rule, type) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${rule.rule_name}</td>
+        <td><span class="badge bg-secondary">${rule.logic_type}</span></td>
+        <td><small>${rule.conditions_summary}</small></td>
+        <td>
+            <span class="badge bg-${rule.is_active ? 'success' : 'secondary'}">
+                ${rule.is_active ? 'Active' : 'Inactive'}
+            </span>
+        </td>
+        <td><small>${rule.created_at}</small></td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="editRule(${rule.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    return row;
+}
+
+function loadKeywords() {
+    ['risk', 'exclude'].forEach(type => {
+        fetch(`/api/admin/keywords/${type}`)
+        .then(response => response.json())
+        .then(keywords => {
+            const container = document.getElementById(`${type}Keywords`);
+            container.innerHTML = '';
+            
+            keywords.forEach(keyword => {
+                const tag = document.createElement('div');
+                tag.className = 'keyword-tag';
+                tag.innerHTML = `
+                    ${keyword}
+                    <span class="remove-keyword" onclick="removeKeyword('${type}', '${keyword}')">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                container.appendChild(tag);
+            });
+        });
+    });
+}
+
+function loadWhitelist() {
+    ['sender', 'domain'].forEach(type => {
+        fetch(`/api/admin/whitelist/${type}`)
+        .then(response => response.json())
+        .then(items => {
+            const container = document.getElementById(`whitelist${type.charAt(0).toUpperCase() + type.slice(1)}s`);
+            container.innerHTML = '';
+            
+            items.forEach(item => {
+                const element = document.createElement('div');
+                element.className = 'whitelist-item';
+                element.innerHTML = `
+                    <span>${item}</span>
+                    <span class="remove-item" onclick="removeWhitelistItem('${type}', '${item}')">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                container.appendChild(element);
+            });
+        });
+    });
+}
+
+function loadMLSettings() {
+    fetch('/api/admin/ml-settings')
+    .then(response => response.json())
+    .then(settings => {
+        document.getElementById('riskThreshold').value = settings.risk_threshold || 70;
+        document.getElementById('confidenceThreshold').value = settings.confidence_threshold || 85;
+        document.getElementById('retrainFrequency').value = settings.retrain_frequency || 'weekly';
+        document.getElementById('enableMLOverride').checked = settings.enable_ml_override !== false;
+        document.getElementById('enableAutoEscalation').checked = settings.enable_auto_escalation !== false;
+        
+        document.getElementById('riskThresholdValue').textContent = settings.risk_threshold || 70;
+        document.getElementById('confidenceThresholdValue').textContent = settings.confidence_threshold || 85;
+    });
+}
+
+function editRule(ruleId) {
+    // Implementation for editing rules
+    showAlert('Edit rule functionality would load rule data into modal', 'info');
+}
+
+function deleteRule(ruleId) {
+    if (!confirm('Are you sure you want to delete this rule?')) {
+        return;
+    }
+    
+    fetch(`/api/admin/delete-rule/${ruleId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            loadRules();
+            showAlert('Rule deleted successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at top of content
+    const content = document.querySelector('.container-fluid');
+    content.insertBefore(alertDiv, content.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}
