@@ -1467,8 +1467,29 @@ def api_export_cleared():
         logging.error(f"Export cleared emails error: {e}")
         return jsonify({'error': 'Failed to export data'}), 500
 
-# Add the missing index route to fix Flask error
-@app.route('/')
+# Add missing route aliases that the template expects
+@app.route('/manage-security-rules')
+def manage_security_rules():
+    """Security rules management page"""
+    return redirect(url_for('admin_rules'))
+
+@app.route('/manage-risk-keywords')
+def manage_risk_keywords():
+    """Risk keywords management page"""
+    return redirect(url_for('admin_panel'))
+
+@app.route('/manage-exclusion-keywords')
+def manage_exclusion_keywords():
+    """Exclusion keywords management page"""
+    return redirect(url_for('admin_panel'))
+
+@app.route('/manage-ml-settings')
+def manage_ml_settings():
+    """ML settings management page"""
+    return redirect(url_for('admin_panel'))
+
+# Add index route that the template references
+@app.route('/index')
 def index():
-    """Redirect to main dashboard"""
+    """Index page redirects to dashboard"""
     return redirect(url_for('dashboard'))

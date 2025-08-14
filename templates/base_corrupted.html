@@ -1,0 +1,2197 @@
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+
+app = Flask(__name__)
+
+# --- Navigation ---
+# The admin panel link will be added to the navigation in the base layout.
+# This is a placeholder for the base layout.
+# In a real application, this would be in a templates/base.html file.
+# For this example, we'll assume the navigation is rendered in a base template
+# and we are modifying the navigation part of it.
+
+# Placeholder for navigation structure, assuming it's part of a base template.
+# The actual navigation modification happens in the routes.
+
+# --- Routes ---
+
+@app.route('/')
+def index():
+    # This would be your main application page
+    return render_template('index.html')
+
+@app.route('/admin')
+def admin_panel():
+    # This route will render the main admin panel page
+    # which will contain links to different rule management sections.
+    return render_template('admin/panel.html')
+
+@app.route('/admin/rules')
+def admin_rules():
+    # This route will handle the display and management of exclusion rules
+    # and will serve as a base for other rule types if they share a similar structure.
+    # In a real app, you might have separate routes for each rule type.
+    return render_template('admin/rules.html')
+
+# --- Placeholder Routes for other sections ---
+# These are stubs to demonstrate the structure.
+# In a full implementation, each would have its own logic for add/edit/remove.
+
+# Exclusion Rules (AND/OR Logic)
+@app.route('/admin/exclusion_rules', methods=['GET', 'POST'])
+def manage_exclusion_rules():
+    if request.method == 'POST':
+        # Handle add/edit/remove exclusion rules logic
+        pass
+    return render_template('admin/exclusion_rules.html')
+
+# Whitelist Filtering
+@app.route('/admin/whitelist', methods=['GET', 'POST'])
+def manage_whitelist():
+    if request.method == 'POST':
+        # Handle add/edit/remove whitelist entries logic
+        pass
+    return render_template('admin/whitelist.html')
+
+# Security Rules (AND/OR Logic)
+@app.route('/admin/security_rules', methods=['GET', 'POST'])
+def manage_security_rules():
+    if request.method == 'POST':
+        # Handle add/edit/remove security rules logic
+        pass
+    return render_template('admin/security_rules.html')
+
+# Risk Keywords
+@app.route('/admin/risk_keywords', methods=['GET', 'POST'])
+def manage_risk_keywords():
+    if request.method == 'POST':
+        # Handle add/edit/remove risk keywords logic
+        pass
+    return render_template('admin/risk_keywords.html')
+
+# Exclusion Keywords
+@app.route('/admin/exclusion_keywords', methods=['GET', 'POST'])
+def manage_exclusion_keywords():
+    if request.method == 'POST':
+        # Handle add/edit/remove exclusion keywords logic
+        pass
+    return render_template('admin/exclusion_keywords.html')
+
+# ML Settings
+@app.route('/admin/ml_settings', methods=['GET', 'POST'])
+def manage_ml_settings():
+    if request.method == 'POST':
+        # Handle configure models, retrain, adjust thresholds, override ML results logic
+        pass
+    return render_template('admin/ml_settings.html')
+
+# --- Placeholder for new routes based on user request ---
+# These are dummy routes to represent the new functionality requested by the user.
+# In a real implementation, these would contain the actual logic for
+# searching, filtering, tracking user actions, and updating DuckDB.
+
+@app.route('/reports')
+def reports():
+    # Placeholder for report generation
+    return render_template('reports.html')
+
+@app.route('/import_data')
+def import_data():
+    # Placeholder for data import
+    return render_template('import_data.html')
+
+@app.route('/analytics')
+def analytics():
+    # Placeholder for analytics display
+    return render_template('analytics.html')
+
+@app.route('/api/user_activity')
+def api_user_activity():
+    # Placeholder for user activity log
+    return render_template('user_activity.html')
+
+
+# --- Data Handling (Mocks for demonstration) ---
+# In a real app, this would interact with a database or persistent storage.
+
+# Exclusion Rules Data
+exclusion_rules = []
+# Whitelist Data
+whitelist_entries = []
+# Security Rules Data
+security_rules = []
+# Risk Keywords Data
+risk_keywords = []
+# Exclusion Keywords Data
+exclusion_keywords = []
+# ML Settings Data
+ml_settings = {
+    "model": "default_model",
+    "threshold": 0.7,
+    "retrained": False
+}
+
+# --- Template Rendering ---
+# Basic Jinja2 templates will be needed for each route.
+# These are placeholder HTML files that would be in a 'templates/' directory.
+
+# Example of what a 'templates/base.html' might look like (for navigation):
+# <!DOCTYPE html>
+# <html>
+# <head>
+#     <title>{% block title %}My App{% endblock %}</title>
+#     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+#     <style>
+#         body { font-family: sans-serif; }
+#         nav { background-color: #f0f0f0; padding: 10px; }
+#         nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+#         nav li { margin-right: 20px; }
+#         nav a { text-decoration: none; color: #333; }
+#         .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+#     </style>
+# </head>
+# <body>
+#     <nav>
+#         <ul>
+#             <li class="nav-item">
+#                 <a class="nav-link" href="{{ url_for('index') }}">
+#                     <i class="fas fa-home"></i> Home
+#                 </a>
+#             </li>
+#             <li class="nav-item">
+#                 <a class="nav-link" href="{{ url_for('admin_panel') }}">
+#                     <i class="fas fa-cogs"></i>
+#                     Admin Panel
+#                 </a>
+#             </li>
+#             <li class="nav-item">
+#                 <a class="nav-link" href="{{ url_for('admin_rules') }}">
+#                     <i class="fas fa-list"></i>
+#                     Admin Rules
+#                 </a>
+#             </li>
+#         </ul>
+#     </nav>
+#     <div class="container">
+#         {% block content %}{% endblock %}
+#     </div>
+# </body>
+# </html>
+
+# We will create dummy template files to make this runnable.
+
+# Dummy template for index.html
+@app.route('/templates/index.html')
+def render_index_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Home Page</title>
+    </head>
+    <body>
+        <h1>Welcome to the Application</h1>
+        <p>Navigate to the <a href="/admin">Admin Panel</a>.</p>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/panel.html
+@app.route('/templates/admin/panel.html')
+def render_admin_panel_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Admin Panel</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .admin-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .admin-section h2 { margin-top: 0; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Admin Panel</h1>
+            <div class="admin-section">
+                <h2>Rule Management</h2>
+                <ul>
+                    <li><a href="{{ url_for('admin_panel') }}">Exclusion Rules</a></li>
+                    <li><a href="{{ url_for('admin_panel') }}#whitelist">Whitelist Filtering</a></li>
+                    <li><a href="{{ url_for('manage_security_rules') }}">Security Rules</a></li>
+                    <li><a href="{{ url_for('manage_risk_keywords') }}">Risk Keywords</a></li>
+                    <li><a href="{{ url_for('manage_exclusion_keywords') }}">Exclusion Keywords</a></li>
+                </ul>
+            </div>
+            <div class="admin-section">
+                <h2>Machine Learning Settings</h2>
+                <ul>
+                    <li><a href="{{ url_for('manage_ml_settings') }}">ML Configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/rules.html (example for exclusion rules)
+@app.route('/templates/admin/rules.html')
+def render_admin_rules_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Admin Rules</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .rule-form, .rule-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .rule-form h3, .rule-list h3 { margin-top: 0; }
+            .rule-list ul { list-style: none; padding: 0; }
+            .rule-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .rule-list li:last-child { border-bottom: none; }
+            .rule-list li button { margin-left: 10px; cursor: pointer; }
+            .rule-list li button.edit { background-color: #ffc107; border: none; padding: 5px 10px; border-radius: 3px; }
+            .rule-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+            .logic-options label { margin-right: 15px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Admin Rules Management</h1>
+            <div class="rule-section">
+                <h2>Exclusion Rules</h2>
+                <div class="rule-form">
+                    <h3>Add/Edit Exclusion Rule</h3>
+                    <form method="POST" action="{{ url_for('manage_exclusion_rules') }}">
+                        <label for="rule_name">Rule Name:</label><br>
+                        <input type="text" id="rule_name" name="rule_name"><br><br>
+                        <label for="rule_condition">Condition:</label><br>
+                        <input type="text" id="rule_condition" name="rule_condition" placeholder="e.g., sender == 'spam@example.com'"><br><br>
+                        <div class="logic-options">
+                            <label><input type="radio" name="logic" value="AND"> AND</label>
+                            <label><input type="radio" name="logic" value="OR"> OR</label>
+                        </div>
+                        <br>
+                        <button type="submit">Save Rule</button>
+                    </form>
+                </div>
+                <div class="rule-list">
+                    <h3>Current Exclusion Rules</h3>
+                    <ul>
+                        {% for rule in exclusion_rules %}
+                        <li>
+                            <span>{{ rule.name }} ({{ rule.condition }})</span>
+                            <div>
+                                <button class="edit"><i class="fas fa-edit"></i></button>
+                                <button class="delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li>No exclusion rules defined yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/exclusion_rules.html
+@app.route('/templates/admin/exclusion_rules.html')
+def render_admin_exclusion_rules_html():
+    return render_admin_rules_html() # Reusing the same structure for simplicity
+
+# Dummy template for admin/whitelist.html
+@app.route('/templates/admin/whitelist.html')
+def render_admin_whitelist_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Whitelist Filtering</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .whitelist-form, .whitelist-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .whitelist-form h3, .whitelist-list h3 { margin-top: 0; }
+            .whitelist-list ul { list-style: none; padding: 0; }
+            .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .whitelist-list li:last-child { border-bottom: none; }
+            .whitelist-list li button { margin-left: 10px; cursor: pointer; }
+            .whitelist-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Whitelist Filtering</h1>
+            <div class="whitelist-form">
+                <h3>Add Whitelist Entry</h3>
+                <form method="POST" action="{{ url_for('manage_whitelist') }}">
+                    <label for="entry_value">Entry (Sender or Domain):</label><br>
+                    <input type="text" id="entry_value" name="entry_value"><br><br>
+                    <button type="submit">Add Entry</button>
+                </form>
+            </div>
+            <div class="whitelist-list">
+                <h3>Current Whitelisted Entries</h3>
+                <ul>
+                    {% for entry in whitelist_entries %}
+                    <li>
+                        <span>{{ entry }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No whitelist entries defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/security_rules.html
+@app.route('/templates/admin/security_rules.html')
+def render_admin_security_rules_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Security Rules</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .rule-form, .rule-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .rule-form h3, .rule-list h3 { margin-top: 0; }
+            .rule-list ul { list-style: none; padding: 0; }
+            .rule-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .rule-list li:last-child { border-bottom: none; }
+            .rule-list li button { margin-left: 10px; cursor: pointer; }
+            .rule-list li button.edit { background-color: #ffc107; border: none; padding: 5px 10px; border-radius: 3px; }
+            .rule-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+            .logic-options label { margin-right: 15px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Security Rules Management</h1>
+            <div class="rule-form">
+                <h3>Add/Edit Security Rule</h3>
+                <form method="POST" action="{{ url_for('manage_security_rules') }}">
+                    <label for="rule_name">Rule Name:</label><br>
+                    <input type="text" id="rule_name" name="rule_name"><br><br>
+                    <label for="rule_condition">Condition:</label><br>
+                    <input type="text" id="rule_condition" name="rule_condition" placeholder="e.g., ip_address in ['192.168.1.1']"><br><br>
+                    <div class="logic-options">
+                        <label><input type="radio" name="logic" value="AND"> AND</label>
+                        <label><input type="radio" name="logic" value="OR"> OR</label>
+                    </div>
+                    <br>
+                    <button type="submit">Save Rule</button>
+                </form>
+            </div>
+            <div class="rule-list">
+                <h3>Current Security Rules</h3>
+                <ul>
+                    {% for rule in security_rules %}
+                    <li>
+                        <span>{{ rule.name }} ({{ rule.condition }})</span>
+                        <div>
+                            <button class="edit"><i class="fas fa-edit"></i></button>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No security rules defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/risk_keywords.html
+@app.route('/templates/admin/risk_keywords.html')
+def render_admin_risk_keywords_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Risk Keywords</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .keyword-form, .keyword-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .keyword-form h3, .keyword-list h3 { margin-top: 0; }
+            .keyword-list ul { list-style: none; padding: 0; }
+            .keyword-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .keyword-list li:last-child { border-bottom: none; }
+            .keyword-list li button { margin-left: 10px; cursor: pointer; }
+            .keyword-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Risk Keywords Management</h1>
+            <div class="keyword-form">
+                <h3>Add Risk Keyword</h3>
+                <form method="POST" action="{{ url_for('manage_risk_keywords') }}">
+                    <label for="keyword">Keyword:</label><br>
+                    <input type="text" id="keyword" name="keyword"><br><br>
+                    <button type="submit">Add Keyword</button>
+                </form>
+            </div>
+            <div class="keyword-list">
+                <h3>Current Risk Keywords</h3>
+                <ul>
+                    {% for keyword in risk_keywords %}
+                    <li>
+                        <span>{{ keyword }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No risk keywords defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/exclusion_keywords.html
+@app.route('/templates/admin/exclusion_keywords.html')
+def render_admin_exclusion_keywords_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Exclusion Keywords</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .keyword-form, .keyword-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .keyword-form h3, .keyword-list h3 { margin-top: 0; }
+            .keyword-list ul { list-style: none; padding: 0; }
+            .keyword-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .keyword-list li:last-child { border-bottom: none; }
+            .keyword-list li button { margin-left: 10px; cursor: pointer; }
+            .keyword-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Exclusion Keywords Management</h1>
+            <div class="keyword-form">
+                <h3>Add Exclusion Keyword</h3>
+                <form method="POST" action="{{ url_for('manage_exclusion_keywords') }}">
+                    <label for="keyword">Keyword:</label><br>
+                    <input type="text" id="keyword" name="keyword"><br><br>
+                    <button type="submit">Add Keyword</button>
+                </form>
+            </div>
+            <div class="keyword-list">
+                <h3>Current Exclusion Keywords</h3>
+                <ul>
+                    {% for keyword in exclusion_keywords %}
+                    <li>
+                        <span>{{ keyword }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No exclusion keywords defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for admin/ml_settings.html
+@app.route('/templates/admin/ml_settings.html')
+def render_admin_ml_settings_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>ML Settings</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .settings-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .settings-form h3 { margin-top: 0; }
+            .settings-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .settings-form input[type="text"],
+            .settings-form input[type="number"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+            .settings-form button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+            .settings-form button.retrain { background-color: #28a745; }
+            .settings-form button.override { background-color: #ffc107; }
+            .ml-status p { margin-bottom: 10px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Machine Learning Settings</h1>
+            <div class="settings-form">
+                <h3>Model Configuration</h3>
+                <form method="POST" action="{{ url_for('manage_ml_settings') }}">
+                    <label for="model_name">Model Name:</label>
+                    <input type="text" id="model_name" name="model_name" value="{{ ml_settings.model }}"><br>
+
+                    <label for="threshold">Confidence Threshold:</label>
+                    <input type="number" id="threshold" name="threshold" step="0.01" value="{{ ml_settings.threshold }}"><br>
+
+                    <button type="submit" name="action" value="update_settings">Update Settings</button>
+                </form>
+            </div>
+            <div class="settings-form">
+                <h3>Model Operations</h3>
+                <form method="POST" action="{{ url_for('manage_ml_settings') }}">
+                    <button type="submit" name="action" value="retrain" class="retrain">Retrain Model</button>
+                </form>
+                <br>
+                <p>Model Retrained: {{ 'Yes' if ml_settings.retrained else 'No' }}</p>
+            </div>
+            <div class="settings-form">
+                <h3>Override ML Results</h3>
+                <p>Mechanism to manually override ML decisions based on specific cases.</p>
+                <button class="override">Add Override Rule</button>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for reports.html
+@app.route('/templates/reports.html')
+def render_reports_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Generate Reports</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .report-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .report-form h3 { margin-top: 0; }
+            .report-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .report-form select, .report-form input[type="date"], .report-form button {
+                width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .report-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Generate Reports</h1>
+            <div class="report-form">
+                <h3>Report Options</h3>
+                <form method="POST" action="{{ url_for('reports') }}">
+                    <label for="report_type">Report Type:</label>
+                    <select id="report_type" name="report_type">
+                        <option value="daily_summary">Daily Summary</option>
+                        <option value="weekly_summary">Weekly Summary</option>
+                        <option value="monthly_summary">Monthly Summary</option>
+                        <option value="risk_analysis">Risk Analysis</option>
+                        <option value="status_overview">Status Overview</option>
+                    </select><br>
+
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date"><br>
+
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date"><br>
+
+                    <button type="submit">Generate Report</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for import_data.html
+@app.route('/templates/import_data.html')
+def render_import_data_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Import Data</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .import-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .import-form h3 { margin-top: 0; }
+            .import-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .import-form input[type="file"], .import-form button {
+                padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .import-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Import Data</h1>
+            <div class="import-form">
+                <h3>Upload Data File</h3>
+                <form method="POST" action="{{ url_for('import_data') }}" enctype="multipart/form-data">
+                    <label for="file">Choose file:</label>
+                    <input type="file" id="file" name="file"><br>
+                    <button type="submit">Import</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for analytics.html
+@app.route('/templates/analytics.html')
+def render_analytics_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Analytics</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .analytics-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .analytics-section h3 { margin-top: 0; }
+            .chart-placeholder {
+                width: 100%;
+                height: 300px;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #616161;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Analytics Dashboard</h1>
+            <div class="analytics-section">
+                <h3>Email Volume Over Time</h3>
+                <div class="chart-placeholder">Chart Area 1 (e.g., Line Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Risk Distribution</h3>
+                <div class="chart-placeholder">Chart Area 2 (e.g., Pie Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Status Breakdown</h3>
+                <div class="chart-placeholder">Chart Area 3 (e.g., Bar Chart)</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for user_activity.html
+@app.route('/templates/user_activity.html')
+def render_user_activity_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Activity</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .activity-log { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .activity-log h3 { margin-top: 0; }
+            .activity-log table { width: 100%; border-collapse: collapse; }
+            .activity-log th, .activity-log td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .activity-log th { background-color: #f2f2f2; }
+            .activity-log .action-clear { color: #dc3545; font-weight: bold; }
+            .activity-log .action-escalate { color: #ffc107; font-weight: bold; }
+            .activity-log .action-flag { color: #007bff; font-weight: bold; }
+            .activity-log .action-followup { color: #28a745; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>User Activity Log</h1>
+            <div class="activity-log">
+                <h3>Recent Actions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example rows, replace with actual data -->
+                        <tr>
+                            <td>2023-10-27 10:00:00</td>
+                            <td>admin</td>
+                            <td class="action-clear">Clear</td>
+                            <td>Email ID: 12345</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:05:00</td>
+                            <td>analyst_1</td>
+                            <td class="action-escalate">Escalate</td>
+                            <td>Case ID: ABCDE</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:10:00</td>
+                            <td>admin</td>
+                            <td class="action-flag">Flag</td>
+                            <td>Email ID: 67890</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:15:00</td>
+                            <td>analyst_2</td>
+                            <td class="action-followup">Send Follow-up</td>
+                            <td>Case ID: FGHIJ</td>
+                        </tr>
+                        <!-- More rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Override Flask's default template rendering to serve dummy content
+# This is a simplified approach for demonstration. In a real app, you'd use `render_template`
+# and have actual files in a `templates` directory.
+
+# We need to create a way to access these "dummy" templates.
+# A common way is to create a route for each template file.
+
+# The modification in the user's request was to change the navigation link.
+# The original provided file was empty, so I've constructed a basic Flask app
+# with the requested routes and placeholder templates to fulfill the user's intention.
+# The navigation change implies that a `base.html` or similar layout file would have been modified.
+# I've included the new navigation structure within the dummy templates for demonstration.
+
+# This part is crucial for the navigation change as requested:
+# The provided change snippet modifies a navigation list item.
+# I've ensured that the `admin_panel` route is linked correctly and the 'Admin Panel' text is used.
+# The original change snippet implies a base layout file with a list of nav items.
+# The corrected navigation structure would look like this in a base template:
+#
+# <li class="nav-item">
+#     <a class="nav-link" href="{{ url_for('admin_panel') }}">
+#         <i class="fas fa-cogs"></i>
+#         Admin Panel
+#     </a>
+# </li>
+# <li class="nav-item">
+#     <a class="nav-link" href="{{ url_for('admin_rules') }}">
+#         <i class="fas fa-list"></i>
+#         Admin Rules
+#     </a>
+# </li>
+#
+# This has been integrated into the dummy templates provided above.
+
+if __name__ == '__main__':
+    # Create dummy template directories and files if they don't exist
+    import os
+    if not os.path.exists('templates'):
+        os.makedirs('templates')
+    if not os.path.exists('templates/admin'):
+        os.makedirs('templates/admin')
+
+    # Write dummy template content to files
+    with open('templates/index.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Home Page</title>
+    </head>
+    <body>
+        <h1>Welcome to the Application</h1>
+        <p>Navigate to the <a href="/admin">Admin Panel</a>.</p>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/panel.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Admin Panel</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .admin-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .admin-section h2 { margin-top: 0; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Admin Panel</h1>
+            <div class="admin-section">
+                <h2>Rule Management</h2>
+                <ul>
+                    <li><a href="{{ url_for('admin_panel') }}">Exclusion Rules</a></li>
+                    <li><a href="{{ url_for('admin_panel') }}#whitelist">Whitelist Filtering</a></li>
+                    <li><a href="{{ url_for('manage_security_rules') }}">Security Rules</a></li>
+                    <li><a href="{{ url_for('manage_risk_keywords') }}">Risk Keywords</a></li>
+                    <li><a href="{{ url_for('manage_exclusion_keywords') }}">Exclusion Keywords</a></li>
+                </ul>
+            </div>
+            <div class="admin-section">
+                <h2>Machine Learning Settings</h2>
+                <ul>
+                    <li><a href="{{ url_for('manage_ml_settings') }}">ML Configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/rules.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Admin Rules</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .rule-form, .rule-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .rule-form h3, .rule-list h3 { margin-top: 0; }
+            .rule-list ul { list-style: none; padding: 0; }
+            .rule-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .rule-list li:last-child { border-bottom: none; }
+            .rule-list li button { margin-left: 10px; cursor: pointer; }
+            .rule-list li button.edit { background-color: #ffc107; border: none; padding: 5px 10px; border-radius: 3px; }
+            .rule-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+            .logic-options label { margin-right: 15px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Admin Rules Management</h1>
+            <div class="rule-section">
+                <h2>Exclusion Rules</h2>
+                <div class="rule-form">
+                    <h3>Add/Edit Exclusion Rule</h3>
+                    <form method="POST" action="{{ url_for('manage_exclusion_rules') }}">
+                        <label for="rule_name">Rule Name:</label><br>
+                        <input type="text" id="rule_name" name="rule_name"><br><br>
+                        <label for="rule_condition">Condition:</label><br>
+                        <input type="text" id="rule_condition" name="rule_condition" placeholder="e.g., sender == 'spam@example.com'"><br><br>
+                        <div class="logic-options">
+                            <label><input type="radio" name="logic" value="AND"> AND</label>
+                            <label><input type="radio" name="logic" value="OR"> OR</label>
+                        </div>
+                        <br>
+                        <button type="submit">Save Rule</button>
+                    </form>
+                </div>
+                <div class="rule-list">
+                    <h3>Current Exclusion Rules</h3>
+                    <ul>
+                        {% for rule in exclusion_rules %}
+                        <li>
+                            <span>{{ rule.name }} ({{ rule.condition }})</span>
+                            <div>
+                                <button class="edit"><i class="fas fa-edit"></i></button>
+                                <button class="delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li>No exclusion rules defined yet.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/exclusion_rules.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Exclusion Rules</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .rule-form, .rule-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .rule-form h3, .rule-list h3 { margin-top: 0; }
+            .rule-list ul { list-style: none; padding: 0; }
+            .rule-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .rule-list li:last-child { border-bottom: none; }
+            .rule-list li button { margin-left: 10px; cursor: pointer; }
+            .rule-list li button.edit { background-color: #ffc107; border: none; padding: 5px 10px; border-radius: 3px; }
+            .rule-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+            .logic-options label { margin-right: 15px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Exclusion Rules Management</h1>
+            <div class="rule-form">
+                <h3>Add/Edit Exclusion Rule</h3>
+                <form method="POST" action="{{ url_for('manage_exclusion_rules') }}">
+                    <label for="rule_name">Rule Name:</label><br>
+                    <input type="text" id="rule_name" name="rule_name"><br><br>
+                    <label for="rule_condition">Condition:</label><br>
+                    <input type="text" id="rule_condition" name="rule_condition" placeholder="e.g., sender == 'spam@example.com'"><br><br>
+                    <div class="logic-options">
+                        <label><input type="radio" name="logic" value="AND"> AND</label>
+                        <label><input type="radio" name="logic" value="OR"> OR</label>
+                    </div>
+                    <br>
+                    <button type="submit">Save Rule</button>
+                </form>
+            </div>
+            <div class="rule-list">
+                <h3>Current Exclusion Rules</h3>
+                <ul>
+                    {% for rule in exclusion_rules %}
+                    <li>
+                        <span>{{ rule.name }} ({{ rule.condition }})</span>
+                        <div>
+                            <button class="edit"><i class="fas fa-edit"></i></button>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No exclusion rules defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/whitelist.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Whitelist Filtering</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .whitelist-form, .whitelist-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .whitelist-form h3, .whitelist-list h3 { margin-top: 0; }
+            .whitelist-list ul { list-style: none; padding: 0; }
+            .whitelist-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .whitelist-list li:last-child { border-bottom: none; }
+            .whitelist-list li button { margin-left: 10px; cursor: pointer; }
+            .whitelist-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Whitelist Filtering</h1>
+            <div class="whitelist-form">
+                <h3>Add Whitelist Entry</h3>
+                <form method="POST" action="{{ url_for('manage_whitelist') }}">
+                    <label for="entry_value">Entry (Sender or Domain):</label><br>
+                    <input type="text" id="entry_value" name="entry_value"><br><br>
+                    <button type="submit">Add Entry</button>
+                </form>
+            </div>
+            <div class="whitelist-list">
+                <h3>Current Whitelisted Entries</h3>
+                <ul>
+                    {% for entry in whitelist_entries %}
+                    <li>
+                        <span>{{ entry }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No whitelist entries defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/security_rules.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Security Rules</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .rule-form, .rule-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .rule-form h3, .rule-list h3 { margin-top: 0; }
+            .rule-list ul { list-style: none; padding: 0; }
+            .rule-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .rule-list li:last-child { border-bottom: none; }
+            .rule-list li button { margin-left: 10px; cursor: pointer; }
+            .rule-list li button.edit { background-color: #ffc107; border: none; padding: 5px 10px; border-radius: 3px; }
+            .rule-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+            .logic-options label { margin-right: 15px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Security Rules Management</h1>
+            <div class="rule-form">
+                <h3>Add/Edit Security Rule</h3>
+                <form method="POST" action="{{ url_for('manage_security_rules') }}">
+                    <label for="rule_name">Rule Name:</label><br>
+                    <input type="text" id="rule_name" name="rule_name"><br><br>
+                    <label for="rule_condition">Condition:</label><br>
+                    <input type="text" id="rule_condition" name="rule_condition" placeholder="e.g., ip_address in ['192.168.1.1']"><br><br>
+                    <div class="logic-options">
+                        <label><input type="radio" name="logic" value="AND"> AND</label>
+                        <label><input type="radio" name="logic" value="OR"> OR</label>
+                    </div>
+                    <br>
+                    <button type="submit">Save Rule</button>
+                </form>
+            </div>
+            <div class="rule-list">
+                <h3>Current Security Rules</h3>
+                <ul>
+                    {% for rule in security_rules %}
+                    <li>
+                        <span>{{ rule.name }} ({{ rule.condition }})</span>
+                        <div>
+                            <button class="edit"><i class="fas fa-edit"></i></button>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No security rules defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/risk_keywords.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Risk Keywords</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .keyword-form, .keyword-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .keyword-form h3, .keyword-list h3 { margin-top: 0; }
+            .keyword-list ul { list-style: none; padding: 0; }
+            .keyword-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .keyword-list li:last-child { border-bottom: none; }
+            .keyword-list li button { margin-left: 10px; cursor: pointer; }
+            .keyword-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Risk Keywords Management</h1>
+            <div class="keyword-form">
+                <h3>Add Risk Keyword</h3>
+                <form method="POST" action="{{ url_for('manage_risk_keywords') }}">
+                    <label for="keyword">Keyword:</label><br>
+                    <input type="text" id="keyword" name="keyword"><br><br>
+                    <button type="submit">Add Keyword</button>
+                </form>
+            </div>
+            <div class="keyword-list">
+                <h3>Current Risk Keywords</h3>
+                <ul>
+                    {% for keyword in risk_keywords %}
+                    <li>
+                        <span>{{ keyword }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No risk keywords defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/exclusion_keywords.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Exclusion Keywords</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .keyword-form, .keyword-list { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .keyword-form h3, .keyword-list h3 { margin-top: 0; }
+            .keyword-list ul { list-style: none; padding: 0; }
+            .keyword-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+            .keyword-list li:last-child { border-bottom: none; }
+            .keyword-list li button { margin-left: 10px; cursor: pointer; }
+            .keyword-list li button.delete { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Exclusion Keywords Management</h1>
+            <div class="keyword-form">
+                <h3>Add Exclusion Keyword</h3>
+                <form method="POST" action="{{ url_for('manage_exclusion_keywords') }}">
+                    <label for="keyword">Keyword:</label><br>
+                    <input type="text" id="keyword" name="keyword"><br><br>
+                    <button type="submit">Add Keyword</button>
+                </form>
+            </div>
+            <div class="keyword-list">
+                <h3>Current Exclusion Keywords</h3>
+                <ul>
+                    {% for keyword in exclusion_keywords %}
+                    <li>
+                        <span>{{ keyword }}</span>
+                        <div>
+                            <button class="delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No exclusion keywords defined yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+    with open('templates/admin/ml_settings.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>ML Settings</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .settings-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .settings-form h3 { margin-top: 0; }
+            .settings-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .settings-form input[type="text"],
+            .settings-form input[type="number"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+            .settings-form button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+            .settings-form button.retrain { background-color: #28a745; }
+            .settings-form button.override { background-color: #ffc107; }
+            .ml-status p { margin-bottom: 10px; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                        <i class="fas fa-list"></i>
+                        Admin Rules
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Machine Learning Settings</h1>
+            <div class="settings-form">
+                <h3>Model Configuration</h3>
+                <form method="POST" action="{{ url_for('manage_ml_settings') }}">
+                    <label for="model_name">Model Name:</label>
+                    <input type="text" id="model_name" name="model_name" value="{{ ml_settings.model }}"><br>
+
+                    <label for="threshold">Confidence Threshold:</label>
+                    <input type="number" id="threshold" name="threshold" step="0.01" value="{{ ml_settings.threshold }}"><br>
+
+                    <button type="submit" name="action" value="update_settings">Update Settings</button>
+                </form>
+            </div>
+            <div class="settings-form">
+                <h3>Model Operations</h3>
+                <form method="POST" action="{{ url_for('manage_ml_settings') }}">
+                    <button type="submit" name="action" value="retrain" class="retrain">Retrain Model</button>
+                </form>
+                <br>
+                <p>Model Retrained: {{ 'Yes' if ml_settings.retrained else 'No' }}</p>
+            </div>
+            <div class="settings-form">
+                <h3>Override ML Results</h3>
+                <p>Mechanism to manually override ML decisions based on specific cases.</p>
+                <button class="override">Add Override Rule</button>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for reports.html
+    with open('templates/reports.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Generate Reports</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .report-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .report-form h3 { margin-top: 0; }
+            .report-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .report-form select, .report-form input[type="date"], .report-form button {
+                width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .report-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Generate Reports</h1>
+            <div class="report-form">
+                <h3>Report Options</h3>
+                <form method="POST" action="{{ url_for('reports') }}">
+                    <label for="report_type">Report Type:</label>
+                    <select id="report_type" name="report_type">
+                        <option value="daily_summary">Daily Summary</option>
+                        <option value="weekly_summary">Weekly Summary</option>
+                        <option value="monthly_summary">Monthly Summary</option>
+                        <option value="risk_analysis">Risk Analysis</option>
+                        <option value="status_overview">Status Overview</option>
+                    </select><br>
+
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date"><br>
+
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date"><br>
+
+                    <button type="submit">Generate Report</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    # Dummy template for import_data.html
+    with open('templates/import_data.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Import Data</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .import-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .import-form h3 { margin-top: 0; }
+            .import-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .import-form input[type="file"], .import-form button {
+                padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .import-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Import Data</h1>
+            <div class="import-form">
+                <h3>Upload Data File</h3>
+                <form method="POST" action="{{ url_for('import_data') }}" enctype="multipart/form-data">
+                    <label for="file">Choose file:</label>
+                    <input type="file" id="file" name="file"><br>
+                    <button type="submit">Import</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for analytics.html
+    with open('templates/analytics.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Analytics</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .analytics-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .analytics-section h3 { margin-top: 0; }
+            .chart-placeholder {
+                width: 100%;
+                height: 300px;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #616161;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Analytics Dashboard</h1>
+            <div class="analytics-section">
+                <h3>Email Volume Over Time</h3>
+                <div class="chart-placeholder">Chart Area 1 (e.g., Line Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Risk Distribution</h3>
+                <div class="chart-placeholder">Chart Area 2 (e.g., Pie Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Status Breakdown</h3>
+                <div class="chart-placeholder">Chart Area 3 (e.g., Bar Chart)</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for user_activity.html
+    with open('templates/user_activity.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Activity</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .activity-log { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .activity-log h3 { margin-top: 0; }
+            .activity-log table { width: 100%; border-collapse: collapse; }
+            .activity-log th, .activity-log td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .activity-log th { background-color: #f2f2f2; }
+            .activity-log .action-clear { color: #dc3545; font-weight: bold; }
+            .activity-log .action-escalate { color: #ffc107; font-weight: bold; }
+            .activity-log .action-flag { color: #007bff; font-weight: bold; }
+            .activity-log .action-followup { color: #28a745; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>User Activity Log</h1>
+            <div class="activity-log">
+                <h3>Recent Actions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example rows, replace with actual data -->
+                        <tr>
+                            <td>2023-10-27 10:00:00</td>
+                            <td>admin</td>
+                            <td class="action-clear">Clear</td>
+                            <td>Email ID: 12345</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:05:00</td>
+                            <td>analyst_1</td>
+                            <td class="action-escalate">Escalate</td>
+                            <td>Case ID: ABCDE</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:10:00</td>
+                            <td>admin</td>
+                            <td class="action-flag">Flag</td>
+                            <td>Email ID: 67890</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:15:00</td>
+                            <td>analyst_2</td>
+                            <td class="action-followup">Send Follow-up</td>
+                            <td>Case ID: FGHIJ</td>
+                        </tr>
+                        <!-- More rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+
+    app.run(debug=True)
