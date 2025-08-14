@@ -2,19 +2,19 @@
 // Chart color schemes and default configurations
 
 const chartColors = {
-    primary: '#0d6efd',
-    secondary: '#6c757d',
-    success: '#198754',
-    danger: '#dc3545',
-    warning: '#ffc107',
-    info: '#0dcaf0',
-    light: '#f8f9fa',
-    dark: '#212529'
+    primary: '#3b82f6',
+    secondary: '#475569',
+    success: '#16a34a',
+    danger: '#dc2626',
+    warning: '#d97706',
+    info: '#0891b2',
+    light: '#f8fafc',
+    dark: '#0f172a'
 };
 
 const chartColorPalette = [
-    '#0d6efd', '#198754', '#dc3545', '#ffc107', '#0dcaf0',
-    '#6f42c1', '#fd7e14', '#20c997', '#e83e8c', '#6c757d'
+    '#3b82f6', '#16a34a', '#dc2626', '#d97706', '#0891b2',
+    '#7c3aed', '#ea580c', '#059669', '#db2777', '#475569'
 ];
 
 // Default chart configuration
