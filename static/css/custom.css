@@ -799,23 +799,63 @@ footer {
 
 /* Admin Panel Tab Specific Styling */
 #adminTabs .nav-link {
-    color: var(--gray-800) !important;
-    background: var(--gray-100);
-    border: 1px solid var(--gray-200);
+    color: #1e293b !important;
+    background: #f1f5f9 !important;
+    border: 2px solid #cbd5e1 !important;
     margin-right: 0.5rem;
-    font-weight: 600;
+    font-weight: 700 !important;
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 8px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
 }
 
 #adminTabs .nav-link.active {
-    background: var(--primary-blue) !important;
-    color: white !important;
-    border-color: var(--primary-blue);
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25) !important;
 }
 
 #adminTabs .nav-link:hover:not(.active) {
-    background: var(--gray-200);
-    color: var(--gray-900) !important;
-    border-color: var(--gray-300);
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure tab content visibility */
+.tab-content .tab-pane {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 2rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* Fix any other potential white text issues */
+.nav-tabs .nav-link {
+    color: #1e293b !important;
+    background: #f8fafc !important;
+    border: 2px solid #e2e8f0 !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.25rem !important;
+    margin-right: 0.25rem !important;
+    border-radius: 8px 8px 0 0 !important;
+}
+
+.nav-tabs .nav-link.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    border-bottom-color: #2563eb !important;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
 }
 
 /* Button group radio button styling for better visibility */
