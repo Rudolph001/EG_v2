@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}Admin Panel - Email Guardian{% endblock %}
@@ -103,7 +102,7 @@
 
 <!-- Tab Content -->
 <div class="tab-content" id="adminTabContent">
-    
+
     <!-- Exclusion Rules Tab -->
     <div class="tab-pane fade show active" id="exclusion" role="tabpanel">
         <div class="card">
@@ -177,7 +176,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-striped" id="whitelistRulesTable">
                         <thead>
@@ -220,7 +219,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-striped" id="securityRulesTable">
                         <thead>
@@ -327,7 +326,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label class="form-label">Auto-Retrain Frequency</label>
                                 <select class="form-select" id="retrainFrequency">
@@ -337,7 +336,7 @@
                                     <option value="manual">Manual Only</option>
                                 </select>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
@@ -346,7 +345,7 @@
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
@@ -355,7 +354,7 @@
                                     </label>
                                 </div>
                             </div>
-                            
+
                             <button type="button" class="btn btn-primary" onclick="saveMLSettings()">
                                 <i class="fas fa-save"></i> Save Settings
                             </button>
@@ -377,7 +376,7 @@
                                 <br><small>Last trained: {{ ml_status.last_trained or 'Never' }}</small>
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Model Accuracy</label>
                             <div class="progress mb-2">
@@ -386,13 +385,13 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="d-grid gap-2">
-                            <button class="btn btn-warning" onclick="retrainModel()">
-                                <i class="fas fa-sync"></i> Retrain Model
+                            <button type="button" class="btn btn-primary" onclick="trainModel()">
+                                <i class="fas fa-brain"></i> Train Basic Model
                             </button>
-                            <button class="btn btn-info" onclick="testModel()">
-                                <i class="fas fa-vial"></i> Test Model
+                            <button type="button" class="btn btn-success ms-2" onclick="trainAdvancedModels()">
+                                <i class="fas fa-robot"></i> Train Advanced Models
                             </button>
                             <button class="btn btn-outline-danger" onclick="resetModel()">
                                 <i class="fas fa-trash"></i> Reset Model
@@ -417,12 +416,12 @@
                 <form id="ruleForm">
                     <input type="hidden" id="ruleType" name="rule_type">
                     <input type="hidden" id="ruleId" name="rule_id">
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Rule Name</label>
                         <input type="text" class="form-control" id="ruleName" name="rule_name" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Logic Type</label>
                         <select class="form-select" id="ruleLogic" name="logic_type" required>
@@ -430,7 +429,7 @@
                             <option value="OR">OR (Any condition can match)</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Conditions</label>
                         <div id="conditionsContainer">
@@ -440,7 +439,7 @@
                             <i class="fas fa-plus"></i> Add Condition
                         </button>
                     </div>
-                    
+
                     <div class="mb-3" id="riskLevelContainer" style="display: none;">
                         <label class="form-label">Risk Level</label>
                         <select class="form-select" id="riskLevel" name="risk_level">
@@ -450,7 +449,7 @@
                             <option value="critical">Critical</option>
                         </select>
                     </div>
-                    
+
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="ruleActive" name="is_active" checked>
@@ -532,12 +531,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadKeywords();
     loadWhitelist();
     loadMLSettings();
-    
+
     // Setup threshold value displays
     document.getElementById('riskThreshold').addEventListener('input', function() {
         document.getElementById('riskThresholdValue').textContent = this.value;
     });
-    
+
     document.getElementById('confidenceThreshold').addEventListener('input', function() {
         document.getElementById('confidenceThresholdValue').textContent = this.value;
     });
@@ -547,27 +546,27 @@ function showRuleModal(ruleType) {
     currentRuleType = ruleType;
     document.getElementById('ruleType').value = ruleType;
     document.getElementById('ruleModalTitle').textContent = `Add ${ruleType.charAt(0).toUpperCase() + ruleType.slice(1)} Rule`;
-    
+
     // Show/hide risk level for security rules
     if (ruleType === 'security') {
         document.getElementById('riskLevelContainer').style.display = 'block';
     } else {
         document.getElementById('riskLevelContainer').style.display = 'none';
     }
-    
+
     // Clear form
     document.getElementById('ruleForm').reset();
     document.getElementById('conditionsContainer').innerHTML = '';
     conditionCounter = 0;
     addCondition();
-    
+
     new bootstrap.Modal(document.getElementById('ruleModal')).show();
 }
 
 function addCondition() {
     const container = document.getElementById('conditionsContainer');
     const conditionId = `condition_${conditionCounter++}`;
-    
+
     const conditionHtml = `
         <div class="condition-row" id="${conditionId}">
             <div class="row">
@@ -604,7 +603,7 @@ function addCondition() {
             </div>
         </div>
     `;
-    
+
     container.insertAdjacentHTML('beforeend', conditionHtml);
 }
 
@@ -615,7 +614,7 @@ function removeCondition(conditionId) {
 function updateOperators(conditionId) {
     const field = document.querySelector(`#${conditionId} .condition-field`).value;
     const operatorSelect = document.querySelector(`#${conditionId} .condition-operator`);
-    
+
     // Reset operators
     operatorSelect.innerHTML = `
         <option value="contains">Contains</option>
@@ -624,7 +623,7 @@ function updateOperators(conditionId) {
         <option value="ends_with">Ends With</option>
         <option value="regex">Regex Match</option>
     `;
-    
+
     // Add field-specific operators
     if (field === 'attachment') {
         operatorSelect.innerHTML += `
@@ -638,19 +637,19 @@ function updateOperators(conditionId) {
 function saveRule() {
     const form = document.getElementById('ruleForm');
     const formData = new FormData(form);
-    
+
     // Collect conditions
     const conditions = [];
     document.querySelectorAll('.condition-row').forEach(row => {
         const field = row.querySelector('.condition-field').value;
         const operator = row.querySelector('.condition-operator').value;
         const value = row.querySelector('.condition-value').value;
-        
+
         if (field && operator && value) {
             conditions.push({ field, operator, value });
         }
     });
-    
+
     const ruleData = {
         rule_type: formData.get('rule_type'),
         rule_name: formData.get('rule_name'),
@@ -659,7 +658,7 @@ function saveRule() {
         risk_level: formData.get('risk_level'),
         is_active: formData.get('is_active') ? true : false
     };
-    
+
     fetch('/api/admin/save-rule', {
         method: 'POST',
         headers: {
@@ -686,9 +685,9 @@ function saveRule() {
 function addKeyword(type) {
     const inputId = type === 'risk' ? 'newRiskKeyword' : 'newExcludeKeyword';
     const keyword = document.getElementById(inputId).value.trim();
-    
+
     if (!keyword) return;
-    
+
     fetch('/api/admin/add-keyword', {
         method: 'POST',
         headers: {
@@ -730,9 +729,9 @@ function removeKeyword(type, keyword) {
 function addWhitelistItem(type) {
     const inputId = type === 'sender' ? 'newSender' : 'newDomain';
     const value = document.getElementById(inputId).value.trim();
-    
+
     if (!value) return;
-    
+
     fetch('/api/admin/add-whitelist', {
         method: 'POST',
         headers: {
@@ -779,7 +778,7 @@ function saveMLSettings() {
         enable_ml_override: document.getElementById('enableMLOverride').checked,
         enable_auto_escalation: document.getElementById('enableAutoEscalation').checked
     };
-    
+
     fetch('/api/admin/save-ml-settings', {
         method: 'POST',
         headers: {
@@ -797,43 +796,59 @@ function saveMLSettings() {
     });
 }
 
-function retrainModel() {
-    if (!confirm('Are you sure you want to retrain the ML model? This may take several minutes.')) {
-        return;
-    }
-    
-    const button = event.target;
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
-    
-    fetch('/api/train-model', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showAlert('Model retrained successfully', 'success');
-            loadMLSettings();
-        } else {
-            showAlert('Error: ' + result.error, 'danger');
+function trainModel() {
+            fetch('/api/train-model', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Model trained successfully! Accuracy: ${(data.accuracy * 100).toFixed(1)}%`);
+                } else {
+                    alert('Error training model: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error training model');
+            });
         }
-    })
-    .finally(() => {
-        button.disabled = false;
-        button.innerHTML = '<i class="fas fa-sync"></i> Retrain Model';
-    });
-}
 
-function testModel() {
-    // Implementation for model testing
-    showAlert('Model testing functionality would be implemented here', 'info');
-}
+        function trainAdvancedModels() {
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+
+            fetch('/api/train-advanced-models', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const results = data.results;
+                    alert(`Advanced models trained successfully!\n` +
+                          `Accuracy: ${(results.ensemble_accuracy * 100).toFixed(1)}%\n` +
+                          `Training samples: ${results.training_samples}\n` +
+                          `Features: ${results.feature_count}`);
+                } else {
+                    alert('Error training advanced models: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error training advanced models');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-robot"></i> Train Advanced Models';
+            });
+        }
 
 function resetModel() {
     if (!confirm('Are you sure you want to reset the ML model? This will delete all training data and model files.')) {
         return;
     }
-    
+
     fetch('/api/admin/reset-model', {
         method: 'POST'
     })
@@ -856,7 +871,7 @@ function loadRules() {
         .then(rules => {
             const tbody = document.getElementById(`${type}RulesBody`);
             tbody.innerHTML = '';
-            
+
             rules.forEach(rule => {
                 const row = createRuleRow(rule, type);
                 tbody.appendChild(row);
@@ -898,7 +913,7 @@ function loadKeywords() {
         .then(keywords => {
             const container = document.getElementById(`${type}Keywords`);
             container.innerHTML = '';
-            
+
             keywords.forEach(keyword => {
                 const tag = document.createElement('div');
                 tag.className = 'keyword-tag';
@@ -921,7 +936,7 @@ function loadWhitelist() {
         .then(items => {
             const container = document.getElementById(`whitelist${type.charAt(0).toUpperCase() + type.slice(1)}s`);
             container.innerHTML = '';
-            
+
             items.forEach(item => {
                 const element = document.createElement('div');
                 element.className = 'whitelist-item';
@@ -946,7 +961,7 @@ function loadMLSettings() {
         document.getElementById('retrainFrequency').value = settings.retrain_frequency || 'weekly';
         document.getElementById('enableMLOverride').checked = settings.enable_ml_override !== false;
         document.getElementById('enableAutoEscalation').checked = settings.enable_auto_escalation !== false;
-        
+
         document.getElementById('riskThresholdValue').textContent = settings.risk_threshold || 70;
         document.getElementById('confidenceThresholdValue').textContent = settings.confidence_threshold || 85;
     });
@@ -961,7 +976,7 @@ function deleteRule(ruleId) {
     if (!confirm('Are you sure you want to delete this rule?')) {
         return;
     }
-    
+
     fetch(`/api/admin/delete-rule/${ruleId}`, {
         method: 'DELETE'
     })
@@ -983,11 +998,11 @@ function showAlert(message, type) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     // Insert at top of content
     const content = document.querySelector('.container-fluid');
     content.insertBefore(alertDiv, content.firstChild);
-    
+
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
         alertDiv.remove();
