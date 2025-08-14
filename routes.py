@@ -683,12 +683,26 @@ def upload_csv():
             
             conn.close()
 
+            # Process newly imported emails automatically
+            if rows_inserted > 0:
+                try:
+                    from processor import EmailProcessor
+                    processor = EmailProcessor()
+                    # Process the newly imported emails (those with empty final_outcome)
+                    processing_results = processor.process_batch(limit=rows_inserted)
+                    processing_message = f" - {processing_results['processed']} emails analyzed, {processing_results['escalated']} escalated to cases"
+                except Exception as e:
+                    logging.warning(f"Auto-processing failed: {e}")
+                    processing_message = " - Note: Email analysis will run later"
+            else:
+                processing_message = ""
+
             # Clean up uploaded file
             os.remove(filepath)
 
             return jsonify({
                 'success': True, 
-                'message': f'Successfully imported {rows_inserted} out of {len(df)} email records'
+                'message': f'Successfully imported {rows_inserted} out of {len(df)} email records{processing_message}'
             })
 
         except Exception as e:
