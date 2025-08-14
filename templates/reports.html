@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Email Guardian{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar"></i>
+            Reports & Analytics
+        </h1>
+        <p class="lead text-muted">
+            Generate comprehensive reports and analytics for email data monitoring and compliance.
+        </p>
+    </div>
+</div>
+
+<!-- Report Generation Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-pdf"></i>
+                    PDF Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Generate professional PDF reports with charts and tables for executive summaries.</p>
+                
+                <form id="pdfReportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pdfDateFrom" class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="pdfDateFrom" name="date_from" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="pdfDateTo" class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="pdfDateTo" name="date_to" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-pdf"></i>
+                        Generate PDF Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-excel"></i>
+                    Excel Reports
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Export detailed data to Excel with multiple sheets for in-depth analysis.</p>
+                
+                <form id="excelReportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="excelDateFrom" class="form-label">From Date</label>
+                                <input type="date" class="form-control" id="excelDateFrom" name="date_from" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="excelDateTo" class="form-label">To Date</label>
+                                <input type="date" class="form-control" id="excelDateTo" name="date_to" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i>
+                        Generate Excel Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Report Templates -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt"></i>
+                    Quick Report Templates
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-day fa-2x text-info mb-2"></i>
+                                <h6>Daily Summary</h6>
+                                <p class="small text-muted">Today's email activity</p>
+                                <button class="btn btn-outline-info btn-sm" onclick="generateQuickReport('daily')">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-week fa-2x text-warning mb-2"></i>
+                                <h6>Weekly Report</h6>
+                                <p class="small text-muted">Last 7 days analysis</p>
+                                <button class="btn btn-outline-warning btn-sm" onclick="generateQuickReport('weekly')">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                                <h6>Monthly Report</h6>
+                                <p class="small text-muted">Current month overview</p>
+                                <button class="btn btn-outline-primary btn-sm" onclick="generateQuickReport('monthly')">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                                <h6>Risk Report</h6>
+                                <p class="small text-muted">Flagged & high-risk emails</p>
+                                <button class="btn btn-outline-danger btn-sm" onclick="generateQuickReport('risk')">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Dashboard -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line"></i>
+                    Email Volume Trends
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="volumeTrendChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie"></i>
+                    Risk Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="riskDistributionChart"></canvas>
+                
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">High Risk</span>
+                        <span class="badge bg-danger">12</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small">Medium Risk</span>
+                        <span class="badge bg-warning text-dark">45</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small">Low Risk</span>
+                        <span class="badge bg-success">143</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Performance -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building"></i>
+                    Department Email Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="departmentStatsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Department</th>
+                                <th>Total Emails</th>
+                                <th>Flagged</th>
+                                <th>Risk Rate</th>
+                                <th>Trend</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Finance</strong></td>
+                                <td><span class="badge bg-primary">1,247</span></td>
+                                <td><span class="badge bg-warning text-dark">23</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: 85%">1.8%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-arrow-up text-success"></i>
+                                    <small class="text-muted">+12%</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewDepartmentDetails('Finance')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>HR</strong></td>
+                                <td><span class="badge bg-primary">892</span></td>
+                                <td><span class="badge bg-danger">34</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-warning" style="width: 65%">3.8%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-arrow-down text-danger"></i>
+                                    <small class="text-muted">-5%</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewDepartmentDetails('HR')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>IT</strong></td>
+                                <td><span class="badge bg-primary">654</span></td>
+                                <td><span class="badge bg-success">5</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" style="width: 95%">0.8%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-arrow-up text-success"></i>
+                                    <small class="text-muted">+8%</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewDepartmentDetails('IT')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Marketing</strong></td>
+                                <td><span class="badge bg-primary">423</span></td>
+                                <td><span class="badge bg-warning text-dark">15</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-warning" style="width: 75%">3.5%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-minus text-muted"></i>
+                                    <small class="text-muted">0%</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewDepartmentDetails('Marketing')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ML Model Performance -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-brain"></i>
+                    ML Model Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-info">87%</h3>
+                        <p class="text-muted mb-0">Accuracy</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">1,234</h3>
+                        <p class="text-muted mb-0">Predictions Today</p>
+                    </div>
+                </div>
+                <hr>
+                <button class="btn btn-outline-info btn-sm" onclick="retrainModel()">
+                    <i class="fas fa-sync-alt"></i>
+                    Retrain Model
+                </button>
+                <button class="btn btn-outline-primary btn-sm ms-2" onclick="viewModelDetails()">
+                    <i class="fas fa-chart-line"></i>
+                    View Details
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-download"></i>
+                    Export Options
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportRawData()">
+                        <i class="fas fa-database"></i>
+                        Export Raw Data (CSV)
+                    </button>
+                    <button class="btn btn-outline-info" onclick="exportChartData()">
+                        <i class="fas fa-chart-bar"></i>
+                        Export Chart Data (JSON)
+                    </button>
+                    <button class="btn btn-outline-success" onclick="scheduleReport()">
+                        <i class="fas fa-clock"></i>
+                        Schedule Regular Reports
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set default dates
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('pdfDateTo').value = today.toISOString().split('T')[0];
+    document.getElementById('pdfDateFrom').value = lastWeek.toISOString().split('T')[0];
+    document.getElementById('excelDateTo').value = today.toISOString().split('T')[0];
+    document.getElementById('excelDateFrom').value = lastWeek.toISOString().split('T')[0];
+    
+    // Initialize charts
+    initializeCharts();
+});
+
+// PDF Report Generation
+document.getElementById('pdfReportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generateReport('pdf', this);
+});
+
+// Excel Report Generation
+document.getElementById('excelReportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generateReport('excel', this);
+});
+
+function generateReport(type, form) {
+    const formData = new FormData(form);
+    const data = {
+        type: type,
+        date_from: formData.get('date_from'),
+        date_to: formData.get('date_to')
+    };
+    
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
+    fetch('/api/generate-report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Report generation failed');
+    })
+    .then(blob => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `email_report_${data.date_from}_to_${data.date_to}.${type === 'pdf' ? 'pdf' : 'xlsx'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        // Show success message
+        alert(`${type.toUpperCase()} report generated and downloaded successfully!`);
+    })
+    .catch(error => {
+        console.error('Report generation error:', error);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        alert('Failed to generate report. Please try again.');
+    });
+}
+
+function generateQuickReport(period) {
+    const today = new Date();
+    let fromDate, toDate = today.toISOString().split('T')[0];
+    
+    switch(period) {
+        case 'daily':
+            fromDate = toDate;
+            break;
+        case 'weekly':
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            fromDate = lastWeek.toISOString().split('T')[0];
+            break;
+        case 'monthly':
+            const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            fromDate = lastMonth.toISOString().split('T')[0];
+            break;
+        case 'risk':
+            const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            fromDate = last30Days.toISOString().split('T')[0];
+            break;
+    }
+    
+    // Set form values and trigger PDF generation
+    document.getElementById('pdfDateFrom').value = fromDate;
+    document.getElementById('pdfDateTo').value = toDate;
+    document.getElementById('pdfReportForm').dispatchEvent(new Event('submit'));
+}
+
+function initializeCharts() {
+    // Volume Trend Chart
+    const volumeCtx = document.getElementById('volumeTrendChart').getContext('2d');
+    new Chart(volumeCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Email Volume',
+                data: [450, 520, 380, 670, 590, 320, 280],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Risk Distribution Chart
+    const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
+    new Chart(riskCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+            datasets: [{
+                data: [12, 45, 143],
+                backgroundColor: [
+                    '#dc3545',
+                    '#ffc107',
+                    '#198754'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function viewDepartmentDetails(department) {
+    window.location.href = `/emails?department=${encodeURIComponent(department)}`;
+}
+
+function retrainModel() {
+    if (!confirm('This will retrain the ML model with current data. Continue?')) {
+        return;
+    }
+    
+    fetch('/api/train-model', { method: 'POST' })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message);
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Model training error:', error);
+        alert('Failed to retrain model.');
+    });
+}
+
+function viewModelDetails() {
+    alert('ML model details view would be implemented here');
+}
+
+function exportRawData() {
+    window.location.href = '/api/export/raw-data';
+}
+
+function exportChartData() {
+    alert('Chart data export functionality would be implemented here');
+}
+
+function scheduleReport() {
+    alert('Scheduled reporting functionality would be implemented here');
+}
+</script>
+{% endblock %}

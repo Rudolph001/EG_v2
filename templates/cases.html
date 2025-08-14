@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Case Management - Email Guardian{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-exclamation-triangle"></i>
+                Case Management
+            </h1>
+            <div>
+                <span class="badge bg-warning fs-6">{{ cases|length }} Cases</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Filter by Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="open" {{ 'selected' if status_filter == 'open' }}>Open</option>
+                            <option value="in_progress" {{ 'selected' if status_filter == 'in_progress' }}>In Progress</option>
+                            <option value="resolved" {{ 'selected' if status_filter == 'resolved' }}>Resolved</option>
+                            <option value="closed" {{ 'selected' if status_filter == 'closed' }}>Closed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <a href="{{ url_for('cases') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cases Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table"></i>
+                    Active Cases
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if cases %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0" id="casesTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Case ID</th>
+                                <th>Created</th>
+                                <th>Email Details</th>
+                                <th>Escalation Reason</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in cases %}
+                            <tr>
+                                <td>
+                                    <strong class="text-primary">#{{ case[0] }}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ case[4].strftime('%Y-%m-%d %H:%M') if case[4] else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>From:</strong> {{ case[6] or 'Unknown' }}
+                                        <br>
+                                        <strong>Subject:</strong> 
+                                        <span class="text-truncate d-inline-block" style="max-width: 250px;" title="{{ case[7] or '' }}">
+                                            {{ case[7] or 'No Subject' }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock"></i> {{ case[8].strftime('%Y-%m-%d %H:%M') if case[8] else 'N/A' }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-break" style="max-width: 300px;">
+                                        {{ case[2] or 'No reason provided' }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if case[3] == 'open' %}
+                                        <span class="badge bg-danger">Open</span>
+                                    {% elif case[3] == 'in_progress' %}
+                                        <span class="badge bg-warning text-dark">In Progress</span>
+                                    {% elif case[3] == 'resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% elif case[3] == 'closed' %}
+                                        <span class="badge bg-secondary">Closed</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ case[3] or 'Unknown' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ case[5].strftime('%Y-%m-%d %H:%M') if case[5] else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        {% if case[3] == 'open' %}
+                                        <button type="button" class="btn btn-outline-warning" 
+                                                onclick="updateCaseStatus({{ case[0] }}, 'in_progress')" 
+                                                title="Start Progress">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if case[3] in ['open', 'in_progress'] %}
+                                        <button type="button" class="btn btn-outline-success" 
+                                                onclick="updateCaseStatus({{ case[0] }}, 'resolved')" 
+                                                title="Mark Resolved">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if case[3] == 'resolved' %}
+                                        <button type="button" class="btn btn-outline-secondary" 
+                                                onclick="updateCaseStatus({{ case[0] }}, 'closed')" 
+                                                title="Close Case">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <button type="button" class="btn btn-outline-info" 
+                                                onclick="viewCaseDetails({{ case[0] }})" 
+                                                title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No cases found</h5>
+                    {% if status_filter %}
+                    <p class="text-muted">No cases with status "{{ status_filter }}" found.</p>
+                    <a href="{{ url_for('cases') }}" class="btn btn-primary">View All Cases</a>
+                    {% else %}
+                    <p class="text-muted">No cases have been created yet.</p>
+                    <a href="{{ url_for('emails') }}" class="btn btn-primary">Manage Emails</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Case Status Summary -->
+{% if cases %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar"></i>
+                    Case Status Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    {% set status_counts = {} %}
+                    {% for case in cases %}
+                        {% if case[3] in status_counts %}
+                            {% set _ = status_counts.update({case[3]: status_counts[case[3]] + 1}) %}
+                        {% else %}
+                            {% set _ = status_counts.update({case[3]: 1}) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-exclamation-circle text-danger fa-2x mb-2"></i>
+                            <h4 class="mb-1">{{ status_counts.get('open', 0) }}</h4>
+                            <p class="text-muted mb-0">Open Cases</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-cogs text-warning fa-2x mb-2"></i>
+                            <h4 class="mb-1">{{ status_counts.get('in_progress', 0) }}</h4>
+                            <p class="text-muted mb-0">In Progress</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <h4 class="mb-1">{{ status_counts.get('resolved', 0) }}</h4>
+                            <p class="text-muted mb-0">Resolved</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3">
+                            <i class="fas fa-times-circle text-secondary fa-2x mb-2"></i>
+                            <h4 class="mb-1">{{ status_counts.get('closed', 0) }}</h4>
+                            <p class="text-muted mb-0">Closed</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function updateCaseStatus(caseId, newStatus) {
+    if (!confirm(`Are you sure you want to update this case status to "${newStatus}"?`)) {
+        return;
+    }
+    
+    fetch('/api/update-case-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            case_id: caseId,
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the case status.');
+    });
+}
+
+function viewCaseDetails(caseId) {
+    // Implementation for viewing case details
+    alert('View details for case ID: ' + caseId);
+}
+
+// Initialize DataTable if we have cases
+{% if cases %}
+$(document).ready(function() {
+    $('#casesTable').DataTable({
+        order: [[0, 'desc']],
+        pageLength: 25,
+        columnDefs: [
+            { orderable: false, targets: [6] }
+        ]
+    });
+});
+{% endif %}
+</script>
+{% endblock %}
