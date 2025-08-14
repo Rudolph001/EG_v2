@@ -1,0 +1,44 @@
+
+{
+    "name": "Email Guardian",
+    "version": "1.0.0",
+    "description": "Email Security and Compliance Management System",
+    "author": "Email Guardian Team",
+    "main_script": "startup.py",
+    "build_options": {
+        "console": true,
+        "onefile": true,
+        "optimize": 2,
+        "strip": false,
+        "upx": true
+    },
+    "include_files": [
+        "templates/*",
+        "static/*", 
+        "data/.gitkeep",
+        "logs/.gitkeep",
+        "ml_models/.gitkeep",
+        "reports/.gitkeep"
+    ],
+    "hidden_imports": [
+        "flask",
+        "duckdb", 
+        "pandas",
+        "numpy",
+        "scikit-learn",
+        "matplotlib",
+        "seaborn",
+        "reportlab",
+        "openpyxl",
+        "joblib",
+        "email_validator",
+        "werkzeug",
+        "jinja2"
+    ],
+    "exclude_modules": [
+        "tkinter",
+        "unittest",
+        "pdb",
+        "doctest"
+    ]
+}

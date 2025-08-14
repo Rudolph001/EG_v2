@@ -104,8 +104,8 @@ def analytics():
     # Placeholder for analytics display
     return render_template('analytics.html')
 
-@app.route('/user_activity')
-def user_activity():
+@app.route('/api/user_activity')
+def api_user_activity():
     # Placeholder for user activity log
     return render_template('user_activity.html')
 
@@ -179,10 +179,6 @@ ml_settings = {
 
 # We will create dummy template files to make this runnable.
 
-# --- Dummy Templates ---
-# In a real project, these would be in a `templates` folder.
-# For demonstration, we'll simulate their existence.
-
 # Dummy template for index.html
 @app.route('/templates/index.html')
 def render_index_html():
@@ -251,7 +247,7 @@ def render_admin_panel_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -826,7 +822,7 @@ def render_reports_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -918,7 +914,7 @@ def render_import_data_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -1003,7 +999,7 @@ def render_analytics_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -1088,7 +1084,7 @@ def render_user_activity_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -1249,7 +1245,7 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -1883,7 +1879,7 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -1916,7 +1912,7 @@ if __name__ == '__main__':
         </div>
     </body>
     </html>
-    """)
+    """
 
     # Dummy template for import_data.html
     with open('templates/import_data.html', 'w') as f:
@@ -1974,7 +1970,7 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -2058,7 +2054,7 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
@@ -2142,7 +2138,7 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                    <a class="nav-link" href="{{ url_for('api_user_activity') }}">
                         <i class="fas fa-user-clock"></i>
                         User Activity
                     </a>
