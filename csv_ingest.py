@@ -140,7 +140,7 @@ class CSVIngestor:
         if 'termination_date' in row:
             normalized['termination_date'] = self.normalize_date(row['termination_date'])
         
-        # Normalize text fields
+        # Normalize text fields - only add if they exist in the CSV
         text_fields = ['sender', 'subject', 'time_month', 'leaver', 'bunit', 
                       'department', 'user_response', 'final_outcome']
         
@@ -148,7 +148,7 @@ class CSVIngestor:
             if field in row:
                 normalized[field] = self.normalize_value(row[field])
         
-        # Handle multi-value fields - split and rejoin as JSON arrays or comma-separated
+        # Handle multi-value fields - only add if they exist in the CSV
         multi_value_fields = ['recipients', 'attachments', 'policy_name', 'justifications']
         
         for field in multi_value_fields:
@@ -158,11 +158,12 @@ class CSVIngestor:
                     # Split multi-values and store as comma-separated string
                     values = self.split_multi_values(raw_value)
                     normalized[field] = ', '.join(values) if values else None
-                else:
-                    normalized[field] = None
         
         # Add creation timestamp
         normalized['created_at'] = datetime.now()
+        
+        # Log which fields were found for debugging
+        logger.debug(f"Normalized record with fields: {list(normalized.keys())}")
         
         return normalized
     
@@ -230,24 +231,34 @@ class CSVIngestor:
         try:
             conn = get_db_connection()
             
-            # Prepare insert statement with all possible fields (excluding auto-increment id)
-            fields = [
-                '_time', 'sender', 'subject', 'attachments', 'recipients',
-                'time_month', 'leaver', 'termination_date', 'bunit', 'department',
-                'user_response', 'final_outcome', 'policy_name', 'justifications',
-                'created_at'
-            ]
+            # Get the actual columns from the first record to build dynamic insert
+            if records:
+                sample_record = records[0]
+                available_fields = [field for field in [
+                    '_time', 'sender', 'subject', 'attachments', 'recipients',
+                    'time_month', 'leaver', 'termination_date', 'bunit', 'department',
+                    'user_response', 'final_outcome', 'policy_name', 'justifications',
+                    'created_at'
+                ] if field in sample_record and sample_record[field] is not None]
+                
+                # Always include created_at if not present
+                if 'created_at' not in available_fields:
+                    available_fields.append('created_at')
             
-            placeholders = ', '.join(['?' for _ in fields])
+            placeholders = ', '.join(['?' for _ in available_fields])
             insert_sql = f"""
-                INSERT INTO emails ({', '.join(fields)})
+                INSERT INTO emails ({', '.join(available_fields)})
                 VALUES ({placeholders})
             """
             
             # Convert records to tuples for batch insert
             record_tuples = []
             for record in records:
-                record_tuple = tuple(record.get(field) for field in fields)
+                # Ensure created_at is set
+                if 'created_at' not in record or record['created_at'] is None:
+                    record['created_at'] = datetime.now()
+                
+                record_tuple = tuple(record.get(field) for field in available_fields)
                 record_tuples.append(record_tuple)
             
             # Batch insert for better performance
@@ -257,7 +268,7 @@ class CSVIngestor:
             inserted_count = len(record_tuples)
             
             conn.close()
-            logger.info(f"Successfully inserted {inserted_count} email records")
+            logger.info(f"Successfully inserted {inserted_count} email records using fields: {available_fields}")
             return inserted_count
             
         except Exception as e:
