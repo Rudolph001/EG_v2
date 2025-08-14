@@ -81,22 +81,32 @@
     </div>
 </div>
 
-<!-- Search and Filters -->
+<!-- Advanced Search and Filters -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-filter"></i>
-                    Filters & Search
+                    Advanced Search & Filters
+                    <button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                        <i class="fas fa-chevron-down"></i> More Filters
+                    </button>
                 </h5>
             </div>
             <div class="card-body">
                 <form method="GET" class="row g-3">
+                    <!-- Primary Filters -->
                     <div class="col-md-4">
                         <label for="search" class="form-label">Search</label>
                         <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ search }}" placeholder="Search sender or subject...">
+                               value="{{ search }}" placeholder="Search all fields...">
+                        <small class="form-text text-muted">Search sender, subject, justifications, recipients</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sender" class="form-label">Sender</label>
+                        <input type="text" class="form-control" id="sender" name="sender" 
+                               value="{{ sender }}" placeholder="Filter by sender...">
                     </div>
                     <div class="col-md-3">
                         <label for="department" class="form-label">Department</label>
@@ -109,23 +119,87 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label for="risk_level" class="form-label">Risk Level</label>
-                        <select class="form-select" id="risk_level" name="risk_level">
-                            <option value="">All Risk Levels</option>
-                            {% for risk in risk_levels %}
-                            <option value="{{ risk[0] }}" {% if risk_level == risk[0] %}selected{% endif %}>
-                                {{ risk[0] }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
                     <div class="col-md-2">
                         <label class="form-label">&nbsp;</label>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i> Filter
+                                <i class="fas fa-search"></i> Search
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Filters (Collapsible) -->
+                    <div class="collapse" id="advancedFilters">
+                        <hr>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="risk_level" class="form-label">Risk Level</label>
+                                <select class="form-select" id="risk_level" name="risk_level">
+                                    <option value="">All Risk Levels</option>
+                                    {% for risk in risk_levels %}
+                                    <option value="{{ risk[0] }}" {% if risk_level == risk[0] %}selected{% endif %}>
+                                        {{ risk[0] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="policy" class="form-label">Policy</label>
+                                <select class="form-select" id="policy" name="policy">
+                                    <option value="">All Policies</option>
+                                    {% for pol in policies %}
+                                    <option value="{{ pol[0] }}" {% if policy == pol[0] %}selected{% endif %}>
+                                        {{ pol[0] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="">All Statuses</option>
+                                    {% for stat in statuses %}
+                                    <option value="{{ stat[0] }}" {% if status == stat[0] %}selected{% endif %}>
+                                        {{ stat[0] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sort_by" class="form-label">Sort By</label>
+                                <select class="form-select" id="sort_by" name="sort_by">
+                                    <option value="_time" {% if sort_by == '_time' %}selected{% endif %}>Date</option>
+                                    <option value="sender" {% if sort_by == 'sender' %}selected{% endif %}>Sender</option>
+                                    <option value="subject" {% if sort_by == 'subject' %}selected{% endif %}>Subject</option>
+                                    <option value="department" {% if sort_by == 'department' %}selected{% endif %}>Department</option>
+                                    <option value="final_outcome" {% if sort_by == 'final_outcome' %}selected{% endif %}>Status</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date_from" class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="date_to" class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sort_order" class="form-label">Order</label>
+                                <select class="form-select" id="sort_order" name="sort_order">
+                                    <option value="DESC" {% if sort_order == 'DESC' %}selected{% endif %}>Newest First</option>
+                                    <option value="ASC" {% if sort_order == 'ASC' %}selected{% endif %}>Oldest First</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Clear All
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-filter"></i> Apply Filters
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>

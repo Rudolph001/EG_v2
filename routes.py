@@ -1110,10 +1110,10 @@ def api_generate_followup(email_id):
         followup_type = data.get('type', 'escalation')
         to_addresses = data.get('to_addresses', 'security@company.com')
         cc_addresses = data.get('cc_addresses', '')
-        
+
         # Generate follow-up using Outlook integration
         result = generate_followup_email(email_id, followup_type, to_addresses)
-        
+
         if result.get('success'):
             return jsonify({
                 'success': True,
@@ -1127,7 +1127,7 @@ def api_generate_followup(email_id):
             })
         else:
             return jsonify({'error': result.get('error', 'Failed to generate follow-up')}), 500
-            
+
     except Exception as e:
         logging.error(f"Generate follow-up error: {e}")
         return jsonify({'error': 'Failed to generate follow-up email'}), 500
@@ -1245,17 +1245,17 @@ def api_send_followup(email_id):
     try:
         data = request.json or {}
         method = data.get('method', 'mailto')  # 'mailto' or 'outlook_windows'
-        
+
         # First generate the follow-up
         followup_result = generate_followup_email(
             email_id, 
             data.get('type', 'escalation'),
             data.get('to_addresses', 'security@company.com')
         )
-        
+
         if not followup_result.get('success'):
             return jsonify({'error': followup_result.get('error')}), 500
-        
+
         # Update with any custom content
         if data.get('subject'):
             followup_result['subject'] = data['subject']
@@ -1263,12 +1263,12 @@ def api_send_followup(email_id):
             followup_result['body'] = data['body']
         if data.get('cc_addresses'):
             followup_result['cc_addresses'] = data['cc_addresses']
-        
+
         # Send the follow-up
         send_result = send_followup_email(email_id, followup_result, method)
-        
+
         return jsonify(send_result)
-        
+
     except Exception as e:
         logging.error(f"Send follow-up error: {e}")
         return jsonify({'error': 'Failed to send follow-up email'}), 500
@@ -1281,14 +1281,14 @@ def api_bulk_generate_followups():
         email_ids = data.get('email_ids', [])
         followup_type = data.get('type', 'escalation')
         to_addresses = data.get('to_addresses', 'security@company.com')
-        
+
         if not email_ids:
             return jsonify({'error': 'No email IDs provided'}), 400
-        
+
         result = bulk_generate_followups(email_ids, followup_type, to_addresses)
-        
+
         return jsonify(result)
-        
+
     except Exception as e:
         logging.error(f"Bulk generate followups error: {e}")
         return jsonify({'error': 'Failed to generate bulk follow-ups'}), 500
@@ -1303,7 +1303,7 @@ def api_followup_history(email_id):
         logging.error(f"Followup history error: {e}")
         return jsonify({'error': 'Failed to load follow-up history'}), 500
 
-@app.route('/api/followup-history')
+@app.route('/api/all-followup-history')
 def api_all_followup_history():
     """Get all follow-up history"""
     try:
@@ -1312,6 +1312,109 @@ def api_all_followup_history():
     except Exception as e:
         logging.error(f"All followup history error: {e}")
         return jsonify({'error': 'Failed to load follow-up history'}), 500
+
+@app.route('/api/user-activity')
+def api_user_activity():
+    """Get user activity log"""
+    try:
+        from user_actions import action_tracker
+
+        user_id = request.args.get('user_id')
+        limit = request.args.get('limit', 100, type=int)
+
+        activity = action_tracker.get_user_activity(user_id, limit)
+
+        # Format activity for JSON response
+        formatted_activity = []
+        for record in activity:
+            formatted_activity.append({
+                'id': record[0],
+                'user_id': record[1],
+                'action_type': record[2],
+                'email_id': record[3],
+                'case_id': record[4],
+                'details': json.loads(record[5]) if record[5] else {},
+                'timestamp': record[6].isoformat() if record[6] else None,
+                'sender': record[7],
+                'subject': record[8],
+                'escalation_reason': record[9]
+            })
+
+        return jsonify(formatted_activity)
+    except Exception as e:
+        logging.error(f"User activity error: {e}")
+        return jsonify({'error': 'Failed to load user activity'}), 500
+
+@app.route('/api/action-statistics')
+def api_action_statistics():
+    """Get action statistics"""
+    try:
+        from user_actions import action_tracker
+
+        days = request.args.get('days', 30, type=int)
+        stats = action_tracker.get_action_stats(days)
+
+        # Format stats for JSON response
+        formatted_stats = []
+        for record in stats:
+            formatted_stats.append({
+                'action_type': record[0],
+                'count': record[1],
+                'unique_users': record[2]
+            })
+
+        return jsonify({
+            'period_days': days,
+            'statistics': formatted_stats
+        })
+    except Exception as e:
+        logging.error(f"Action statistics error: {e}")
+        return jsonify({'error': 'Failed to load action statistics'}), 500
+
+@app.route('/api/bulk-update-status', methods=['POST'])
+def api_bulk_update_status():
+    """Bulk update email status"""
+    try:
+        from user_actions import action_tracker
+
+        data = request.json or {}
+        email_ids = data.get('email_ids', [])
+        new_status = data.get('status')
+        user_id = data.get('user_id', 'anonymous')
+
+        if not email_ids or not new_status:
+            return jsonify({'error': 'Email IDs and status are required'}), 400
+
+        conn = get_db_connection()
+        updated_count = 0
+
+        for email_id in email_ids:
+            try:
+                conn.execute("""
+                    UPDATE emails 
+                    SET final_outcome = ?
+                    WHERE id = ?
+                """, [new_status, email_id])
+
+                # Track individual action
+                action_tracker.track_action('bulk_update_status', email_id=email_id, 
+                                          details={'new_status': new_status}, 
+                                          user_id=user_id)
+                updated_count += 1
+            except Exception as e:
+                logging.error(f"Failed to update email {email_id}: {e}")
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Updated {updated_count} of {len(email_ids)} emails',
+            'updated_count': updated_count
+        })
+    except Exception as e:
+        logging.error(f"Bulk update error: {e}")
+        return jsonify({'error': 'Failed to bulk update emails'}), 500
+
 
 @app.route('/api/export-cleared')
 def api_export_cleared():

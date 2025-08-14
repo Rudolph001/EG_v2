@@ -84,6 +84,32 @@ def manage_ml_settings():
         pass
     return render_template('admin/ml_settings.html')
 
+# --- Placeholder for new routes based on user request ---
+# These are dummy routes to represent the new functionality requested by the user.
+# In a real implementation, these would contain the actual logic for
+# searching, filtering, tracking user actions, and updating DuckDB.
+
+@app.route('/reports')
+def reports():
+    # Placeholder for report generation
+    return render_template('reports.html')
+
+@app.route('/import_data')
+def import_data():
+    # Placeholder for data import
+    return render_template('import_data.html')
+
+@app.route('/analytics')
+def analytics():
+    # Placeholder for analytics display
+    return render_template('analytics.html')
+
+@app.route('/user_activity')
+def user_activity():
+    # Placeholder for user activity log
+    return render_template('user_activity.html')
+
+
 # --- Data Handling (Mocks for demonstration) ---
 # In a real app, this would interact with a database or persistent storage.
 
@@ -207,9 +233,27 @@ def render_admin_panel_html():
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
-                        <i class="fas fa-list"></i>
-                        Admin Rules
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
                     </a>
                 </li>
             </ul>
@@ -725,6 +769,380 @@ def render_admin_ml_settings_html():
     </html>
     """
 
+# Dummy template for reports.html
+@app.route('/templates/reports.html')
+def render_reports_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Generate Reports</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .report-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .report-form h3 { margin-top: 0; }
+            .report-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .report-form select, .report-form input[type="date"], .report-form button {
+                width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .report-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Generate Reports</h1>
+            <div class="report-form">
+                <h3>Report Options</h3>
+                <form method="POST" action="{{ url_for('reports') }}">
+                    <label for="report_type">Report Type:</label>
+                    <select id="report_type" name="report_type">
+                        <option value="daily_summary">Daily Summary</option>
+                        <option value="weekly_summary">Weekly Summary</option>
+                        <option value="monthly_summary">Monthly Summary</option>
+                        <option value="risk_analysis">Risk Analysis</option>
+                        <option value="status_overview">Status Overview</option>
+                    </select><br>
+
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date"><br>
+
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date"><br>
+
+                    <button type="submit">Generate Report</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for import_data.html
+@app.route('/templates/import_data.html')
+def render_import_data_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Import Data</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .import-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .import-form h3 { margin-top: 0; }
+            .import-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .import-form input[type="file"], .import-form button {
+                padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .import-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Import Data</h1>
+            <div class="import-form">
+                <h3>Upload Data File</h3>
+                <form method="POST" action="{{ url_for('import_data') }}" enctype="multipart/form-data">
+                    <label for="file">Choose file:</label>
+                    <input type="file" id="file" name="file"><br>
+                    <button type="submit">Import</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for analytics.html
+@app.route('/templates/analytics.html')
+def render_analytics_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Analytics</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .analytics-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .analytics-section h3 { margin-top: 0; }
+            .chart-placeholder {
+                width: 100%;
+                height: 300px;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #616161;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Analytics Dashboard</h1>
+            <div class="analytics-section">
+                <h3>Email Volume Over Time</h3>
+                <div class="chart-placeholder">Chart Area 1 (e.g., Line Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Risk Distribution</h3>
+                <div class="chart-placeholder">Chart Area 2 (e.g., Pie Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Status Breakdown</h3>
+                <div class="chart-placeholder">Chart Area 3 (e.g., Bar Chart)</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+# Dummy template for user_activity.html
+@app.route('/templates/user_activity.html')
+def render_user_activity_html():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Activity</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .activity-log { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .activity-log h3 { margin-top: 0; }
+            .activity-log table { width: 100%; border-collapse: collapse; }
+            .activity-log th, .activity-log td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .activity-log th { background-color: #f2f2f2; }
+            .activity-log .action-clear { color: #dc3545; font-weight: bold; }
+            .activity-log .action-escalate { color: #ffc107; font-weight: bold; }
+            .activity-log .action-flag { color: #007bff; font-weight: bold; }
+            .activity-log .action-followup { color: #28a745; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>User Activity Log</h1>
+            <div class="activity-log">
+                <h3>Recent Actions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example rows, replace with actual data -->
+                        <tr>
+                            <td>2023-10-27 10:00:00</td>
+                            <td>admin</td>
+                            <td class="action-clear">Clear</td>
+                            <td>Email ID: 12345</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:05:00</td>
+                            <td>analyst_1</td>
+                            <td class="action-escalate">Escalate</td>
+                            <td>Case ID: ABCDE</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:10:00</td>
+                            <td>admin</td>
+                            <td class="action-flag">Flag</td>
+                            <td>Email ID: 67890</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:15:00</td>
+                            <td>analyst_2</td>
+                            <td class="action-followup">Send Follow-up</td>
+                            <td>Case ID: FGHIJ</td>
+                        </tr>
+                        <!-- More rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
 # Override Flask's default template rendering to serve dummy content
 # This is a simplified approach for demonstration. In a real app, you'd use `render_template`
 # and have actual files in a `templates` directory.
@@ -813,9 +1231,27 @@ if __name__ == '__main__':
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_rules') }}">
-                        <i class="fas fa-list"></i>
-                        Admin Rules
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
                     </a>
                 </li>
             </ul>
@@ -1390,5 +1826,376 @@ if __name__ == '__main__':
     </body>
     </html>
     """)
+
+    # Dummy template for reports.html
+    with open('templates/reports.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Generate Reports</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .report-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .report-form h3 { margin-top: 0; }
+            .report-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .report-form select, .report-form input[type="date"], .report-form button {
+                width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .report-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Generate Reports</h1>
+            <div class="report-form">
+                <h3>Report Options</h3>
+                <form method="POST" action="{{ url_for('reports') }}">
+                    <label for="report_type">Report Type:</label>
+                    <select id="report_type" name="report_type">
+                        <option value="daily_summary">Daily Summary</option>
+                        <option value="weekly_summary">Weekly Summary</option>
+                        <option value="monthly_summary">Monthly Summary</option>
+                        <option value="risk_analysis">Risk Analysis</option>
+                        <option value="status_overview">Status Overview</option>
+                    </select><br>
+
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" id="start_date" name="start_date"><br>
+
+                    <label for="end_date">End Date:</label>
+                    <input type="date" id="end_date" name="end_date"><br>
+
+                    <button type="submit">Generate Report</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for import_data.html
+    with open('templates/import_data.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Import Data</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .import-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .import-form h3 { margin-top: 0; }
+            .import-form label { display: block; margin-bottom: 5px; font-weight: bold;}
+            .import-form input[type="file"], .import-form button {
+                padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+            }
+            .import-form button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Import Data</h1>
+            <div class="import-form">
+                <h3>Upload Data File</h3>
+                <form method="POST" action="{{ url_for('import_data') }}" enctype="multipart/form-data">
+                    <label for="file">Choose file:</label>
+                    <input type="file" id="file" name="file"><br>
+                    <button type="submit">Import</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for analytics.html
+    with open('templates/analytics.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Analytics</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .analytics-section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .analytics-section h3 { margin-top: 0; }
+            .chart-placeholder {
+                width: 100%;
+                height: 300px;
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: #616161;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>Analytics Dashboard</h1>
+            <div class="analytics-section">
+                <h3>Email Volume Over Time</h3>
+                <div class="chart-placeholder">Chart Area 1 (e.g., Line Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Risk Distribution</h3>
+                <div class="chart-placeholder">Chart Area 2 (e.g., Pie Chart)</div>
+            </div>
+            <div class="analytics-section">
+                <h3>Status Breakdown</h3>
+                <div class="chart-placeholder">Chart Area 3 (e.g., Bar Chart)</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
+    # Dummy template for user_activity.html
+    with open('templates/user_activity.html', 'w') as f:
+        f.write("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>User Activity</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <style>
+            body { font-family: sans-serif; }
+            nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+            nav li { margin-right: 20px; }
+            nav a { text-decoration: none; color: #333; }
+            .container { margin-top: 20px; padding: 20px; border: 1px solid #ccc; }
+            .activity-log { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; }
+            .activity-log h3 { margin-top: 0; }
+            .activity-log table { width: 100%; border-collapse: collapse; }
+            .activity-log th, .activity-log td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            .activity-log th { background-color: #f2f2f2; }
+            .activity-log .action-clear { color: #dc3545; font-weight: bold; }
+            .activity-log .action-escalate { color: #ffc107; font-weight: bold; }
+            .activity-log .action-flag { color: #007bff; font-weight: bold; }
+            .activity-log .action-followup { color: #28a745; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li class="nav-item">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_panel') }}">
+                        <i class="fas fa-cogs"></i>
+                        Admin Panel
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('reports') }}">
+                        <i class="fas fa-chart-bar"></i>
+                        Generate Reports
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('import_data') }}">
+                        <i class="fas fa-upload"></i>
+                        Import Data
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analytics') }}">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_activity') }}">
+                        <i class="fas fa-user-clock"></i>
+                        User Activity
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="container">
+            <h1>User Activity Log</h1>
+            <div class="activity-log">
+                <h3>Recent Actions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Example rows, replace with actual data -->
+                        <tr>
+                            <td>2023-10-27 10:00:00</td>
+                            <td>admin</td>
+                            <td class="action-clear">Clear</td>
+                            <td>Email ID: 12345</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:05:00</td>
+                            <td>analyst_1</td>
+                            <td class="action-escalate">Escalate</td>
+                            <td>Case ID: ABCDE</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:10:00</td>
+                            <td>admin</td>
+                            <td class="action-flag">Flag</td>
+                            <td>Email ID: 67890</td>
+                        </tr>
+                        <tr>
+                            <td>2023-10-27 10:15:00</td>
+                            <td>analyst_2</td>
+                            <td class="action-followup">Send Follow-up</td>
+                            <td>Case ID: FGHIJ</td>
+                        </tr>
+                        <!-- More rows as needed -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
 
     app.run(debug=True)
