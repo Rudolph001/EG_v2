@@ -293,7 +293,7 @@
 }
 
 .navbar-nav .nav-link {
-    color: var(--gray-600) !important;
+    color: var(--gray-700) !important;
     font-weight: 500;
     padding: 0.75rem 1rem !important;
     border-radius: 8px;
@@ -307,7 +307,7 @@
 }
 
 .navbar-nav .nav-link.active {
-    background: var(--bg-primary) !important;
+    background: var(--primary-blue) !important;
     color: white !important;
     box-shadow: var(--shadow-sm);
 }
@@ -517,21 +517,26 @@ footer {
 .nav-tabs .nav-link {
     border: none;
     border-bottom: 3px solid transparent;
-    background: none;
-    color: var(--gray-600);
+    background: white;
+    color: var(--gray-700) !important;
     font-weight: 500;
     padding: 1rem 1.5rem;
+    margin-right: 0.25rem;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s ease;
 }
 
 .nav-tabs .nav-link.active {
-    background: none;
+    background: var(--primary-blue) !important;
     border-bottom-color: var(--primary-blue);
-    color: var(--primary-blue);
+    color: white !important;
+    box-shadow: var(--shadow-sm);
 }
 
 .nav-tabs .nav-link:hover {
+    background: var(--gray-100);
     border-bottom-color: var(--gray-400);
-    color: var(--gray-800);
+    color: var(--gray-800) !important;
 }
 
 /* Print styles */
@@ -790,6 +795,45 @@ footer {
 .ml-analysis-badge:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3);
+}
+
+/* Admin Panel Tab Specific Styling */
+#adminTabs .nav-link {
+    color: var(--gray-800) !important;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    margin-right: 0.5rem;
+    font-weight: 600;
+}
+
+#adminTabs .nav-link.active {
+    background: var(--primary-blue) !important;
+    color: white !important;
+    border-color: var(--primary-blue);
+}
+
+#adminTabs .nav-link:hover:not(.active) {
+    background: var(--gray-200);
+    color: var(--gray-900) !important;
+    border-color: var(--gray-300);
+}
+
+/* Button group radio button styling for better visibility */
+.btn-group .btn-check:checked + .btn,
+.btn-group .btn.active {
+    background-color: var(--primary-blue) !important;
+    border-color: var(--primary-blue) !important;
+    color: white !important;
+}
+
+.btn-outline-danger:not(:checked):not(.active) {
+    color: var(--danger-red) !important;
+    border-color: var(--danger-red) !important;
+}
+
+.btn-outline-success:not(:checked):not(.active) {
+    color: var(--success-green) !important;
+    border-color: var(--success-green) !important;
 }
 
 /* High contrast theme toggle */
