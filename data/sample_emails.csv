@@ -1,0 +1,6 @@
+_time,sender,subject,attachments,recipients,time_month,leaver,termination_date,bunit,department,user_response,final_outcome,policy_name,justifications
+2024-01-15 09:30:45,john.doe@company.com,Weekly Report Submission,report.pdf;charts.xlsx,manager@company.com;hr@company.com,January,No,-,Sales,Marketing,Approved,Cleared,"HR Policy, Data Policy",Business justification provided
+2024-01-15 10:15:22,jane.smith@external.com,Contract Proposal,contract_v2.docx,legal@company.com,January,No,-,Legal,Legal Department,Under Review,Pending Review,Legal Review Policy,External contractor communication
+2024-01-15 11:45:33,mike.wilson@company.com,Confidential Financial Data,-,cfo@company.com;finance-team@company.com,January,Yes,2024-01-20,Finance,Finance,Flagged,Escalated,Confidentiality Policy,Contains sensitive financial information
+2024-01-15 14:20:15,sarah.jones@company.com,Team Meeting Notes,meeting_notes.pdf,team-leads@company.com,January,No,-,Operations,Operations,Approved,Cleared,Communication Policy,Internal team communication
+2024-01-15 16:45:09,bob.taylor@vendor.com,Invoice Submission,invoice_jan_2024.pdf,accounts-payable@company.com,January,No,-,Procurement,Finance,Approved,Cleared,Vendor Policy,Standard vendor invoice

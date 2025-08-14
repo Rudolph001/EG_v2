@@ -14,10 +14,13 @@ def init_database():
     try:
         conn = get_db_connection()
         
+        # Create sequence for email IDs first
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS email_id_seq START 1")
+        
         # Create emails table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS emails (
-                id INTEGER PRIMARY KEY,
+                id INTEGER DEFAULT nextval('email_id_seq'),
                 _time TIMESTAMP,
                 sender VARCHAR,
                 subject VARCHAR,

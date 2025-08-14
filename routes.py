@@ -7,6 +7,7 @@ from app import app
 from database import get_db_connection, get_dashboard_stats, execute_query
 from ml_processor import classify_email, train_model
 from report_generator import generate_pdf_report, generate_excel_report
+from csv_ingest import CSVIngestor
 import logging
 from datetime import datetime, timedelta
 import json
@@ -313,3 +314,22 @@ def api_train_model():
     except Exception as e:
         logging.error(f"Model training error: {e}")
         return jsonify({'error': 'Model training failed'}), 500
+
+@app.route('/api/ingest-csv', methods=['POST'])
+def api_ingest_csv():
+    """Ingest CSV files from data directory"""
+    try:
+        ingestor = CSVIngestor(data_dir='data')
+        results = ingestor.ingest_csv_files()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully processed {results["files_processed"]} files',
+            'files_processed': results['files_processed'],
+            'total_records': results['total_records'],
+            'successful_inserts': results['successful_inserts'],
+            'errors': results['errors']
+        })
+    except Exception as e:
+        logging.error(f"CSV ingestion error: {e}")
+        return jsonify({'error': f'CSV ingestion failed: {str(e)}'}), 500
