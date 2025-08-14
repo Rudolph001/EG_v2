@@ -473,7 +473,7 @@ def analytics():
             COUNT(*) as total_emails,
             COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
         FROM emails
-        WHERE _time >= DATE('now', '-12 months')
+        WHERE _time >= CURRENT_DATE - INTERVAL '12 months'
         GROUP BY strftime('%Y-%m', _time)
         ORDER BY month
     """).fetchall()
