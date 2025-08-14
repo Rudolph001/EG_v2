@@ -550,16 +550,62 @@ def upload_csv():
             filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
 
+            # Process CSV with pandas first to validate and transform data
+            import pandas as pd
+            df = pd.read_csv(filepath)
+            
+            # Validate required columns
+            required_columns = ['_time', 'sender', 'subject']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                os.remove(filepath)
+                return jsonify({'error': f'Missing required columns: {", ".join(missing_columns)}'}), 400
+            
+            # Ensure required columns exist with defaults
+            default_columns = {
+                'recipients': '',
+                'attachments': '',
+                'time_month': '',
+                'leaver': '',
+                'termination_date': None,
+                'bunit': '',
+                'department': '',
+                'user_response': '',
+                'final_outcome': '',
+                'policy_name': '',
+                'justifications': ''
+            }
+            
+            for col, default_val in default_columns.items():
+                if col not in df.columns:
+                    df[col] = default_val
+            
             # Process CSV with DuckDB for high performance
             conn = get_db_connection()
-
-            # Use DuckDB's native CSV reading capability
-            result = conn.execute(f"""
-                INSERT INTO emails 
-                SELECT * FROM read_csv_auto('{filepath}')
-            """)
-
-            rows_inserted = result.fetchone()[0] if result else 0
+            
+            # Insert records one by one to handle any schema mismatches
+            rows_inserted = 0
+            for _, row in df.iterrows():
+                try:
+                    conn.execute("""
+                        INSERT INTO emails (
+                            _time, sender, subject, attachments, recipients, 
+                            time_month, leaver, termination_date, bunit, department,
+                            user_response, final_outcome, policy_name, justifications
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, [
+                        row['_time'], row['sender'], row['subject'], 
+                        row['attachments'], row['recipients'], row['time_month'],
+                        row['leaver'], row['termination_date'], row['bunit'], 
+                        row['department'], row['user_response'], row['final_outcome'],
+                        row['policy_name'], row['justifications']
+                    ])
+                    rows_inserted += 1
+                except Exception as e:
+                    logging.warning(f"Skipped row due to error: {e}")
+                    continue
+            
             conn.close()
 
             # Clean up uploaded file
@@ -567,14 +613,16 @@ def upload_csv():
 
             return jsonify({
                 'success': True, 
-                'message': f'Successfully imported {rows_inserted} email records'
+                'message': f'Successfully imported {rows_inserted} out of {len(df)} email records'
             })
 
         except Exception as e:
             logging.error(f"CSV upload error: {e}")
+            if 'filepath' in locals() and os.path.exists(filepath):
+                os.remove(filepath)
             return jsonify({'error': f'Import failed: {str(e)}'}), 500
 
-    return jsonify({'error': 'Invalid file type'}), 400
+    return jsonify({'error': 'Invalid file type. Please upload a CSV file.'}), 400
 
 @app.route('/api/flag-sender', methods=['POST'])
 def flag_sender():

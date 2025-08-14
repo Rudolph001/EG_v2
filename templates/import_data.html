@@ -73,105 +73,52 @@
 <!-- CSV Format Requirements -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
-                    <i class="fas fa-table"></i>
+                    <i class="fas fa-exclamation-triangle"></i>
                     CSV Format Requirements
                 </h5>
             </div>
             <div class="card-body">
-                <p class="mb-3">Your CSV file should contain the following columns in this order:</p>
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Column Name</th>
-                                <th>Required</th>
-                                <th>Data Type</th>
-                                <th>Description</th>
-                                <th>Example</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>_time</code></td>
-                                <td><span class="badge bg-success">Yes</span></td>
-                                <td>DateTime</td>
-                                <td>Email timestamp</td>
-                                <td>2025-01-15 14:30:00</td>
-                            </tr>
-                            <tr>
-                                <td><code>sender</code></td>
-                                <td><span class="badge bg-success">Yes</span></td>
-                                <td>Email</td>
-                                <td>Sender email address</td>
-                                <td>user@company.com</td>
-                            </tr>
-                            <tr>
-                                <td><code>subject</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Email subject line</td>
-                                <td>Monthly Report</td>
-                            </tr>
-                            <tr>
-                                <td><code>attachments</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Attachment filenames</td>
-                                <td>report.pdf, data.xlsx</td>
-                            </tr>
-                            <tr>
-                                <td><code>recipients</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Recipient email addresses</td>
-                                <td>team@company.com</td>
-                            </tr>
-                            <tr>
-                                <td><code>time_month</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Month identifier</td>
-                                <td>2025-01</td>
-                            </tr>
-                            <tr>
-                                <td><code>department</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Department name</td>
-                                <td>Finance, HR, IT</td>
-                            </tr>
-                            <tr>
-                                <td><code>bunit</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Business unit</td>
-                                <td>North America</td>
-                            </tr>
-                            <tr>
-                                <td><code>final_outcome</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Processing outcome</td>
-                                <td>approved, flagged, pending</td>
-                            </tr>
-                            <tr>
-                                <td><code>justifications</code></td>
-                                <td><span class="badge bg-warning text-dark">Optional</span></td>
-                                <td>Text</td>
-                                <td>Additional notes</td>
-                                <td>Business justification</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Required Columns:</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent">
+                                <code>_time</code> - Email timestamp (YYYY-MM-DD HH:MM:SS)
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>sender</code> - Email sender address
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>subject</code> - Email subject line
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>recipients</code> - Email recipients (comma-separated)
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Optional Columns:</h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent">
+                                <code>attachments</code> - Attachment names
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>department</code> - Sender department
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>bunit</code> - Business unit
+                            </li>
+                            <li class="list-group-item bg-transparent">
+                                <code>final_outcome</code> - Classification result
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-lightbulb"></i>
-                    <strong>Pro Tip:</strong> 
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fas fa-info-circle"></i>
                     DuckDB can automatically detect column types and handle missing values. 
                     Ensure your timestamp format is consistent (YYYY-MM-DD HH:MM:SS).
                 </div>
@@ -227,224 +174,123 @@
     </div>
 </div>
 
-<!-- Process Data Directory Button -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-secondary">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-folder-open"></i>
-                    Process Data Directory
-                </h5>
-            </div>
-            <div class="card-body">
-                <p>
-                    Click the button below to process all CSV files found in the <code>data/</code> directory.
-                    This is useful for bulk imports or when files are added automatically.
-                </p>
-                <button class="btn btn-secondary" id="processDataDirBtn">
-                    <i class="fas fa-play"></i>
-                    Process CSV files from data directory
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
-<!-- Import History -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-history"></i>
-                    Recent Import History
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-clock fa-2x mb-3"></i>
-                    <p>Import history will be displayed here after your first upload.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_scripts %}
 <script>
-// Helper function to show alerts
-function showAlert(message, type) {
-    const alertContainer = $('#uploadResults'); // Assuming #uploadResults is used for alerts as well
-    const alertClass = `alert alert-${type} alert-dismissible fade show`;
-    const alertHtml = `
-        <div class="${alertClass}" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
-    alertContainer.html(alertHtml).show();
-}
+$(document).ready(function() {
+    // Helper function to show alerts
+    function showAlert(message, type) {
+        const alertContainer = $('#uploadResults');
+        const alertClass = `alert alert-${type} alert-dismissible fade show`;
+        const alertHtml = `
+            <div class="${alertClass}" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        alertContainer.html(alertHtml).show();
+    }
 
-// Handle form submission
-        $('#csvUploadForm').on('submit', function(e) {
-            e.preventDefault();
+    // Handle form submission
+    $('#csvUploadForm').on('submit', function(e) {
+        e.preventDefault();
 
-            const formData = new FormData();
-            const fileInput = document.getElementById('csvFile');
+        const formData = new FormData();
+        const fileInput = document.getElementById('csvFile');
 
-            if (fileInput.files.length === 0) {
-                showAlert('Please select a CSV file.', 'warning');
-                return;
-            }
+        if (fileInput.files.length === 0) {
+            showAlert('Please select a CSV file.', 'warning');
+            return;
+        }
 
-            formData.append('file', fileInput.files[0]);
+        formData.append('file', fileInput.files[0]);
 
-            // Show progress bar
-            $('#uploadProgress').show();
-            $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+        // Show progress bar
+        $('#uploadProgress').show();
+        $('#uploadBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
 
-            // Simulate progress
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 90) progress = 90;
-                $('#progressBar').css('width', progress + '%');
-                $('#progressText').text(Math.round(progress) + '%');
-            }, 500);
+        // Simulate progress
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            $('#progressBar').css('width', progress + '%');
+            $('#progressText').text(Math.round(progress) + '%');
+        }, 500);
 
-            $.ajax({
-                url: '/api/upload-csv',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    clearInterval(progressInterval);
-                    $('#progressBar').css('width', '100%');
-                    $('#progressText').text('100%');
+        $.ajax({
+            url: '/api/upload-csv',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                clearInterval(progressInterval);
+                $('#progressBar').css('width', '100%');
+                $('#progressText').text('100%');
 
-                    setTimeout(() => {
-                        $('#uploadProgress').hide();
-                        $('#progressBar').css('width', '0%');
-                        $('#progressText').text('0%');
-                        showAlert(response.message, 'success');
-
-                        // Show results
-                        const results = `
-                            <div class="alert alert-success">
-                                <h5><i class="fas fa-check-circle"></i> Import Successful</h5>
-                                <p class="mb-0">${response.message}</p>
-                            </div>
-                        `;
-                        $('#uploadResults').html(results).show();
-
-                        // Reset form
-                        $('#csvUploadForm')[0].reset();
-                    }, 1000);
-                },
-                error: function(xhr) {
-                    clearInterval(progressInterval);
+                setTimeout(() => {
                     $('#uploadProgress').hide();
                     $('#progressBar').css('width', '0%');
                     $('#progressText').text('0%');
 
-                    let errorMsg = 'Upload failed';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg = xhr.responseJSON.error;
-                    }
-                    showAlert(errorMsg, 'danger');
-
-                    // Show error results
-                    const errorResults = `
-                        <div class="alert alert-danger">
-                            <h5><i class="fas fa-exclamation-triangle"></i> Import Failed</h5>
-                            <p class="mb-0">${errorMsg}</p>
-                        </div>
-                    `;
-                    $('#uploadResults').html(errorResults).show();
-                },
-                complete: function() {
-                    $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-cloud-upload-alt"></i> Upload & Import');
-                }
-            });
-        });
-
-        // Handle data directory processing
-        $('#processDataDirBtn').on('click', function() {
-            const btn = $(this);
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-
-            $.ajax({
-                url: '/api/ingest-csv',
-                type: 'POST',
-                success: function(response) {
-                    showAlert(response.message, 'success');
-
-                    // Show detailed results
+                    // Show results
                     const results = `
                         <div class="alert alert-success">
-                            <h5><i class="fas fa-check-circle"></i> Processing Complete</h5>
-                            <ul class="mb-0">
-                                <li>Files processed: ${response.files_processed}</li>
-                                <li>Total records found: ${response.total_records}</li>
-                                <li>Successfully imported: ${response.successful_inserts}</li>
-                                ${response.errors.length > 0 ? `<li>Errors: ${response.errors.length}</li>` : ''}
-                            </ul>
+                            <h5><i class="fas fa-check-circle"></i> Import Successful</h5>
+                            <p class="mb-0">${response.message}</p>
                         </div>
                     `;
                     $('#uploadResults').html(results).show();
-                },
-                error: function(xhr) {
-                    let errorMsg = 'Processing failed';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg = xhr.responseJSON.error;
-                    }
-                    showAlert(errorMsg, 'danger');
 
-                    const errorResults = `
-                        <div class="alert alert-danger">
-                            <h5><i class="fas fa-exclamation-triangle"></i> Processing Failed</h5>
-                            <p class="mb-0">${errorMsg}</p>
-                        </div>
-                    `;
-                    $('#uploadResults').html(errorResults).show();
-                },
-                complete: function() {
-                    btn.prop('disabled', false).html('<i class="fas fa-play"></i> Process CSV files from data directory');
-                }
-            });
-        });
-                        <div class="alert alert-success">
-                            <h5><i class="fas fa-check-circle"></i> Processing Complete</h5>
-                            <ul class="mb-0">
-                                <li>Files processed: ${response.files_processed}</li>
-                                <li>Total records found: ${response.total_records}</li>
-                                <li>Successfully imported: ${response.successful_inserts}</li>
-                                ${response.errors.length > 0 ? `<li>Errors: ${response.errors.length}</li>` : ''}
-                            </ul>
-                        </div>
-                    `;
-                    $('#uploadResults').html(results).show();
-                },
-                error: function(xhr) {
-                    let errorMsg = 'Processing failed';
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg = xhr.responseJSON.error;
-                    }
-                    showAlert(errorMsg, 'danger');
+                    // Reset form
+                    $('#csvUploadForm')[0].reset();
+                }, 1000);
+            },
+            error: function(xhr) {
+                clearInterval(progressInterval);
+                $('#uploadProgress').hide();
+                $('#progressBar').css('width', '0%');
+                $('#progressText').text('0%');
 
-                    const errorResults = `
-                        <div class="alert alert-danger">
-                            <h5><i class="fas fa-exclamation-triangle"></i> Processing Failed</h5>
-                            <p class="mb-0">${errorMsg}</p>
-                        </div>
-                    `;
-                    $('#uploadResults').html(errorResults).show();
-                },
-                complete: function() {
-                    btn.prop('disabled', false).html('<i class="fas fa-play"></i> Process CSV files from data directory');
+                let errorMsg = 'Upload failed';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
                 }
-            });
+
+                // Show error results
+                const errorResults = `
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Import Failed</h5>
+                        <p class="mb-0">${errorMsg}</p>
+                    </div>
+                `;
+                $('#uploadResults').html(errorResults).show();
+            },
+            complete: function() {
+                $('#uploadBtn').prop('disabled', false).html('<i class="fas fa-cloud-upload-alt"></i> Upload & Import');
+            }
         });
+    });
+});
+
+function downloadSampleCSV() {
+    const sampleData = `_time,sender,subject,recipients,attachments,department,bunit,final_outcome
+2024-01-15 10:30:00,john.doe@company.com,Monthly Report,manager@company.com,,Finance,North,
+2024-01-15 11:45:00,sarah.smith@company.com,Project Update,team@company.com,presentation.pdf,Engineering,South,
+2024-01-15 14:20:00,mike.jones@company.com,Client Meeting,client@external.com,,Sales,East,`;
+    
+    const blob = new Blob([sampleData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'sample_email_data.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
 </script>
 {% endblock %}
