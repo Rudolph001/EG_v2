@@ -3,331 +3,109 @@
 {% block title %}Admin Panel - Email Guardian{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1 class="mb-4">
-            <i class="fas fa-cogs"></i>
-            Admin Panel
-            <small class="text-muted">System Configuration & Rule Management</small>
-        </h1>
-    </div>
-</div>
-
-<!-- Quick Stats Cards -->
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="card bg-primary text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-ban fa-2x mb-2"></i>
-                <h6>Exclusion Rules</h6>
-                <h4 id="exclusionCount">{{ stats.exclusion_rules or 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card bg-success text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-check-circle fa-2x mb-2"></i>
-                <h6>Whitelist Rules</h6>
-                <h4 id="whitelistCount">{{ stats.whitelist_rules or 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card bg-warning text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-shield-alt fa-2x mb-2"></i>
-                <h6>Security Rules</h6>
-                <h4 id="securityCount">{{ stats.security_rules or 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card bg-danger text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                <h6>Risk Keywords</h6>
-                <h4 id="riskKeywordCount">{{ stats.risk_keywords or 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card bg-info text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-times-circle fa-2x mb-2"></i>
-                <h6>Exclude Keywords</h6>
-                <h4 id="excludeKeywordCount">{{ stats.exclude_keywords or 0 }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card bg-secondary text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-robot fa-2x mb-2"></i>
-                <h6>ML Models</h6>
-                <h4 id="mlModelCount">{{ stats.ml_models or 1 }}</h4>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Navigation Tabs -->
-<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="exclusion-tab" data-bs-toggle="tab" data-bs-target="#exclusion" type="button">
-            <i class="fas fa-ban"></i> Exclusion Rules
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist" type="button">
-            <i class="fas fa-check-circle"></i> Whitelist Filtering
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
-            <i class="fas fa-shield-alt"></i> Security Rules
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="keywords-tab" data-bs-toggle="tab" data-bs-target="#keywords" type="button">
-            <i class="fas fa-tags"></i> Keyword Management
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies" type="button">
-            <i class="fas fa-gavel"></i> Policy Management
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="ml-tab" data-bs-toggle="tab" data-bs-target="#ml" type="button">
-            <i class="fas fa-robot"></i> ML Settings
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button">
-            <i class="fas fa-database"></i> Database Management
-        </button>
-    </li>
-</ul>
-
-<!-- Tab Content -->
-<div class="tab-content" id="adminTabContent">
-
-    <!-- Exclusion Rules Tab -->
-    <div class="tab-pane fade show active" id="exclusion" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-ban"></i>
-                    Exclusion Rules
-                </h5>
-                <button class="btn btn-primary" onclick="showRuleModal('exclusion')">
-                    <i class="fas fa-plus"></i> Add Exclusion Rule
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped" id="exclusionRulesTable">
-                        <thead>
-                            <tr>
-                                <th>Rule Name</th>
-                                <th>Logic</th>
-                                <th>Conditions</th>
-                                <th>Active</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="exclusionRulesBody">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-dark text-white py-4">
+                    <h1 class="h3 mb-0 text-center">
+                        <i class="fas fa-cogs me-3"></i>
+                        ADMIN CONTROL PANEL
+                        <small class="d-block mt-2 text-light">System Configuration & Management</small>
+                    </h1>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Whitelist Filtering Tab -->
-    <div class="tab-pane fade" id="whitelist" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-check-circle"></i>
-                    Whitelist Filtering
-                </h5>
-                <button class="btn btn-success" onclick="showRuleModal('whitelist')">
-                    <i class="fas fa-plus"></i> Add Whitelist Rule
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <h6>Whitelisted Senders</h6>
-                        <div class="input-group mb-2">
-                            <input type="email" class="form-control" id="newSender" placeholder="Enter email address">
-                            <button class="btn btn-success" onclick="addWhitelistItem('sender')">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <div id="whitelistSenders" class="border p-2" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
-                            <!-- Dynamic content -->
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Whitelisted Domains</h6>
-                        <div class="input-group mb-2">
-                            <input type="text" class="form-control" id="newDomain" placeholder="Enter domain (e.g., company.com)">
-                            <button class="btn btn-success" onclick="addWhitelistItem('domain')">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <div id="whitelistDomains" class="border p-2" style="min-height: 100px; max-height: 200px; overflow-y: auto;">
-                            <!-- Dynamic content -->
-                        </div>
-                    </div>
+    <!-- Quick Stats Dashboard -->
+    <div class="row mb-5">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-ban fa-3x mb-3"></i>
+                    <h5>Exclusion Rules</h5>
+                    <h2 id="exclusionCount">{{ stats.exclusion_rules or 0 }}</h2>
                 </div>
-
-                <div class="table-responsive">
-                    <table class="table table-striped" id="whitelistRulesTable">
-                        <thead>
-                            <tr>
-                                <th>Rule Name</th>
-                                <th>Logic</th>
-                                <th>Conditions</th>
-                                <th>Active</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="whitelistRulesBody">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                    <h5>Whitelist Rules</h5>
+                    <h2 id="whitelistCount">{{ stats.whitelist_rules or 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-shield-alt fa-3x mb-3"></i>
+                    <h5>Security Rules</h5>
+                    <h2 id="securityCount">{{ stats.security_rules or 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <h5>Risk Keywords</h5>
+                    <h2 id="riskKeywordCount">{{ stats.risk_keywords or 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-times-circle fa-3x mb-3"></i>
+                    <h5>Exclude Keywords</h5>
+                    <h2 id="excludeKeywordCount">{{ stats.exclude_keywords or 0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white shadow">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-robot fa-3x mb-3"></i>
+                    <h5>ML Models</h5>
+                    <h2 id="mlModelCount">{{ stats.ml_models or 1 }}</h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Security Rules Tab -->
-    <div class="tab-pane fade" id="security" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-shield-alt"></i>
-                    Security Rules
-                </h5>
-                <button class="btn btn-warning" onclick="showRuleModal('security')">
-                    <i class="fas fa-plus"></i> Add Security Rule
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            Security rules help identify potentially dangerous emails based on attachments, external domains, and suspicious patterns.
-                        </div>
-                    </div>
+    <!-- Simple Grid Layout for Admin Sections -->
+    <div class="row g-4">
+        <!-- Exclusion Rules Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-ban me-2"></i>
+                        EXCLUSION RULES
+                    </h4>
                 </div>
-
-                <div class="table-responsive">
-                    <table class="table table-striped" id="securityRulesTable">
-                        <thead>
-                            <tr>
-                                <th>Rule Name</th>
-                                <th>Logic</th>
-                                <th>Conditions</th>
-                                <th>Risk Level</th>
-                                <th>Active</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="securityRulesBody">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Keyword Management Tab -->
-    <div class="tab-pane fade" id="keywords" role="tabpanel">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card border-danger">
-                    <div class="card-header bg-danger text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Risk Keywords
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="newRiskKeyword" placeholder="Enter risk keyword">
-                            <button class="btn btn-danger" onclick="addKeyword('risk')">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <div id="riskKeywords" class="keyword-container">
-                            <!-- Dynamic content -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card border-info">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-times-circle"></i>
-                            Exclusion Keywords
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="input-group mb-3">
-                            <input type="text" class="form-control" id="newExcludeKeyword" placeholder="Enter exclusion keyword">
-                            <button class="btn btn-info" onclick="addKeyword('exclude')">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                        <div id="excludeKeywords" class="keyword-container">
-                            <!-- Dynamic content -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Policy Management Tab -->
-    <div class="tab-pane fade" id="policies" role="tabpanel">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-gavel"></i>
-                            Policy Violations Breakdown
-                            <small class="text-muted">(Manage detected policies)</small>
-                        </h5>
-                        <button class="btn btn-primary" onclick="showPolicyModal()">
-                            <i class="fas fa-plus"></i> Add Policy
+                <div class="card-body">
+                    <p class="text-muted">Manage email exclusion rules and patterns.</p>
+                    <div class="d-grid">
+                        <button class="btn btn-primary btn-lg" onclick="showRuleModal('exclusion')">
+                            <i class="fas fa-plus me-2"></i>
+                            Add New Exclusion Rule
                         </button>
                     </div>
-                    <div class="card-body">
+                    <div class="mt-3">
                         <div class="table-responsive">
-                            <table class="table table-striped" id="policiesTable">
-                                <thead>
+                            <table class="table table-sm" id="exclusionRulesTable">
+                                <thead class="table-dark">
                                     <tr>
-                                        <th>Policy Name & Violations</th>
-                                        <th>Description</th>
-                                        <th>Severity</th>
-                                        <th>Detection Rules</th>
+                                        <th>Rule Name</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="policiesTableBody">
+                                <tbody id="exclusionRulesBody">
                                     <!-- Dynamic content -->
                                 </tbody>
                             </table>
@@ -335,380 +113,254 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Policy Statistics</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="policyStats">
-                            <!-- Dynamic stats -->
+        </div>
+
+        <!-- Whitelist Management Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        WHITELIST MANAGEMENT
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Manage trusted senders and domains.</p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Add Trusted Sender</label>
+                            <div class="input-group">
+                                <input type="email" class="form-control" id="newSender" placeholder="email@domain.com">
+                                <button class="btn btn-success" onclick="addWhitelistItem('sender')">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Add Trusted Domain</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newDomain" placeholder="company.com">
+                                <button class="btn btn-success" onclick="addWhitelistItem('domain')">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Quick Policy Templates</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-warning btn-sm" onclick="createPolicyFromTemplate('data_exfiltration')">
-                                Data Exfiltration Policy
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="createPolicyFromTemplate('mass_email')">
-                                Mass Email Policy
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="createPolicyFromTemplate('external_forwarding')">
-                                External Forwarding Policy
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="createPolicyFromTemplate('pii_transfer')">
-                                PII Transfer Policy
-                            </button>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Trusted Senders</h6>
+                            <div id="whitelistSenders" class="border rounded p-2" style="height: 150px; overflow-y: auto;">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Trusted Domains</h6>
+                            <div id="whitelistDomains" class="border rounded p-2" style="height: 150px; overflow-y: auto;">
+                                <!-- Dynamic content -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ML Settings Tab -->
-    <div class="tab-pane fade" id="ml" role="tabpanel">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-robot"></i>
-                            Machine Learning Configuration
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="mlSettingsForm">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Risk Threshold</label>
-                                        <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70">
-                                        <div class="d-flex justify-content-between">
-                                            <small>Low (0)</small>
-                                            <small id="riskThresholdValue">70</small>
-                                            <small>High (100)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Confidence Threshold</label>
-                                        <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85">
-                                        <div class="d-flex justify-content-between">
-                                            <small>Low (0)</small>
-                                            <small id="confidenceThresholdValue">85</small>
-                                            <small>High (100)</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Auto-Retrain Frequency</label>
-                                <select class="form-select" id="retrainFrequency">
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly" selected>Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="manual">Manual Only</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
-                                    <label class="form-check-label" for="enableMLOverride">
-                                        Allow manual override of ML results
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
-                                    <label class="form-check-label" for="enableAutoEscalation">
-                                        Enable automatic escalation for high-risk emails
-                                    </label>
-                                </div>
-                            </div>
-
-                            <button type="button" class="btn btn-primary" onclick="saveMLSettings()">
-                                <i class="fas fa-save"></i> Save Settings
-                            </button>
-                        </form>
-                    </div>
+        <!-- Security Rules Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        SECURITY RULES
+                    </h4>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Model Management</h5>
+                <div class="card-body">
+                    <p class="text-muted">Configure security threat detection rules.</p>
+                    <div class="d-grid">
+                        <button class="btn btn-warning btn-lg" onclick="showRuleModal('security')">
+                            <i class="fas fa-plus me-2"></i>
+                            Add Security Rule
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label">Current Model Status</label>
-                            <div class="alert alert-success">
-                                <i class="fas fa-check-circle"></i>
-                                Model Active
-                                <br><small>Last trained: {{ ml_status.last_trained or 'Never' }}</small>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Model Accuracy</label>
-                            <div class="progress mb-2">
-                                <div class="progress-bar bg-success" style="width: {{ ml_status.accuracy or 0 }}%">
-                                    {{ ml_status.accuracy or 0 }}%
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-primary" onclick="trainModel()">
-                                <i class="fas fa-brain"></i> Train Basic Model
-                            </button>
-                            <button type="button" class="btn btn-success ms-2" onclick="trainAdvancedModels()">
-                                <i class="fas fa-robot"></i> Train Advanced Models
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="resetModel()">
-                                <i class="fas fa-trash"></i> Reset Model
-                            </button>
+                    <div class="mt-3">
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="securityRulesTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Rule Name</th>
+                                        <th>Risk Level</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="securityRulesBody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Database Management Tab -->
-    <div class="tab-pane fade" id="database" role="tabpanel">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card border-warning">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">
-                            <i class="fas fa-database"></i>
-                            Database Management
-                            <small class="text-muted">(Use with caution)</small>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Warning:</strong> These operations will permanently delete data from your database. 
-                            This action cannot be undone. Please ensure you have backups if needed.
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card border-danger mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0 text-danger">
-                                            <i class="fas fa-trash"></i> Clear Email Data
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small text-muted">
-                                            Removes all imported email records from the database.
-                                        </p>
-                                        <button class="btn btn-outline-danger btn-sm" onclick="clearEmails()">
-                                            <i class="fas fa-envelope"></i> Clear All Emails
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="card border-warning mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0 text-warning">
-                                            <i class="fas fa-briefcase"></i> Clear Case Data
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small text-muted">
-                                            Removes all escalated cases from the database.
-                                        </p>
-                                        <button class="btn btn-outline-warning btn-sm" onclick="clearCases()">
-                                            <i class="fas fa-gavel"></i> Clear All Cases
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="card border-info mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0 text-info">
-                                            <i class="fas fa-flag"></i> Clear Flagged Senders
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small text-muted">
-                                            Removes all flagged sender records.
-                                        </p>
-                                        <button class="btn btn-outline-info btn-sm" onclick="clearFlaggedSenders()">
-                                            <i class="fas fa-user-times"></i> Clear Flagged Senders
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="card border-dark mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-bomb"></i> Complete Reset
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="small text-muted">
-                                            Clears ALL data including emails, cases, and flagged senders.
-                                        </p>
-                                        <button class="btn btn-danger btn-sm" onclick="clearAllData()">
-                                            <i class="fas fa-nuclear"></i> Clear Everything
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Keyword Management Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        KEYWORD MANAGEMENT
+                    </h4>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Database Statistics</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="databaseStats">
-                            <div class="mb-3">
-                                <h6>Current Records</h6>
-                                <div class="row text-center">
-                                    <div class="col-6">
-                                        <div class="h4 text-primary" id="emailCount">-</div>
-                                        <small>Emails</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="h4 text-warning" id="caseCount">-</div>
-                                        <small>Cases</small>
-                                    </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Risk Keywords</h6>
                                 </div>
-                                <div class="row text-center mt-2">
-                                    <div class="col-6">
-                                        <div class="h4 text-info" id="flaggedCount">-</div>
-                                        <small>Flagged</small>
+                                <div class="card-body">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="newRiskKeyword" placeholder="Add risk keyword">
+                                        <button class="btn btn-danger" onclick="addKeyword('risk')">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-6">
-                                        <div class="h4 text-success" id="rulesCount">-</div>
-                                        <small>Rules</small>
+                                    <div id="riskKeywords" class="keyword-container" style="height: 150px;">
+                                        <!-- Dynamic content -->
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-outline-secondary btn-sm w-100" onclick="refreshDatabaseStats()">
-                                <i class="fas fa-sync"></i> Refresh Stats
-                            </button>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Quick Actions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary btn-sm" onclick="exportDatabase()">
-                                <i class="fas fa-download"></i> Export Database
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="optimizeDatabase()">
-                                <i class="fas fa-tools"></i> Optimize Database
-                            </button>
+                        <div class="col-md-6">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">Exclusion Keywords</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="newExcludeKeyword" placeholder="Add exclusion keyword">
+                                        <button class="btn btn-secondary" onclick="addKeyword('exclude')">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div id="excludeKeywords" class="keyword-container" style="height: 150px;">
+                                        <!-- Dynamic content -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Policy Modal -->
-<div class="modal fade" id="policyModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="policyModalTitle">Add Policy</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="policyForm">
-                    <input type="hidden" id="policyId" name="policy_id">
-
-                    <div class="mb-3">
-                        <label class="form-label">Policy Name</label>
-                        <input type="text" class="form-control" id="policyName" name="policy_name" required>
+        <!-- ML Settings Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>
+                        MACHINE LEARNING
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Risk Threshold</label>
+                            <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70">
+                            <div class="text-center">
+                                <span id="riskThresholdValue" class="badge bg-primary">70</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Confidence Level</label>
+                            <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85">
+                            <div class="text-center">
+                                <span id="confidenceThresholdValue" class="badge bg-success">85</span>
+                            </div>
+                        </div>
                     </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="trainModel()">
+                            <i class="fas fa-brain me-2"></i>
+                            Train Basic Model
+                        </button>
+                        <button class="btn btn-success" onclick="trainAdvancedModels()">
+                            <i class="fas fa-robot me-2"></i>
+                            Train Advanced Models
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="saveMLSettings()">
+                            <i class="fas fa-save me-2"></i>
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control" id="policyDescription" name="description" rows="3"></textarea>
+        <!-- Database Management Section -->
+        <div class="col-lg-6">
+            <div class="card h-100 shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        DATABASE MANAGEMENT
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> These operations permanently delete data!
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Severity Level</label>
-                                <select class="form-select" id="policySeverity" name="severity" required>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-outline-danger w-100" onclick="clearEmails()">
+                                <i class="fas fa-envelope me-2"></i>
+                                Clear All Emails
+                            </button>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Action on Violation</label>
-                                <select class="form-select" id="policyAction" name="action" required>
-                                    <option value="flag">Flag for Review</option>
-                                    <option value="escalate">Auto-Escalate</option>
-                                    <option value="block">Block Email</option>
-                                    <option value="quarantine">Quarantine</option>
-                                </select>
-                            </div>
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-outline-warning w-100" onclick="clearCases()">
+                                <i class="fas fa-gavel me-2"></i>
+                                Clear All Cases
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-outline-info w-100" onclick="clearFlaggedSenders()">
+                                <i class="fas fa-user-times me-2"></i>
+                                Clear Flagged Senders
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <button class="btn btn-danger w-100" onclick="clearAllData()">
+                                <i class="fas fa-nuclear me-2"></i>
+                                Reset Everything
+                            </button>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Detection Keywords (comma-separated)</label>
-                        <input type="text" class="form-control" id="policyKeywords" name="keywords" 
-                               placeholder="confidential, sensitive, password, account">
-                    </div>
+                    <hr>
 
-                    <div class="mb-3">
-                        <label class="form-label">Additional Rules (JSON format)</label>
-                        <textarea class="form-control font-monospace" id="policyRules" name="rules" 
-                                  rows="4" placeholder='{"attachment_types": [".zip", ".exe"], "external_domains": true}'></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="policyActive" name="is_active" checked>
-                            <label class="form-check-label" for="policyActive">
-                                Enable policy immediately
-                            </label>
+                    <div class="row text-center">
+                        <div class="col-3">
+                            <div class="h5 text-primary" id="emailCount">-</div>
+                            <small>Emails</small>
+                        </div>
+                        <div class="col-3">
+                            <div class="h5 text-warning" id="caseCount">-</div>
+                            <small>Cases</small>
+                        </div>
+                        <div class="col-3">
+                            <div class="h5 text-info" id="flaggedCount">-</div>
+                            <small>Flagged</small>
+                        </div>
+                        <div class="col-3">
+                            <div class="h5 text-success" id="rulesCount">-</div>
+                            <small>Rules</small>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="savePolicy()">
-                    <i class="fas fa-save"></i> Save Policy
-                </button>
+                </div>
             </div>
         </div>
     </div>
@@ -718,9 +370,9 @@
 <div class="modal fade" id="ruleModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="ruleModalTitle">Add Rule</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="ruleForm">
@@ -728,12 +380,12 @@
                     <input type="hidden" id="ruleId" name="rule_id">
 
                     <div class="mb-3">
-                        <label class="form-label">Rule Name</label>
+                        <label class="form-label fw-bold">Rule Name</label>
                         <input type="text" class="form-control" id="ruleName" name="rule_name" required>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Logic Type</label>
+                        <label class="form-label fw-bold">Logic Type</label>
                         <select class="form-select" id="ruleLogic" name="logic_type" required>
                             <option value="AND">AND (All conditions must match)</option>
                             <option value="OR">OR (Any condition can match)</option>
@@ -741,7 +393,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Conditions</label>
+                        <label class="form-label fw-bold">Conditions</label>
                         <div id="conditionsContainer">
                             <!-- Dynamic conditions will be added here -->
                         </div>
@@ -751,7 +403,7 @@
                     </div>
 
                     <div class="mb-3" id="riskLevelContainer" style="display: none;">
-                        <label class="form-label">Risk Level</label>
+                        <label class="form-label fw-bold">Risk Level</label>
                         <select class="form-select" id="riskLevel" name="risk_level">
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
@@ -763,7 +415,7 @@
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="ruleActive" name="is_active" checked>
-                            <label class="form-check-label" for="ruleActive">
+                            <label class="form-check-label fw-bold" for="ruleActive">
                                 Enable rule immediately
                             </label>
                         </div>
@@ -782,18 +434,17 @@
 
 <style>
 .keyword-container {
-    min-height: 200px;
-    max-height: 300px;
     overflow-y: auto;
     border: 1px solid #dee2e6;
     border-radius: 0.375rem;
     padding: 0.5rem;
+    background-color: #f8f9fa;
 }
 
 .keyword-tag {
     display: inline-block;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: #e9ecef;
+    border: 1px solid #adb5bd;
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
     margin: 0.125rem;
@@ -816,18 +467,26 @@
 
 .whitelist-item {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     padding: 0.25rem 0.5rem;
     margin-bottom: 0.25rem;
-    background-color: #f8f9fa;
+    background-color: #e9ecef;
     border-radius: 0.25rem;
+    font-size: 0.875rem;
 }
 
 .whitelist-item .remove-item {
     color: #dc3545;
     cursor: pointer;
-    margin-left: auto;
+}
+
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
 }
 </style>
 
@@ -841,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadKeywords();
     loadWhitelist();
     loadMLSettings();
-    loadPolicies();
     refreshDatabaseStats();
 
     // Setup threshold value displays
@@ -1086,9 +744,9 @@ function saveMLSettings() {
     const settings = {
         risk_threshold: document.getElementById('riskThreshold').value,
         confidence_threshold: document.getElementById('confidenceThreshold').value,
-        retrain_frequency: document.getElementById('retrainFrequency').value,
-        enable_ml_override: document.getElementById('enableMLOverride').checked,
-        enable_auto_escalation: document.getElementById('enableAutoEscalation').checked
+        retrain_frequency: 'weekly',
+        enable_ml_override: true,
+        enable_auto_escalation: true
     };
 
     fetch('/api/admin/save-ml-settings', {
@@ -1109,69 +767,47 @@ function saveMLSettings() {
 }
 
 function trainModel() {
-            fetch('/api/train-model', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`Model trained successfully! Accuracy: ${(data.accuracy * 100).toFixed(1)}%`);
-                } else {
-                    alert('Error training model: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error training model');
-            });
-        }
-
-        function trainAdvancedModels() {
-            const button = event.target;
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
-
-            fetch('/api/train-advanced-models', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const results = data.results;
-                    alert(`Advanced models trained successfully!\n` +
-                          `Accuracy: ${(results.ensemble_accuracy * 100).toFixed(1)}%\n` +
-                          `Training samples: ${results.training_samples}\n` +
-                          `Features: ${results.feature_count}`);
-                } else {
-                    alert('Error training advanced models: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error training advanced models');
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-robot"></i> Train Advanced Models';
-            });
-        }
-
-function resetModel() {
-    if (!confirm('Are you sure you want to reset the ML model? This will delete all training data and model files.')) {
-        return;
-    }
-
-    fetch('/api/admin/reset-model', {
+    fetch('/api/train-model', {
         method: 'POST'
     })
     .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showAlert('Model reset successfully', 'success');
-            loadMLSettings();
+    .then(data => {
+        if (data.success) {
+            showAlert(`Model trained successfully! Accuracy: ${(data.accuracy * 100).toFixed(1)}%`, 'success');
         } else {
-            showAlert('Error: ' + result.error, 'danger');
+            showAlert('Error training model: ' + data.error, 'danger');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error training model', 'danger');
+    });
+}
+
+function trainAdvancedModels() {
+    const button = event.target;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+
+    fetch('/api/train-advanced-models', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const results = data.results;
+            showAlert(`Advanced models trained successfully! Accuracy: ${(results.ensemble_accuracy * 100).toFixed(1)}%`, 'success');
+        } else {
+            showAlert('Error training advanced models: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error training advanced models', 'danger');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-robot me-2"></i> Train Advanced Models';
     });
 }
 
@@ -1196,14 +832,11 @@ function createRuleRow(rule, type) {
     const row = document.createElement('tr');
     row.innerHTML = `
         <td>${rule.rule_name}</td>
-        <td><span class="badge bg-secondary">${rule.logic_type}</span></td>
-        <td><small>${rule.conditions_summary}</small></td>
         <td>
             <span class="badge bg-${rule.is_active ? 'success' : 'secondary'}">
                 ${rule.is_active ? 'Active' : 'Inactive'}
             </span>
         </td>
-        <td><small>${rule.created_at}</small></td>
         <td>
             <div class="btn-group btn-group-sm">
                 <button class="btn btn-outline-primary" onclick="editRule(${rule.id})">
@@ -1270,9 +903,6 @@ function loadMLSettings() {
     .then(settings => {
         document.getElementById('riskThreshold').value = settings.risk_threshold || 70;
         document.getElementById('confidenceThreshold').value = settings.confidence_threshold || 85;
-        document.getElementById('retrainFrequency').value = settings.retrain_frequency || 'weekly';
-        document.getElementById('enableMLOverride').checked = settings.enable_ml_override !== false;
-        document.getElementById('enableAutoEscalation').checked = settings.enable_auto_escalation !== false;
 
         document.getElementById('riskThresholdValue').textContent = settings.risk_threshold || 70;
         document.getElementById('confidenceThresholdValue').textContent = settings.confidence_threshold || 85;
@@ -1280,8 +910,7 @@ function loadMLSettings() {
 }
 
 function editRule(ruleId) {
-    // Implementation for editing rules
-    showAlert('Edit rule functionality would load rule data into modal', 'info');
+    showAlert('Edit rule functionality coming soon', 'info');
 }
 
 function deleteRule(ruleId) {
@@ -1303,415 +932,13 @@ function deleteRule(ruleId) {
     });
 }
 
-// Policy Management Functions
-function showPolicyModal() {
-    document.getElementById('policyModalTitle').textContent = 'Add New Policy';
-    document.getElementById('policyForm').reset();
-    document.getElementById('policyId').value = '';
-    new bootstrap.Modal(document.getElementById('policyModal')).show();
-}
-
-function createPolicyFromTemplate(templateType) {
-    const templates = {
-        data_exfiltration: {
-            name: 'Data Exfiltration',
-            description: 'Detects potential data exfiltration attempts',
-            severity: 'high',
-            action: 'escalate',
-            keywords: 'confidential, sensitive, proprietary, internal, classified',
-            rules: '{"attachment_required": true, "external_recipients": true}'
-        },
-        mass_email: {
-            name: 'Mass Email Send',
-            description: 'Flags emails sent to multiple recipients',
-            severity: 'medium',
-            action: 'flag',
-            keywords: 'urgent, action required, please forward',
-            rules: '{"recipient_count": {"min": 10}, "time_window": "1h"}'
-        },
-        external_forwarding: {
-            name: 'External Forwarding',
-            description: 'Detects emails forwarded to external domains',
-            severity: 'medium',
-            action: 'flag',
-            keywords: 'forward, fwd, please send',
-            rules: '{"external_domains": true, "forwarding_detected": true}'
-        },
-        pii_transfer: {
-            name: 'PII Transfer',
-            description: 'Detects transfer of personally identifiable information',
-            severity: 'high',
-            action: 'escalate',
-            keywords: 'SSN, social security, credit card, passport, driver license',
-            rules: '{"pii_patterns": ["\\d{3}-\\d{2}-\\d{4}", "\\d{4}\\s\\d{4}\\s\\d{4}\\s\\d{4}"]}'
-        }
-    };
-
-    const template = templates[templateType];
-    if (template) {
-        document.getElementById('policyName').value = template.name;
-        document.getElementById('policyDescription').value = template.description;
-        document.getElementById('policySeverity').value = template.severity;
-        document.getElementById('policyAction').value = template.action;
-        document.getElementById('policyKeywords').value = template.keywords;
-        document.getElementById('policyRules').value = template.rules;
-        
-        showPolicyModal();
-    }
-}
-
-function savePolicy() {
-    const form = document.getElementById('policyForm');
-    const formData = new FormData(form);
-
-    const policyData = {
-        policy_id: formData.get('policy_id'),
-        policy_name: formData.get('policy_name'),
-        description: formData.get('description'),
-        severity: formData.get('severity'),
-        action: formData.get('action'),
-        keywords: formData.get('keywords'),
-        rules: formData.get('rules'),
-        is_active: formData.get('is_active') ? true : false
-    };
-
-    // Validate JSON rules if provided
-    if (policyData.rules) {
-        try {
-            JSON.parse(policyData.rules);
-        } catch (e) {
-            showAlert('Invalid JSON format in rules. Please check your syntax.', 'danger');
-            return;
-        }
-    }
-
-    fetch('/api/admin/save-policy', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(policyData)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('policyModal')).hide();
-            loadPolicies();
-            showAlert('Policy saved successfully', 'success');
-        } else {
-            showAlert('Error: ' + result.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('An error occurred while saving the policy.', 'danger');
-    });
-}
-
-function loadPolicies() {
-    // Load both defined policies and active policy violations
-    Promise.all([
-        fetch('/api/admin/policies'),
-        fetch('/api/admin/policy-violations-data')
-    ])
-    .then(responses => Promise.all(responses.map(r => r.json())))
-    .then(([policies, violations]) => {
-        const tbody = document.getElementById('policiesTableBody');
-        tbody.innerHTML = '';
-
-        // Create a map of existing policies
-        const policyMap = new Map();
-        policies.forEach(policy => {
-            policyMap.set(policy.policy_name, policy);
-        });
-
-        // Add existing policies first
-        policies.forEach(policy => {
-            const violationData = violations.find(v => v.policy_name === policy.policy_name);
-            const row = createPolicyRow(policy, violationData);
-            tbody.appendChild(row);
-        });
-
-        // Add policy violations that don't have defined policies yet
-        violations.forEach(violation => {
-            if (!policyMap.has(violation.policy_name)) {
-                const syntheticPolicy = {
-                    id: `violation_${violation.policy_name}`,
-                    policy_name: violation.policy_name,
-                    description: `Auto-detected policy (${violation.count} violations)`,
-                    severity: violation.count > 20 ? 'high' : violation.count > 10 ? 'medium' : 'low',
-                    action: 'flag',
-                    is_active: true,
-                    is_synthetic: true
-                };
-                const row = createPolicyRow(syntheticPolicy, violation);
-                tbody.appendChild(row);
-            }
-        });
-
-        updatePolicyStats([...policies, ...violations.filter(v => !policyMap.has(v.policy_name))]);
-    })
-    .catch(error => {
-        console.error('Error loading policies:', error);
-    });
-}
-
-function createPolicyRow(policy, violationData = null) {
-    const row = document.createElement('tr');
-    
-    const severityBadges = {
-        low: 'bg-success',
-        medium: 'bg-warning',
-        high: 'bg-danger',
-        critical: 'bg-dark'
-    };
-
-    const violationInfo = violationData ? 
-        `<br><small class="text-info"><i class="fas fa-chart-bar"></i> ${violationData.count} violations (${violationData.percentage}%)</small>` : '';
-
-    const policyId = policy.is_synthetic ? `'${policy.policy_name}'` : policy.id;
-    const isActive = policy.is_active;
-
-    row.innerHTML = `
-        <td>
-            <strong>${policy.policy_name}</strong>
-            ${violationInfo}
-        </td>
-        <td><small>${policy.description || 'No description'}</small></td>
-        <td><span class="badge ${severityBadges[policy.severity] || 'bg-secondary'}">${policy.severity}</span></td>
-        <td><small>${policy.keywords || 'Auto-detected'}</small></td>
-        <td>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="policy_${policyId}" 
-                       ${isActive ? 'checked' : ''} 
-                       onchange="togglePolicy(${policyId}, this.checked, ${policy.is_synthetic || false})">
-                <label class="form-check-label" for="policy_${policyId}">
-                    <span class="badge bg-${isActive ? 'success' : 'secondary'}">
-                        ${isActive ? 'Active' : 'Disabled'}
-                    </span>
-                </label>
-            </div>
-        </td>
-        <td>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" onclick="editPolicy(${policyId}, ${policy.is_synthetic || false})" title="Edit Policy">
-                    <i class="fas fa-edit"></i>
-                </button>
-                ${policy.is_synthetic ? 
-                    `<button class="btn btn-outline-success" onclick="convertToPolicy('${policy.policy_name}')" title="Convert to Managed Policy">
-                        <i class="fas fa-plus-circle"></i>
-                    </button>` :
-                    `<button class="btn btn-outline-danger" onclick="deletePolicy(${policy.id})" title="Delete Policy">
-                        <i class="fas fa-trash"></i>
-                    </button>`
-                }
-            </div>
-        </td>
-    `;
-    return row;
-}
-
-function updatePolicyStats(policies) {
-    const statsContainer = document.getElementById('policyStats');
-    const totalPolicies = policies.length;
-    const activePolicies = policies.filter(p => p.is_active).length;
-    const severityCounts = policies.reduce((acc, p) => {
-        acc[p.severity] = (acc[p.severity] || 0) + 1;
-        return acc;
-    }, {});
-
-    statsContainer.innerHTML = `
-        <div class="mb-3">
-            <h6>Total Policies</h6>
-            <div class="h4 text-primary">${totalPolicies}</div>
-        </div>
-        <div class="mb-3">
-            <h6>Active Policies</h6>
-            <div class="h4 text-success">${activePolicies}</div>
-        </div>
-        <hr>
-        <div class="mb-2">
-            <small class="text-muted">By Severity:</small>
-        </div>
-        ${Object.entries(severityCounts).map(([severity, count]) => `
-            <div class="d-flex justify-content-between mb-1">
-                <span class="text-capitalize">${severity}:</span>
-                <span class="badge bg-secondary">${count}</span>
-            </div>
-        `).join('')}
-    `;
-}
-
-function editPolicy(policyId) {
-    fetch(`/api/admin/policy/${policyId}`)
-    .then(response => response.json())
-    .then(policy => {
-        document.getElementById('policyModalTitle').textContent = 'Edit Policy';
-        document.getElementById('policyId').value = policy.id;
-        document.getElementById('policyName').value = policy.policy_name;
-        document.getElementById('policyDescription').value = policy.description || '';
-        document.getElementById('policySeverity').value = policy.severity;
-        document.getElementById('policyAction').value = policy.action;
-        document.getElementById('policyKeywords').value = policy.keywords || '';
-        document.getElementById('policyRules').value = policy.rules || '';
-        document.getElementById('policyActive').checked = policy.is_active;
-        
-        new bootstrap.Modal(document.getElementById('policyModal')).show();
-    })
-    .catch(error => {
-        console.error('Error loading policy:', error);
-        showAlert('Error loading policy details', 'danger');
-    });
-}
-
-function togglePolicy(policyId, isActive, isSynthetic = false) {
-    if (isSynthetic) {
-        // For synthetic policies, we toggle the policy_name in admin_rules
-        fetch('/api/admin/toggle-policy-violation', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                policy_name: policyId,
-                is_active: isActive
-            })
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                showAlert(`Policy ${isActive ? 'enabled' : 'disabled'} successfully`, 'success');
-            } else {
-                showAlert('Error: ' + result.error, 'danger');
-                // Revert the toggle
-                document.getElementById(`policy_${policyId}`).checked = !isActive;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Error toggling policy', 'danger');
-            document.getElementById(`policy_${policyId}`).checked = !isActive;
-        });
-    } else {
-        // For regular policies, update via the normal API
-        fetch('/api/admin/save-policy', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                policy_id: policyId,
-                is_active: isActive
-            })
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                showAlert(`Policy ${isActive ? 'enabled' : 'disabled'} successfully`, 'success');
-            } else {
-                showAlert('Error: ' + result.error, 'danger');
-                document.getElementById(`policy_${policyId}`).checked = !isActive;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Error toggling policy', 'danger');
-            document.getElementById(`policy_${policyId}`).checked = !isActive;
-        });
-    }
-}
-
-function convertToPolicy(policyName) {
-    // Pre-fill the policy modal with data from the violation
-    document.getElementById('policyModalTitle').textContent = 'Convert to Managed Policy';
-    document.getElementById('policyId').value = '';
-    document.getElementById('policyName').value = policyName;
-    document.getElementById('policyDescription').value = `Converted from auto-detected policy: ${policyName}`;
-    document.getElementById('policySeverity').value = 'medium';
-    document.getElementById('policyAction').value = 'flag';
-    document.getElementById('policyKeywords').value = '';
-    document.getElementById('policyRules').value = '';
-    document.getElementById('policyActive').checked = true;
-    
-    new bootstrap.Modal(document.getElementById('policyModal')).show();
-}
-
-function editPolicy(policyId, isSynthetic = false) {
-    if (isSynthetic) {
-        convertToPolicy(policyId);
-        return;
-    }
-    
-    fetch(`/api/admin/policy/${policyId}`)
-    .then(response => response.json())
-    .then(policy => {
-        document.getElementById('policyModalTitle').textContent = 'Edit Policy';
-        document.getElementById('policyId').value = policy.id;
-        document.getElementById('policyName').value = policy.policy_name;
-        document.getElementById('policyDescription').value = policy.description || '';
-        document.getElementById('policySeverity').value = policy.severity;
-        document.getElementById('policyAction').value = policy.action;
-        document.getElementById('policyKeywords').value = policy.keywords || '';
-        document.getElementById('policyRules').value = policy.rules || '';
-        document.getElementById('policyActive').checked = policy.is_active;
-        
-        new bootstrap.Modal(document.getElementById('policyModal')).show();
-    })
-    .catch(error => {
-        console.error('Error loading policy:', error);
-        showAlert('Error loading policy details', 'danger');
-    });
-}
-
-function deletePolicy(policyId) {
-    if (!confirm('Are you sure you want to delete this policy? This action cannot be undone.')) {
-        return;
-    }
-
-    fetch(`/api/admin/delete-policy/${policyId}`, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            loadPolicies();
-            showAlert('Policy deleted successfully', 'success');
-        } else {
-            showAlert('Error: ' + result.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Error deleting policy', 'danger');
-    });
-}
-
-function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-    // Insert at top of content
-    const content = document.querySelector('.container-fluid');
-    content.insertBefore(alertDiv, content.firstChild);
-
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
-}
-
 // Database Management Functions
 function clearEmails() {
     if (!confirm('Are you sure you want to delete ALL email records? This action cannot be undone.')) {
         return;
     }
 
-    if (!confirm('This will permanently delete all imported email data. Type "DELETE" to confirm this action.') || 
-        prompt('Type "DELETE" to confirm:') !== 'DELETE') {
+    if (prompt('Type "DELETE" to confirm:') !== 'DELETE') {
         return;
     }
 
@@ -1793,10 +1020,6 @@ function clearAllData() {
         return;
     }
 
-    if (!confirm('Are you absolutely sure? This will completely reset your database.')) {
-        return;
-    }
-
     const confirmation = prompt('Type "RESET DATABASE" to confirm complete data deletion:');
     if (confirmation !== 'RESET DATABASE') {
         showAlert('Operation cancelled - confirmation text did not match', 'info');
@@ -1838,26 +1061,21 @@ function refreshDatabaseStats() {
     });
 }
 
-function exportDatabase() {
-    window.location.href = '/api/admin/export-database';
-}
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
 
-function optimizeDatabase() {
-    fetch('/api/admin/optimize-database', {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            showAlert('Database optimized successfully', 'success');
-        } else {
-            showAlert('Error: ' + result.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Failed to optimize database', 'danger');
-    });
+    document.body.appendChild(alertDiv);
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
 }
 </script>
 {% endblock %}
