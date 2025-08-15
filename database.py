@@ -150,10 +150,10 @@ def get_dashboard_stats():
     # Timeline data (last 30 days)
     try:
         timeline_data = conn.execute("""
-            SELECT DATE(_time) as date, COUNT(*) as count
+            SELECT CAST(_time AS DATE) as date, COUNT(*) as count
             FROM emails 
-            WHERE _time >= date('now', '-30 days')
-            GROUP BY DATE(_time)
+            WHERE _time >= CURRENT_DATE - INTERVAL 30 DAY
+            GROUP BY CAST(_time AS DATE)
             ORDER BY date
         """).fetchall()
         stats['timeline_data'] = timeline_data

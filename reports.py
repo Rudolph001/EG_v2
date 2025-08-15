@@ -154,7 +154,7 @@ class ReportGenerator:
                     COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails,
                     COUNT(CASE WHEN final_outcome IN ('cleared', 'approved') THEN 1 END) as cleared_emails
                 FROM emails
-                WHERE _time >= (DATE '{date_from}' - INTERVAL 12 MONTH)
+                WHERE _time >= (CAST('{date_from}' AS DATE) - INTERVAL 12 MONTH)
                 GROUP BY strftime('%Y-%m', _time)
                 ORDER BY month
             """
@@ -407,7 +407,11 @@ class ReportGenerator:
 
             story.append(Paragraph("Email Guardian Comprehensive Report", title_style))
             story.append(Paragraph(f"Report Period: {data['date_from']} to {data['date_to']}", self.report_styles['Normal']))
-            story.append(Paragraph(f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M:%S')}", self.report_styles['Normal']))
+            generated_at = data['generated_at']
+            if isinstance(generated_at, str):
+                story.append(Paragraph(f"Generated: {generated_at}", self.report_styles['Normal']))
+            else:
+                story.append(Paragraph(f"Generated: {generated_at.strftime('%Y-%m-%d %H:%M:%S')}", self.report_styles['Normal']))
             story.append(Spacer(1, 20))
 
             # Executive Summary
@@ -656,7 +660,11 @@ class ReportGenerator:
             ws_summary = wb.create_sheet("Executive Summary")
             ws_summary.append(["Email Guardian Report"])
             ws_summary.append([f"Period: {data['date_from']} to {data['date_to']}"])
-            ws_summary.append([f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M:%S')}"])
+            generated_at = data['generated_at']
+            if isinstance(generated_at, str):
+                ws_summary.append([f"Generated: {generated_at}"])
+            else:
+                ws_summary.append([f"Generated: {generated_at.strftime('%Y-%m-%d %H:%M:%S')}"])
             ws_summary.append([])
 
             # Format header

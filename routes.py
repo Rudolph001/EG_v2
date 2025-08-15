@@ -433,11 +433,11 @@ def analytics():
         # Escalations over time (last 30 days)
         try:
             escalations_timeline = conn.execute("""
-                SELECT DATE(_time) as date, COUNT(*) as count
+                SELECT CAST(_time AS DATE) as date, COUNT(*) as count
                 FROM emails 
                 WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
-                AND _time >= (CURRENT_DATE - INTERVAL '30 days')
-                GROUP BY DATE(_time)
+                AND _time >= CURRENT_DATE - INTERVAL 30 DAY
+                GROUP BY CAST(_time AS DATE)
                 ORDER BY date
             """).fetchall()
         except Exception as e:
@@ -496,7 +496,7 @@ def analytics():
                     COUNT(*) as total_emails,
                     COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
                 FROM emails
-                WHERE _time >= date('now', '-12 months')
+                WHERE _time >= CURRENT_DATE - INTERVAL 12 MONTH
                 GROUP BY strftime('%Y-%m', _time)
                 ORDER BY month
             """).fetchall()
