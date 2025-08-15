@@ -623,7 +623,7 @@ def admin_rules():
             'conditions': rule[2] if len(rule) > 2 else None,
             'action': rule[3] if len(rule) > 3 else 'flag',
             'is_active': bool(rule[4]) if len(rule) > 4 else False,
-            'created_at': rule[5].strftime('%Y-%m-%d') if len(rule) > 5 and rule[5] else 'N/A',
+            'created_at': rule[5].strftime('%Y-%m-%d') if len(rule) > 5 and rule[5] and hasattr(rule[5], 'strftime') else str(rule[5]) if len(rule) > 5 and rule[5] else 'N/A',
         }
         
         # Extract actual rule name from conditions JSON
