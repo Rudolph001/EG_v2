@@ -528,28 +528,31 @@ footer {
 }
 
 .nav-tabs .nav-link {
-    border: none;
+    border: 2px solid #374151;
     border-bottom: 3px solid transparent;
     background: white;
-    color: var(--gray-700) !important;
-    font-weight: 500;
+    color: #000000 !important;
+    font-weight: 700 !important;
     padding: 1rem 1.5rem;
     margin-right: 0.25rem;
     border-radius: 8px 8px 0 0;
     transition: all 0.2s ease;
+    font-size: 0.9rem !important;
 }
 
 .nav-tabs .nav-link.active {
-    background: var(--primary-blue) !important;
-    border-bottom-color: var(--primary-blue);
-    color: white !important;
-    box-shadow: var(--shadow-sm);
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #1d4ed8 !important;
+    border-bottom-color: #1d4ed8 !important;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25) !important;
+    font-weight: 800 !important;
 }
 
-.nav-tabs .nav-link:hover {
-    background: var(--gray-100);
-    border-bottom-color: var(--gray-400);
-    color: var(--gray-800) !important;
+.nav-tabs .nav-link:hover:not(.active) {
+    background: #f3f4f6 !important;
+    color: #000000 !important;
+    border-color: #1f2937 !important;
 }
 
 /* Print styles */
