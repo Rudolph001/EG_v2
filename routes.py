@@ -1846,6 +1846,206 @@ def api_bulk_update_status():
         return jsonify({'error': 'Failed to bulk update emails'}), 500
 
 
+@app.route('/api/admin/clear-emails', methods=['POST'])
+def api_admin_clear_emails():
+    """Clear all email records from database"""
+    try:
+        conn = get_db_connection()
+        
+        # Get count before deletion
+        count_result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
+        deleted_count = count_result[0] if count_result else 0
+        
+        # Clear emails table
+        conn.execute("DELETE FROM emails")
+        
+        # Reset sequence
+        conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
+        
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {deleted_count} email records',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        logging.error(f"Clear emails error: {e}")
+        return jsonify({'error': 'Failed to clear email data'}), 500
+
+@app.route('/api/admin/clear-cases', methods=['POST'])
+def api_admin_clear_cases():
+    """Clear all case records from database"""
+    try:
+        conn = get_db_connection()
+        
+        # Get count before deletion
+        count_result = conn.execute("SELECT COUNT(*) FROM cases").fetchone()
+        deleted_count = count_result[0] if count_result else 0
+        
+        # Clear cases table
+        conn.execute("DELETE FROM cases")
+        
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {deleted_count} case records',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        logging.error(f"Clear cases error: {e}")
+        return jsonify({'error': 'Failed to clear case data'}), 500
+
+@app.route('/api/admin/clear-flagged-senders', methods=['POST'])
+def api_admin_clear_flagged_senders():
+    """Clear all flagged sender records from database"""
+    try:
+        conn = get_db_connection()
+        
+        # Get count before deletion
+        count_result = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()
+        deleted_count = count_result[0] if count_result else 0
+        
+        # Clear flagged_senders table
+        conn.execute("DELETE FROM flagged_senders")
+        
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {deleted_count} flagged sender records',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        logging.error(f"Clear flagged senders error: {e}")
+        return jsonify({'error': 'Failed to clear flagged sender data'}), 500
+
+@app.route('/api/admin/clear-all-data', methods=['POST'])
+def api_admin_clear_all_data():
+    """Clear all imported data from database"""
+    try:
+        conn = get_db_connection()
+        
+        # Get counts before deletion
+        email_count = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
+        case_count = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
+        flagged_count = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
+        
+        # Clear all tables
+        conn.execute("DELETE FROM cases")
+        conn.execute("DELETE FROM emails")
+        conn.execute("DELETE FROM flagged_senders")
+        
+        # Reset sequences
+        conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
+        
+        conn.close()
+
+        summary = f"{email_count} emails, {case_count} cases, {flagged_count} flagged senders"
+
+        return jsonify({
+            'success': True,
+            'message': 'All data cleared successfully',
+            'summary': summary,
+            'email_count': email_count,
+            'case_count': case_count,
+            'flagged_count': flagged_count
+        })
+    except Exception as e:
+        logging.error(f"Clear all data error: {e}")
+        return jsonify({'error': 'Failed to clear all data'}), 500
+
+@app.route('/api/admin/database-stats')
+def api_admin_database_stats():
+    """Get database statistics"""
+    try:
+        conn = get_db_connection()
+        
+        stats = {}
+        
+        # Get table counts
+        stats['emails'] = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
+        stats['cases'] = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
+        stats['flagged_senders'] = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
+        stats['admin_rules'] = conn.execute("SELECT COUNT(*) FROM admin_rules").fetchone()[0]
+        
+        conn.close()
+        
+        return jsonify(stats)
+    except Exception as e:
+        logging.error(f"Database stats error: {e}")
+        return jsonify({'error': 'Failed to load database statistics'}), 500
+
+@app.route('/api/admin/export-database')
+def api_admin_export_database():
+    """Export database to CSV files"""
+    try:
+        import zipfile
+        from io import BytesIO
+        import tempfile
+        import os
+        
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            conn = get_db_connection()
+            
+            # Export each table to CSV
+            tables = ['emails', 'cases', 'flagged_senders', 'admin_rules']
+            
+            for table in tables:
+                try:
+                    df = conn.execute(f"SELECT * FROM {table}").df()
+                    csv_path = os.path.join(temp_dir, f"{table}.csv")
+                    df.to_csv(csv_path, index=False)
+                except Exception as e:
+                    logging.warning(f"Could not export table {table}: {e}")
+            
+            conn.close()
+            
+            # Create ZIP file
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zip_file.write(file_path, file)
+            
+            zip_buffer.seek(0)
+            
+            return send_file(
+                zip_buffer,
+                mimetype='application/zip',
+                as_attachment=True,
+                download_name=f'email_guardian_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+            )
+            
+    except Exception as e:
+        logging.error(f"Database export error: {e}")
+        return jsonify({'error': 'Failed to export database'}), 500
+
+@app.route('/api/admin/optimize-database', methods=['POST'])
+def api_admin_optimize_database():
+    """Optimize database performance"""
+    try:
+        conn = get_db_connection()
+        
+        # Run VACUUM to optimize database
+        conn.execute("VACUUM")
+        
+        # Update statistics
+        conn.execute("ANALYZE")
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Database optimized successfully'
+        })
+    except Exception as e:
+        logging.error(f"Database optimization error: {e}")
+        return jsonify({'error': 'Failed to optimize database'}), 500
+
 @app.route('/api/export-cleared')
 def api_export_cleared():
     """Export cleared emails to Excel"""

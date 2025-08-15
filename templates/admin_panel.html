@@ -103,6 +103,11 @@
             <i class="fas fa-robot"></i> ML Settings
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button">
+            <i class="fas fa-database"></i> Database Management
+        </button>
+    </li>
 </ul>
 
 <!-- Tab Content -->
@@ -480,6 +485,154 @@
             </div>
         </div>
     </div>
+
+    <!-- Database Management Tab -->
+    <div class="tab-pane fade" id="database" role="tabpanel">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database"></i>
+                            Database Management
+                            <small class="text-muted">(Use with caution)</small>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Warning:</strong> These operations will permanently delete data from your database. 
+                            This action cannot be undone. Please ensure you have backups if needed.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card border-danger mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0 text-danger">
+                                            <i class="fas fa-trash"></i> Clear Email Data
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">
+                                            Removes all imported email records from the database.
+                                        </p>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="clearEmails()">
+                                            <i class="fas fa-envelope"></i> Clear All Emails
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card border-warning mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0 text-warning">
+                                            <i class="fas fa-briefcase"></i> Clear Case Data
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">
+                                            Removes all escalated cases from the database.
+                                        </p>
+                                        <button class="btn btn-outline-warning btn-sm" onclick="clearCases()">
+                                            <i class="fas fa-gavel"></i> Clear All Cases
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card border-info mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0 text-info">
+                                            <i class="fas fa-flag"></i> Clear Flagged Senders
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">
+                                            Removes all flagged sender records.
+                                        </p>
+                                        <button class="btn btn-outline-info btn-sm" onclick="clearFlaggedSenders()">
+                                            <i class="fas fa-user-times"></i> Clear Flagged Senders
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card border-dark mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-bomb"></i> Complete Reset
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small text-muted">
+                                            Clears ALL data including emails, cases, and flagged senders.
+                                        </p>
+                                        <button class="btn btn-danger btn-sm" onclick="clearAllData()">
+                                            <i class="fas fa-nuclear"></i> Clear Everything
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Database Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="databaseStats">
+                            <div class="mb-3">
+                                <h6>Current Records</h6>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="h4 text-primary" id="emailCount">-</div>
+                                        <small>Emails</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="h4 text-warning" id="caseCount">-</div>
+                                        <small>Cases</small>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-2">
+                                    <div class="col-6">
+                                        <div class="h4 text-info" id="flaggedCount">-</div>
+                                        <small>Flagged</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="h4 text-success" id="rulesCount">-</div>
+                                        <small>Rules</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm w-100" onclick="refreshDatabaseStats()">
+                                <i class="fas fa-sync"></i> Refresh Stats
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportDatabase()">
+                                <i class="fas fa-download"></i> Export Database
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="optimizeDatabase()">
+                                <i class="fas fa-tools"></i> Optimize Database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Policy Modal -->
@@ -689,6 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadWhitelist();
     loadMLSettings();
     loadPolicies();
+    refreshDatabaseStats();
 
     // Setup threshold value displays
     document.getElementById('riskThreshold').addEventListener('input', function() {
@@ -1548,6 +1702,162 @@ function showAlert(message, type) {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// Database Management Functions
+function clearEmails() {
+    if (!confirm('Are you sure you want to delete ALL email records? This action cannot be undone.')) {
+        return;
+    }
+
+    if (!confirm('This will permanently delete all imported email data. Type "DELETE" to confirm this action.') || 
+        prompt('Type "DELETE" to confirm:') !== 'DELETE') {
+        return;
+    }
+
+    fetch('/api/admin/clear-emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(`Successfully deleted ${result.deleted_count} email records`, 'success');
+            refreshDatabaseStats();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to clear email data', 'danger');
+    });
+}
+
+function clearCases() {
+    if (!confirm('Are you sure you want to delete ALL case records? This action cannot be undone.')) {
+        return;
+    }
+
+    fetch('/api/admin/clear-cases', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(`Successfully deleted ${result.deleted_count} case records`, 'success');
+            refreshDatabaseStats();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to clear case data', 'danger');
+    });
+}
+
+function clearFlaggedSenders() {
+    if (!confirm('Are you sure you want to delete ALL flagged sender records? This action cannot be undone.')) {
+        return;
+    }
+
+    fetch('/api/admin/clear-flagged-senders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(`Successfully deleted ${result.deleted_count} flagged sender records`, 'success');
+            refreshDatabaseStats();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to clear flagged senders', 'danger');
+    });
+}
+
+function clearAllData() {
+    if (!confirm('⚠️ DANGER: This will delete ALL data including emails, cases, and flagged senders. This action cannot be undone.')) {
+        return;
+    }
+
+    if (!confirm('Are you absolutely sure? This will completely reset your database.')) {
+        return;
+    }
+
+    const confirmation = prompt('Type "RESET DATABASE" to confirm complete data deletion:');
+    if (confirmation !== 'RESET DATABASE') {
+        showAlert('Operation cancelled - confirmation text did not match', 'info');
+        return;
+    }
+
+    fetch('/api/admin/clear-all-data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(`Database reset complete. Deleted: ${result.summary}`, 'warning');
+            refreshDatabaseStats();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to reset database', 'danger');
+    });
+}
+
+function refreshDatabaseStats() {
+    fetch('/api/admin/database-stats')
+    .then(response => response.json())
+    .then(stats => {
+        document.getElementById('emailCount').textContent = stats.emails || 0;
+        document.getElementById('caseCount').textContent = stats.cases || 0;
+        document.getElementById('flaggedCount').textContent = stats.flagged_senders || 0;
+        document.getElementById('rulesCount').textContent = stats.admin_rules || 0;
+    })
+    .catch(error => {
+        console.error('Error loading database stats:', error);
+    });
+}
+
+function exportDatabase() {
+    window.location.href = '/api/admin/export-database';
+}
+
+function optimizeDatabase() {
+    fetch('/api/admin/optimize-database', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert('Database optimized successfully', 'success');
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to optimize database', 'danger');
+    });
 }
 </script>
 {% endblock %}
