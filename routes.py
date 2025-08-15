@@ -1856,6 +1856,10 @@ def api_admin_clear_emails():
         count_result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
         deleted_count = count_result[0] if count_result else 0
         
+        # Delete dependent records first to avoid foreign key constraint violations
+        # Clear cases that reference emails
+        conn.execute("DELETE FROM cases")
+        
         # Clear emails table
         conn.execute("DELETE FROM emails")
         
@@ -1866,7 +1870,7 @@ def api_admin_clear_emails():
 
         return jsonify({
             'success': True,
-            'message': f'Cleared {deleted_count} email records',
+            'message': f'Cleared {deleted_count} email records and their associated cases',
             'deleted_count': deleted_count
         })
     except Exception as e:
@@ -1932,13 +1936,19 @@ def api_admin_clear_all_data():
         case_count = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
         flagged_count = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
         
-        # Clear all tables
+        # Clear tables in the correct order to avoid foreign key constraint violations
+        # Delete dependent records first
         conn.execute("DELETE FROM cases")
+        
+        # Then delete the main records
         conn.execute("DELETE FROM emails")
         conn.execute("DELETE FROM flagged_senders")
         
         # Reset sequences
-        conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
+        try:
+            conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
+        except Exception as seq_error:
+            logging.warning(f"Could not reset sequence: {seq_error}")
         
         conn.close()
 
