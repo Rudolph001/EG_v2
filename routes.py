@@ -1123,7 +1123,19 @@ def api_dashboard_stats():
     """API endpoint for dashboard statistics"""
     try:
         stats = get_dashboard_stats()
-        return jsonify(stats)
+        
+        # Ensure all values are serializable
+        clean_stats = {
+            'total_emails': int(stats.get('total_emails', 0)),
+            'active_cases': int(stats.get('active_cases', 0)),
+            'flagged_senders': int(stats.get('flagged_senders', 0)),
+            'todays_emails': int(stats.get('todays_emails', 0)),
+            'department_data': list(stats.get('department_data', [])[:10]),  # Limit to prevent endless growth
+            'timeline_data': list(stats.get('timeline_data', [])[:30]),  # Limit to last 30 days
+            'success': True
+        }
+        
+        return jsonify(clean_stats)
     except Exception as e:
         logging.error(f"Dashboard stats error: {e}")
         return jsonify({
@@ -1133,8 +1145,9 @@ def api_dashboard_stats():
             'todays_emails': 0,
             'department_data': [],
             'timeline_data': [],
+            'success': False,
             'error': 'Failed to load dashboard statistics'
-        })
+        }), 500
 
 @app.route('/api/classify-email', methods=['POST'])
 def api_classify_email():

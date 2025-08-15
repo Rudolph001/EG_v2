@@ -170,11 +170,23 @@ function setupFileUploadHandlers() {
     }
 }
 
+let refreshErrorCount = 0;
+const MAX_REFRESH_ERRORS = 3;
+
 function startAutoRefresh() {
+    // Stop existing interval if any
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+    
     // Auto-refresh dashboard data every 30 seconds
     refreshInterval = setInterval(function() {
-        if (!isRefreshing && document.visibilityState === 'visible') {
+        if (!isRefreshing && document.visibilityState === 'visible' && refreshErrorCount < MAX_REFRESH_ERRORS) {
             refreshDashboardData();
+        } else if (refreshErrorCount >= MAX_REFRESH_ERRORS) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+            console.warn('Auto-refresh stopped due to repeated errors');
         }
     }, 30000);
     
@@ -182,10 +194,16 @@ function startAutoRefresh() {
     document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {
             clearInterval(refreshInterval);
-        } else {
+            refreshInterval = null;
+        } else if (refreshErrorCount < MAX_REFRESH_ERRORS) {
             startAutoRefresh();
         }
     });
+}
+
+// Reset error count on successful refresh
+function resetRefreshErrors() {
+    refreshErrorCount = 0;
 }
 
 function refreshDashboardData() {
@@ -196,14 +214,43 @@ function refreshDashboardData() {
     showLoadingIndicator();
     
     fetch('/api/dashboard-stats')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            // Check if response is actually JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON format');
+            }
+            
+            return response.json();
+        })
         .then(data => {
-            updateDashboardStats(data);
-            updateDashboardCharts(data);
+            // Validate data structure before updating
+            if (data && typeof data === 'object') {
+                updateDashboardStats(data);
+                updateDashboardCharts(data);
+                resetRefreshErrors(); // Reset error count on successful refresh
+            } else {
+                throw new Error('Invalid data structure received');
+            }
         })
         .catch(error => {
             console.error('Dashboard refresh error:', error);
-            showNotification('Failed to refresh dashboard data', 'error');
+            refreshErrorCount++;
+            
+            if (refreshErrorCount >= MAX_REFRESH_ERRORS) {
+                // Stop auto-refresh on repeated errors to prevent endless loop
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
+                showNotification('Dashboard auto-refresh disabled due to repeated errors', 'warning');
+            } else {
+                showNotification(`Dashboard refresh error (${refreshErrorCount}/${MAX_REFRESH_ERRORS})`, 'error');
+            }
         })
         .finally(() => {
             hideLoadingIndicator();

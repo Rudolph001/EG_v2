@@ -112,54 +112,71 @@ def execute_query(query, params=None, fetch=False):
         return None
 
 def get_dashboard_stats():
-    """Get statistics for dashboard"""
+    """Get dashboard statistics with limits to prevent endless growth"""
     conn = get_db_connection()
 
-    stats = {}
-
-    # Total emails
-    result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
-    stats['total_emails'] = result[0] if result else 0
-
-    # Active cases
-    result = conn.execute("SELECT COUNT(*) FROM cases WHERE status = 'open'").fetchone()
-    stats['active_cases'] = result[0] if result else 0
-
-    # Flagged senders
-    result = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()
-    stats['flagged_senders'] = result[0] if result else 0
-
-    # Today's emails
-    today_count = conn.execute("""
-        SELECT COUNT(*) FROM emails 
-        WHERE DATE(_time) = CURRENT_DATE
-    """).fetchone()[0]
-    stats['todays_emails'] = today_count
-
-    # Department breakdown
-    dept_data = conn.execute("""
-        SELECT department, COUNT(*) as count 
-        FROM emails 
-        WHERE department IS NOT NULL 
-        GROUP BY department 
-        ORDER BY count DESC 
-        LIMIT 10
-    """).fetchall()
-    stats['department_data'] = dept_data
-
-    # Timeline data (last 30 days)
     try:
+        # Basic counts with safety limits
+        total_emails = min(conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0], 999999)
+        active_cases = min(conn.execute("SELECT COUNT(*) FROM cases WHERE status != 'closed'").fetchone()[0], 9999)
+        flagged_senders = min(conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0], 9999)
+
+        # Today's emails with limit
+        todays_emails = min(conn.execute("""
+            SELECT COUNT(*) FROM emails 
+            WHERE DATE(_time) = CURRENT_DATE
+        """).fetchone()[0], 9999)
+
+        # Department breakdown (limited to top 10)
+        department_data = conn.execute("""
+            SELECT department, COUNT(*) as count
+            FROM emails 
+            WHERE department IS NOT NULL AND department != ''
+            GROUP BY department
+            ORDER BY count DESC
+            LIMIT 10
+        """).fetchall()
+
+        # Timeline data (limited to last 30 days max)
         timeline_data = conn.execute("""
-            SELECT CAST(_time AS DATE) as date, COUNT(*) as count
+            SELECT DATE(_time) as date, COUNT(*) as count
             FROM emails 
             WHERE _time >= CURRENT_DATE - INTERVAL 30 DAY
-            GROUP BY CAST(_time AS DATE)
-            ORDER BY date
+            GROUP BY DATE(_time)
+            ORDER BY date DESC
+            LIMIT 30
         """).fetchall()
-        stats['timeline_data'] = timeline_data
-    except Exception as e:
-        logging.error(f"Timeline data query error: {e}")
-        stats['timeline_data'] = []
 
-    conn.close()
-    return stats
+        # Convert to safe lists with size limits
+        safe_department_data = []
+        for i, (dept, count) in enumerate(department_data):
+            if i >= 10:  # Hard limit
+                break
+            safe_department_data.append([str(dept)[:50], min(int(count), 99999)])
+
+        safe_timeline_data = []
+        for i, (date, count) in enumerate(timeline_data):
+            if i >= 30:  # Hard limit
+                break
+            safe_timeline_data.append([str(date), min(int(count), 9999)])
+
+        return {
+            'total_emails': total_emails,
+            'active_cases': active_cases,
+            'flagged_senders': flagged_senders,
+            'todays_emails': todays_emails,
+            'department_data': safe_department_data,
+            'timeline_data': safe_timeline_data
+        }
+    except Exception as e:
+        logging.error(f"Error getting dashboard stats: {e}")
+        return {
+            'total_emails': 0,
+            'active_cases': 0,
+            'flagged_senders': 0,
+            'todays_emails': 0,
+            'department_data': [],
+            'timeline_data': []
+        }
+    finally:
+        conn.close()
