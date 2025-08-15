@@ -498,160 +498,124 @@ def analytics():
         total_emails_check = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
         logging.info(f"Analytics loading with {total_emails_check} total emails in database")
 
-        # Policy violations data with better error handling
-        try:
-            policy_violations = conn.execute("""
-                SELECT policy_name, COUNT(*) as count
-                FROM emails 
-                WHERE policy_name IS NOT NULL AND policy_name != '' AND policy_name != '-'
-                GROUP BY policy_name
-                ORDER BY count DESC
-                LIMIT 10
-            """).fetchall()
-            logging.info(f"Found {len(policy_violations)} policy violations")
-        except Exception as e:
-            logging.error(f"Policy violations query error: {e}")
-            policy_violations = []
+        if total_emails_check == 0:
+            # No data available - return empty but structured response
+            analytics_data = {
+                'policy_violations': [],
+                'escalations_timeline': [],
+                'risk_categories': [],
+                'dept_risk': [],
+                'dept_stats': [],
+                'monthly_trends': [],
+                'total_emails': 0,
+                'has_data': False
+            }
+            conn.close()
+            return render_template('analytics.html', analytics=analytics_data)
 
-        # Escalations over time (last 30 days) with DuckDB compatible syntax
+        # Policy violations with actual data
+        policy_violations = conn.execute("""
+            SELECT policy_name, COUNT(*) as count
+            FROM emails 
+            WHERE policy_name IS NOT NULL AND policy_name != '' AND policy_name != '-'
+            GROUP BY policy_name
+            ORDER BY count DESC
+            LIMIT 10
+        """).fetchall()
+
+        # Escalations timeline with fallback
         try:
             escalations_timeline = conn.execute("""
                 SELECT DATE(_time) as date, COUNT(*) as count
                 FROM emails 
                 WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
-                AND _time >= (CURRENT_DATE - INTERVAL 30 DAY)
+                AND _time >= DATE('now', '-30 days')
                 GROUP BY DATE(_time)
                 ORDER BY date DESC
                 LIMIT 30
             """).fetchall()
-            logging.info(f"Found {len(escalations_timeline)} escalation timeline entries")
-        except Exception as e:
-            logging.error(f"Escalations timeline query error: {e}")
-            # Try simpler query
-            try:
-                escalations_timeline = conn.execute("""
-                    SELECT DATE(_time) as date, COUNT(*) as count
-                    FROM emails 
-                    WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
-                    GROUP BY DATE(_time)
-                    ORDER BY date DESC
-                    LIMIT 30
-                """).fetchall()
-            except:
-                escalations_timeline = []
+        except:
+            escalations_timeline = conn.execute("""
+                SELECT DATE(_time) as date, COUNT(*) as count
+                FROM emails 
+                WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
+                GROUP BY DATE(_time)
+                ORDER BY date DESC
+                LIMIT 30
+            """).fetchall()
 
-        # Risk categories distribution
-        try:
-            risk_categories = conn.execute("""
-                SELECT 
-                    CASE 
-                        WHEN final_outcome IN ('high_risk', 'escalated', 'critical') THEN 'High Risk'
-                        WHEN final_outcome IN ('medium_risk', 'warning', 'pending_review') THEN 'Medium Risk'
-                        WHEN final_outcome IN ('cleared', 'approved', 'resolved') THEN 'Low Risk'
-                        WHEN final_outcome IN ('excluded', 'whitelisted') THEN 'Filtered'
-                        ELSE 'Pending'
-                    END as risk_level,
-                    COUNT(*) as count
-                FROM emails
-                WHERE final_outcome IS NOT NULL
-                GROUP BY CASE 
+        # Risk categories - actual data from your database
+        risk_categories = conn.execute("""
+            SELECT 
+                CASE 
                     WHEN final_outcome IN ('high_risk', 'escalated', 'critical') THEN 'High Risk'
                     WHEN final_outcome IN ('medium_risk', 'warning', 'pending_review') THEN 'Medium Risk'
                     WHEN final_outcome IN ('cleared', 'approved', 'resolved') THEN 'Low Risk'
                     WHEN final_outcome IN ('excluded', 'whitelisted') THEN 'Filtered'
-                    ELSE 'Pending'
-                END
-                ORDER BY count DESC
-            """).fetchall()
-            logging.info(f"Found {len(risk_categories)} risk categories")
-        except Exception as e:
-            logging.error(f"Risk categories query error: {e}")
-            risk_categories = []
+                    ELSE 'Pending Analysis'
+                END as risk_level,
+                COUNT(*) as count
+            FROM emails
+            GROUP BY CASE 
+                WHEN final_outcome IN ('high_risk', 'escalated', 'critical') THEN 'High Risk'
+                WHEN final_outcome IN ('medium_risk', 'warning', 'pending_review') THEN 'Medium Risk'
+                WHEN final_outcome IN ('cleared', 'approved', 'resolved') THEN 'Low Risk'
+                WHEN final_outcome IN ('excluded', 'whitelisted') THEN 'Filtered'
+                ELSE 'Pending Analysis'
+            END
+            HAVING COUNT(*) > 0
+            ORDER BY count DESC
+        """).fetchall()
 
-        # Department risk analysis - this is the key one for the view you showed
-        try:
+        # Department risk analysis - real data
+        dept_risk = conn.execute("""
+            SELECT 
+                COALESCE(department, 'Unknown Department') as department,
+                COUNT(*) as total_emails,
+                COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) as high_risk_count,
+                ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / COUNT(*), 1) as risk_percentage,
+                COUNT(CASE WHEN sender IN (SELECT sender FROM flagged_senders) THEN 1 END) as flagged_count,
+                'stable' as trend
+            FROM emails
+            WHERE department IS NOT NULL AND department != '' AND department != '-'
+            GROUP BY department
+            HAVING COUNT(*) >= 1
+            ORDER BY total_emails DESC
+            LIMIT 15
+        """).fetchall()
+
+        # If no departments with non-null names, try all departments
+        if not dept_risk:
             dept_risk = conn.execute("""
                 SELECT 
-                    COALESCE(department, 'Unknown') as department,
+                    COALESCE(department, 'Unknown Department') as department,
                     COUNT(*) as total_emails,
                     COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) as high_risk_count,
-                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as risk_percentage,
-                    COUNT(CASE WHEN sender IN (SELECT sender FROM flagged_senders) THEN 1 END) as flagged_count
+                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / COUNT(*), 1) as risk_percentage,
+                    0 as flagged_count,
+                    'stable' as trend
                 FROM emails
-                WHERE department IS NOT NULL AND department != '' AND department != '-'
-                GROUP BY department
-                HAVING COUNT(*) >= 1
+                GROUP BY COALESCE(department, 'Unknown Department')
                 ORDER BY total_emails DESC
                 LIMIT 15
             """).fetchall()
-            logging.info(f"Found {len(dept_risk)} departments with risk analysis")
-        except Exception as e:
-            logging.error(f"Department risk query error: {e}")
-            # Try simpler query
-            try:
-                dept_risk = conn.execute("""
-                    SELECT 
-                        department,
-                        COUNT(*) as total_emails,
-                        0 as high_risk_count,
-                        0.0 as risk_percentage,
-                        0 as flagged_count
-                    FROM emails
-                    WHERE department IS NOT NULL AND department != '' AND department != '-'
-                    GROUP BY department
-                    ORDER BY total_emails DESC
-                    LIMIT 15
-                """).fetchall()
-            except:
-                dept_risk = []
 
-        # Monthly trend data with better date handling
-        try:
-            monthly_trends = conn.execute("""
-                SELECT 
-                    strftime('%Y-%m', _time) as month,
-                    COUNT(*) as total_emails,
-                    COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) as escalated_emails,
-                    COUNT(CASE WHEN final_outcome IN ('cleared', 'approved', 'resolved') THEN 1 END) as cleared_emails
-                FROM emails
-                WHERE _time IS NOT NULL
-                GROUP BY strftime('%Y-%m', _time)
-                ORDER BY month DESC
-                LIMIT 12
-            """).fetchall()
-            logging.info(f"Found {len(monthly_trends)} monthly trend entries")
-        except Exception as e:
-            logging.error(f"Monthly trends query error: {e}")
-            monthly_trends = []
+        # Monthly trends with real data
+        monthly_trends = conn.execute("""
+            SELECT 
+                strftime('%Y-%m', _time) as month,
+                COUNT(*) as total_emails,
+                COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) as escalated_emails,
+                COUNT(CASE WHEN final_outcome IN ('cleared', 'approved', 'resolved') THEN 1 END) as cleared_emails
+            FROM emails
+            WHERE _time IS NOT NULL
+            GROUP BY strftime('%Y-%m', _time)
+            ORDER BY month DESC
+            LIMIT 12
+        """).fetchall()
 
-        # Additional department statistics for the specific view you showed
-        try:
-            dept_stats = conn.execute("""
-                SELECT 
-                    department,
-                    COUNT(*) as total_emails,
-                    COUNT(CASE WHEN sender IN (SELECT sender FROM flagged_senders) THEN 1 END) as flagged_senders_count,
-                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 1) as risk_percentage,
-                    CASE 
-                        WHEN COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) > 20 THEN 'High'
-                        WHEN COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) > 10 THEN 'Medium'
-                        ELSE 'Low'
-                    END as risk_level,
-                    CASE 
-                        WHEN COUNT(*) > LAG(COUNT(*)) OVER (ORDER BY strftime('%Y-%m', MAX(_time))) THEN 'up'
-                        WHEN COUNT(*) < LAG(COUNT(*)) OVER (ORDER BY strftime('%Y-%m', MAX(_time))) THEN 'down'
-                        ELSE 'stable'
-                    END as trend
-                FROM emails
-                WHERE department IS NOT NULL AND department != '' AND department != '-'
-                GROUP BY department
-                HAVING COUNT(*) >= 1
-                ORDER BY total_emails DESC
-            """).fetchall()
-            logging.info(f"Found {len(dept_stats)} department statistics")
-        except Exception as e:
-            logging.error(f"Department statistics query error: {e}")
-            dept_stats = []
+        # Use dept_risk as dept_stats for compatibility
+        dept_stats = dept_risk
 
         conn.close()
 
@@ -660,25 +624,27 @@ def analytics():
             'escalations_timeline': escalations_timeline,
             'risk_categories': risk_categories,
             'dept_risk': dept_risk,
-            'monthly_trends': monthly_trends,
             'dept_stats': dept_stats,
-            'total_emails': total_emails_check
+            'monthly_trends': monthly_trends,
+            'total_emails': total_emails_check,
+            'has_data': True
         }
 
-        logging.info(f"Analytics data prepared with {len(dept_risk)} departments")
+        logging.info(f"Analytics loaded: {len(dept_risk)} departments, {len(policy_violations)} policies, {len(risk_categories)} risk categories")
         return render_template('analytics.html', analytics=analytics_data)
     
     except Exception as e:
         logging.error(f"Analytics dashboard error: {e}")
-        # Return empty analytics data to prevent template errors
         analytics_data = {
             'policy_violations': [],
             'escalations_timeline': [],
             'risk_categories': [],
             'dept_risk': [],
-            'monthly_trends': [],
             'dept_stats': [],
-            'total_emails': 0
+            'monthly_trends': [],
+            'total_emails': 0,
+            'has_data': False,
+            'error': str(e)
         }
         return render_template('analytics.html', analytics=analytics_data)
 
