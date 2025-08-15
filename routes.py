@@ -1046,6 +1046,218 @@ def api_admin_delete_rule(rule_id):
         logging.error(f"Delete rule error: {e}")
         return jsonify({'error': 'Failed to delete rule'}), 500
 
+@app.route('/api/admin/available-fields')
+def api_admin_get_available_fields():
+    """Get available database fields for rule building"""
+    try:
+        conn = get_db_connection()
+        
+        # Get actual column names from emails table
+        columns_info = conn.execute("PRAGMA table_info(emails)").fetchall()
+        fields = [col[1] for col in columns_info]  # col[1] is the column name
+        
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'fields': fields,
+            'field_descriptions': {
+                '_time': 'Email timestamp',
+                'sender': 'Email sender address',
+                'subject': 'Email subject line',
+                'attachments': 'File attachments',
+                'recipients': 'Email recipients',
+                'time_month': 'Month of email',
+                'leaver': 'Is sender a former employee',
+                'termination_date': 'Employee termination date',
+                'bunit': 'Business unit',
+                'department': 'Department',
+                'user_response': 'User response to email',
+                'final_outcome': 'Processing outcome',
+                'policy_name': 'Policy violation name',
+                'justifications': 'Email justifications/content'
+            }
+        })
+    except Exception as e:
+        logging.error(f"Get available fields error: {e}")
+        return jsonify({'error': 'Failed to load available fields'}), 500
+
+@app.route('/api/admin/test-rule', methods=['POST'])
+def api_admin_test_rule():
+    """Test rule conditions against existing emails"""
+    try:
+        data = request.json or {}
+        conditions = data.get('conditions', [])
+        logic_type = data.get('logic_type', 'AND')
+        
+        if not conditions:
+            return jsonify({'error': 'No conditions provided'}), 400
+
+        conn = get_db_connection()
+        
+        # Build test query
+        where_clauses = []
+        params = []
+        
+        for condition in conditions:
+            field = condition.get('field')
+            operator = condition.get('operator')
+            value = condition.get('value')
+            case_sensitive = condition.get('case_sensitive', False)
+            
+            if not all([field, operator, value]):
+                continue
+                
+            # Build condition based on operator
+            if operator == 'contains':
+                if case_sensitive:
+                    where_clauses.append(f"{field} LIKE ?")
+                    params.append(f'%{value}%')
+                else:
+                    where_clauses.append(f"LOWER({field}) LIKE LOWER(?)")
+                    params.append(f'%{value}%')
+            elif operator == 'equals':
+                if case_sensitive:
+                    where_clauses.append(f"{field} = ?")
+                    params.append(value)
+                else:
+                    where_clauses.append(f"LOWER({field}) = LOWER(?)")
+                    params.append(value)
+            elif operator == 'not_contains':
+                if case_sensitive:
+                    where_clauses.append(f"({field} NOT LIKE ? OR {field} IS NULL)")
+                    params.append(f'%{value}%')
+                else:
+                    where_clauses.append(f"(LOWER({field}) NOT LIKE LOWER(?) OR {field} IS NULL)")
+                    params.append(f'%{value}%')
+            elif operator == 'starts_with':
+                if case_sensitive:
+                    where_clauses.append(f"{field} LIKE ?")
+                    params.append(f'{value}%')
+                else:
+                    where_clauses.append(f"LOWER({field}) LIKE LOWER(?)")
+                    params.append(f'{value}%')
+            elif operator == 'ends_with':
+                if case_sensitive:
+                    where_clauses.append(f"{field} LIKE ?")
+                    params.append(f'%{value}')
+                else:
+                    where_clauses.append(f"LOWER({field}) LIKE LOWER(?)")
+                    params.append(f'%{value}')
+            elif operator == 'regex':
+                # SQLite doesn't have built-in regex, so we'll use LIKE with wildcards
+                where_clauses.append(f"{field} LIKE ?")
+                params.append(f'%{value}%')
+        
+        if not where_clauses:
+            return jsonify({'error': 'No valid conditions found'}), 400
+        
+        # Combine conditions with logic type
+        logic_operator = ' AND ' if logic_type == 'AND' else ' OR '
+        where_clause = f"WHERE ({logic_operator.join(where_clauses)})"
+        
+        # Get matching emails (limit to 100 for performance)
+        query = f"""
+            SELECT id, sender, subject, COUNT(*) OVER() as total_count
+            FROM emails 
+            {where_clause}
+            LIMIT 100
+        """
+        
+        results = conn.execute(query, params).fetchall()
+        
+        # Get total count of all emails for comparison
+        total_emails = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
+        
+        conn.close()
+        
+        matching_count = results[0][3] if results else 0
+        sample_matches = [f"ID {r[0]}: {r[1]} - {r[2][:50]}..." for r in results[:5]]
+        
+        return jsonify({
+            'success': True,
+            'matching_count': matching_count,
+            'total_count': total_emails,
+            'sample_matches': sample_matches,
+            'logic_type': logic_type,
+            'conditions_tested': len(conditions)
+        })
+        
+    except Exception as e:
+        logging.error(f"Test rule error: {e}")
+        return jsonify({'error': f'Rule test failed: {str(e)}'}), 500
+
+@app.route('/api/admin/rule/<int:rule_id>')
+def api_admin_get_rule(rule_id):
+    """Get rule details for editing"""
+    try:
+        conn = get_db_connection()
+        rule = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE id = ?
+        """, [rule_id]).fetchone()
+        conn.close()
+
+        if not rule:
+            return jsonify({'error': 'Rule not found'}), 404
+
+        # Parse conditions if it's JSON
+        conditions_data = rule[2]
+        try:
+            parsed_conditions = json.loads(conditions_data) if conditions_data else {}
+        except (json.JSONDecodeError, TypeError):
+            parsed_conditions = {'conditions': conditions_data}
+
+        rule_data = {
+            'id': rule[0],
+            'rule_type': rule[1],
+            'conditions': rule[2],
+            'action': rule[3],
+            'is_active': rule[4],
+            'created_at': rule[5].strftime('%Y-%m-%d') if rule[5] else 'N/A',
+            'rule_name': parsed_conditions.get('rule_name', f'Rule {rule[0]}'),
+            'logic_type': parsed_conditions.get('logic_type', 'AND'),
+            'parsed_conditions': parsed_conditions.get('conditions', [])
+        }
+
+        return jsonify(rule_data)
+    except Exception as e:
+        logging.error(f"Get rule error: {e}")
+        return jsonify({'error': 'Failed to load rule'}), 500
+
+@app.route('/api/admin/toggle-rule', methods=['POST'])
+def api_admin_toggle_rule():
+    """Toggle rule active status"""
+    try:
+        data = request.json or {}
+        rule_id = data.get('rule_id')
+        is_active = data.get('is_active', True)
+
+        if not rule_id:
+            return jsonify({'error': 'Rule ID is required'}), 400
+
+        conn = get_db_connection()
+        result = conn.execute("""
+            UPDATE admin_rules 
+            SET is_active = ?
+            WHERE id = ?
+        """, [is_active, rule_id])
+        
+        if result.rowcount == 0:
+            conn.close()
+            return jsonify({'error': 'Rule not found'}), 404
+            
+        conn.close()
+
+        return jsonify({
+            'success': True, 
+            'message': f'Rule {"enabled" if is_active else "disabled"} successfully'
+        })
+    except Exception as e:
+        logging.error(f"Toggle rule error: {e}")
+        return jsonify({'error': 'Failed to toggle rule'}), 500
+
 @app.route('/api/admin/add-keyword', methods=['POST'])
 def api_admin_add_keyword():
     """Add keyword to risk or exclusion list"""

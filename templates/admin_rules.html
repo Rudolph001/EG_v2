@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Admin Rules - Email Guardian{% endblock %}
@@ -8,13 +9,40 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>
                 <i class="fas fa-cogs"></i>
-                Admin Rules Configuration
+                Advanced Admin Rules Configuration
             </h1>
             <div>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
                     <i class="fas fa-plus"></i>
-                    Add New Rule
+                    Build New Rule
                 </button>
+                <button type="button" class="btn btn-info" onclick="loadAvailableFields()">
+                    <i class="fas fa-database"></i>
+                    View Available Fields
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Fields Info Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle"></i>
+                    Available Fields for Rule Building
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="availableFieldsContainer">
+                    <div class="col-md-12 text-center">
+                        <button class="btn btn-outline-info" onclick="loadAvailableFields()">
+                            <i class="fas fa-sync"></i> Load Current Database Fields
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -39,6 +67,7 @@
                                 <th>Rule ID</th>
                                 <th>Rule Type</th>
                                 <th>Conditions</th>
+                                <th>Logic</th>
                                 <th>Action</th>
                                 <th>Status</th>
                                 <th>Created</th>
@@ -68,14 +97,27 @@
                                         <span class="badge bg-success">
                                             <i class="fas fa-arrow-up"></i> Auto Escalation
                                         </span>
+                                    {% elif rule[1] == 'advanced_rule' %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-brain"></i> Advanced Rule
+                                        </span>
                                     {% else %}
                                         <span class="badge bg-secondary">{{ rule[1] or 'Unknown' }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <div class="text-break" style="max-width: 300px;">
-                                        <code class="small">{{ rule[2] or 'No conditions defined' }}</code>
+                                        <small class="text-muted">{{ rule[2][:100] + '...' if rule[2] and rule[2]|length > 100 else (rule[2] or 'No conditions') }}</small>
                                     </div>
+                                </td>
+                                <td>
+                                    {% if 'AND' in (rule[2] or '') %}
+                                        <span class="badge bg-success">AND</span>
+                                    {% elif 'OR' in (rule[2] or '') %}
+                                        <span class="badge bg-warning">OR</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Simple</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if rule[3] == 'block' %}
@@ -151,9 +193,9 @@
                 <div class="text-center py-5">
                     <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No admin rules configured</h5>
-                    <p class="text-muted">Create your first admin rule to automate email processing.</p>
+                    <p class="text-muted">Create your first advanced rule to automate email processing.</p>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRuleModal">
-                        <i class="fas fa-plus"></i> Create First Rule
+                        <i class="fas fa-plus"></i> Build First Rule
                     </button>
                 </div>
                 {% endif %}
@@ -162,80 +204,209 @@
     </div>
 </div>
 
-<!-- Rule Templates -->
+<!-- Advanced Rule Builder Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addRuleModalLabel">
+                    <i class="fas fa-brain"></i> Advanced Rule Builder
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRuleForm">
+                    <!-- Rule Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="ruleName" class="form-label fw-bold">Rule Name</label>
+                            <input type="text" class="form-control" id="ruleName" name="rule_name" 
+                                   placeholder="My Custom Rule" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="ruleType" class="form-label fw-bold">Rule Type</label>
+                            <select class="form-select" id="ruleType" name="rule_type" required>
+                                <option value="">Select rule type...</option>
+                                <option value="advanced_rule">Advanced Multi-Condition Rule</option>
+                                <option value="sender_filter">Sender Filter</option>
+                                <option value="content_filter">Content Filter</option>
+                                <option value="attachment_filter">Attachment Filter</option>
+                                <option value="auto_escalation">Auto Escalation</option>
+                                <option value="department_filter">Department Filter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="ruleAction" class="form-label fw-bold">Action</label>
+                            <select class="form-select" id="ruleAction" name="action" required>
+                                <option value="">Select action...</option>
+                                <option value="flag">Flag for Review</option>
+                                <option value="block">Block Email</option>
+                                <option value="escalate">Create Case</option>
+                                <option value="notify">Send Notification</option>
+                                <option value="quarantine">Quarantine</option>
+                                <option value="whitelist">Add to Whitelist</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Logic Type Selection -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Condition Logic</label>
+                            <div class="btn-group w-100" role="group" aria-label="Logic type">
+                                <input type="radio" class="btn-check" name="logic_type" id="logicAnd" value="AND" checked>
+                                <label class="btn btn-outline-success" for="logicAnd">
+                                    <i class="fas fa-link"></i> ALL conditions must match (AND)
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="logic_type" id="logicOr" value="OR">
+                                <label class="btn btn-outline-warning" for="logicOr">
+                                    <i class="fas fa-code-branch"></i> ANY condition can match (OR)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conditions Builder -->
+                    <div class="card border-primary mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-filter"></i> Build Conditions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="conditionsContainer">
+                                <!-- Initial condition will be added here -->
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary" onclick="addCondition()">
+                                    <i class="fas fa-plus"></i> Add Condition
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearAllConditions()">
+                                    <i class="fas fa-trash"></i> Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rule Preview -->
+                    <div class="card border-info mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye"></i> Rule Preview
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <pre id="rulePreview" class="bg-light p-3 border rounded">
+{
+  "rule_name": "Enter rule name...",
+  "logic_type": "AND",
+  "conditions": []
+}
+                            </pre>
+                        </div>
+                    </div>
+
+                    <!-- Enable Rule -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ruleActive" name="is_active" checked>
+                            <label class="form-check-label fw-bold" for="ruleActive">
+                                <i class="fas fa-power-off"></i> Enable rule immediately
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="testRule()">
+                    <i class="fas fa-vial"></i> Test Rule
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitAdvancedRule()">
+                    <i class="fas fa-save"></i> Save Rule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Rule Templates -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card border-info">
-            <div class="card-header bg-info text-white">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-lightbulb"></i>
-                    Rule Templates
+                    <i class="fas fa-magic"></i>
+                    Quick Rule Templates
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-primary">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="fas fa-shield-alt text-danger"></i>
-                                    Suspicious Attachment Filter
+                                <h6 class="card-title text-primary">
+                                    <i class="fas fa-shield-alt"></i>
+                                    High-Risk Sender
                                 </h6>
                                 <p class="card-text small">
-                                    Automatically flag emails with potentially dangerous attachments (.exe, .zip, .bat files).
+                                    Flag emails from external domains with attachments AND suspicious keywords.
                                 </p>
-                                <button class="btn btn-outline-primary btn-sm" onclick="useTemplate('attachment_filter')">
+                                <button class="btn btn-outline-primary btn-sm" onclick="useAdvancedTemplate('high_risk_sender')">
                                     Use Template
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-warning">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="fas fa-user-times text-warning"></i>
-                                    External Sender Alert
+                                <h6 class="card-title text-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Department Alert
                                 </h6>
                                 <p class="card-text small">
-                                    Flag emails from external domains not in the company whitelist.
+                                    Monitor Finance OR Legal departments for sensitive keywords.
                                 </p>
-                                <button class="btn btn-outline-primary btn-sm" onclick="useTemplate('external_sender')">
+                                <button class="btn btn-outline-warning btn-sm" onclick="useAdvancedTemplate('department_alert')">
                                     Use Template
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-danger">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="fas fa-exclamation-triangle text-info"></i>
-                                    High Volume Sender
+                                <h6 class="card-title text-danger">
+                                    <i class="fas fa-user-times"></i>
+                                    Former Employee
                                 </h6>
                                 <p class="card-text small">
-                                    Escalate when a sender exceeds 50 emails per day to detect potential spam.
+                                    Block emails from leavers with specific file attachments.
                                 </p>
-                                <button class="btn btn-outline-primary btn-sm" onclick="useTemplate('volume_check')">
+                                <button class="btn btn-outline-danger btn-sm" onclick="useAdvancedTemplate('former_employee')">
                                     Use Template
                                 </button>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100 border-info">
                             <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="fas fa-search text-success"></i>
-                                    Keyword Detection
+                                <h6 class="card-title text-info">
+                                    <i class="fas fa-clock"></i>
+                                    After Hours Activity
                                 </h6>
                                 <p class="card-text small">
-                                    Flag emails containing suspicious keywords like "urgent", "confidential", "password".
+                                    Flag weekend emails OR after 6 PM with large attachments.
                                 </p>
-                                <button class="btn btn-outline-primary btn-sm" onclick="useTemplate('keyword_filter')">
+                                <button class="btn btn-outline-info btn-sm" onclick="useAdvancedTemplate('after_hours')">
                                     Use Template
                                 </button>
                             </div>
@@ -247,165 +418,307 @@
     </div>
 </div>
 
-<!-- Add Rule Modal -->
-<div class="modal fade" id="addRuleModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Admin Rule</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addRuleForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="ruleType" class="form-label">Rule Type</label>
-                                <select class="form-select" id="ruleType" name="rule_type" required onchange="updateConditionsPlaceholder()">
-                                    <option value="">Select rule type...</option>
-                                    <option value="sender_filter">Sender Filter</option>
-                                    <option value="content_filter">Content Filter</option>
-                                    <option value="attachment_filter">Attachment Filter</option>
-                                    <option value="auto_escalation">Auto Escalation</option>
-                                    <option value="time_based">Time-based Rule</option>
-                                    <option value="department_filter">Department Filter</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="ruleAction" class="form-label">Action</label>
-                                <select class="form-select" id="ruleAction" name="action" required>
-                                    <option value="">Select action...</option>
-                                    <option value="flag">Flag for Review</option>
-                                    <option value="block">Block Email</option>
-                                    <option value="escalate">Create Case</option>
-                                    <option value="notify">Send Notification</option>
-                                    <option value="quarantine">Quarantine</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="ruleConditions" class="form-label">Rule Conditions (JSON format)</label>
-                        <textarea class="form-control font-monospace" id="ruleConditions" name="conditions" 
-                                  rows="4" required placeholder="Enter rule conditions in JSON format..."></textarea>
-                        <div class="form-text">
-                            <small class="text-muted">
-                                Example: {"sender_domain": "*.suspicious-domain.com", "attachment_types": [".exe", ".zip"]}
-                            </small>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="ruleActive" name="is_active" checked>
-                            <label class="form-check-label" for="ruleActive">
-                                Enable rule immediately
-                            </label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="submitRule()">
-                    <i class="fas fa-plus"></i> Add Rule
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-// Rule templates
-const ruleTemplates = {
-    attachment_filter: {
-        rule_type: 'attachment_filter',
-        action: 'flag',
-        conditions: JSON.stringify({
-            "attachment_extensions": [".exe", ".bat", ".scr", ".zip", ".rar"],
-            "description": "Flag emails with potentially dangerous attachments"
-        }, null, 2)
-    },
-    external_sender: {
-        rule_type: 'sender_filter',
-        action: 'flag',
-        conditions: JSON.stringify({
-            "sender_domain_not_in": ["company.com", "internal.org"],
-            "description": "Flag emails from external domains"
-        }, null, 2)
-    },
-    volume_check: {
-        rule_type: 'auto_escalation',
-        action: 'escalate',
-        conditions: JSON.stringify({
-            "emails_per_day": 50,
-            "time_window": "24h",
-            "description": "Escalate high-volume senders"
-        }, null, 2)
-    },
-    keyword_filter: {
-        rule_type: 'content_filter',
-        action: 'flag',
-        conditions: JSON.stringify({
-            "keywords": ["urgent", "confidential", "password", "verify account", "click here"],
-            "case_sensitive": false,
-            "description": "Flag emails with suspicious keywords"
-        }, null, 2)
-    }
+// Available database fields
+let availableFields = [];
+
+// Field types and operators mapping
+const fieldOperators = {
+    'text': ['contains', 'equals', 'starts_with', 'ends_with', 'not_contains', 'regex'],
+    'number': ['equals', 'greater_than', 'less_than', 'between'],
+    'date': ['equals', 'after', 'before', 'between'],
+    'boolean': ['equals', 'is_true', 'is_false'],
+    'list': ['contains', 'not_contains', 'in_list']
 };
 
-function useTemplate(templateName) {
-    const template = ruleTemplates[templateName];
-    if (template) {
-        document.getElementById('ruleType').value = template.rule_type;
-        document.getElementById('ruleAction').value = template.action;
-        document.getElementById('ruleConditions').value = template.conditions;
-        new bootstrap.Modal(document.getElementById('addRuleModal')).show();
+// Field type mapping
+const fieldTypes = {
+    'sender': 'text',
+    'subject': 'text',
+    'recipients': 'text',
+    'attachments': 'text',
+    'department': 'text',
+    'bunit': 'text',
+    'leaver': 'boolean',
+    'termination_date': 'date',
+    '_time': 'date',
+    'time_month': 'text',
+    'user_response': 'text',
+    'final_outcome': 'text',
+    'policy_name': 'text',
+    'justifications': 'text'
+};
+
+let conditionCounter = 0;
+
+// Load available fields from database
+function loadAvailableFields() {
+    fetch('/api/admin/available-fields')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                availableFields = data.fields;
+                displayAvailableFields(data.fields);
+            } else {
+                // Use default fields if API fails
+                availableFields = Object.keys(fieldTypes);
+                displayAvailableFields(availableFields);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading fields:', error);
+            // Use default fields
+            availableFields = Object.keys(fieldTypes);
+            displayAvailableFields(availableFields);
+        });
+}
+
+function displayAvailableFields(fields) {
+    const container = document.getElementById('availableFieldsContainer');
+    const fieldGroups = {
+        'Email Content': ['sender', 'subject', 'recipients', 'attachments'],
+        'Metadata': ['_time', 'time_month', 'department', 'bunit'],
+        'User Info': ['leaver', 'termination_date', 'user_response'],
+        'Processing': ['final_outcome', 'policy_name', 'justifications']
+    };
+
+    let html = '';
+    for (const [groupName, groupFields] of Object.entries(fieldGroups)) {
+        const availableInGroup = groupFields.filter(field => fields.includes(field));
+        if (availableInGroup.length > 0) {
+            html += `
+                <div class="col-md-3 mb-3">
+                    <h6 class="text-primary"><i class="fas fa-folder"></i> ${groupName}</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${availableInGroup.map(field => 
+                            `<span class="badge bg-light text-dark border">${field}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
     }
+
+    // Add any other fields not in groups
+    const otherFields = fields.filter(field => 
+        !Object.values(fieldGroups).flat().includes(field)
+    );
+    if (otherFields.length > 0) {
+        html += `
+            <div class="col-md-3 mb-3">
+                <h6 class="text-secondary"><i class="fas fa-plus-circle"></i> Other Fields</h6>
+                <div class="d-flex flex-wrap gap-1">
+                    ${otherFields.map(field => 
+                        `<span class="badge bg-secondary">${field}</span>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
 }
 
-function updateConditionsPlaceholder() {
-    const ruleType = document.getElementById('ruleType').value;
-    const conditionsTextarea = document.getElementById('ruleConditions');
+function addCondition() {
+    conditionCounter++;
+    const conditionId = `condition_${conditionCounter}`;
     
-    const placeholders = {
-        'sender_filter': '{"sender_domain": "example.com", "sender_pattern": "*@suspicious.com"}',
-        'content_filter': '{"keywords": ["urgent", "verify"], "subject_pattern": "*URGENT*"}',
-        'attachment_filter': '{"extensions": [".exe", ".zip"], "max_size_mb": 10}',
-        'auto_escalation': '{"threshold": 10, "time_window": "1h"}',
-        'time_based': '{"time_range": "18:00-06:00", "days": ["saturday", "sunday"]}',
-        'department_filter': '{"departments": ["finance", "hr"], "action_type": "review"}'
-    };
+    const fieldOptions = availableFields.map(field => 
+        `<option value="${field}">${field}</option>`
+    ).join('');
     
-    conditionsTextarea.placeholder = placeholders[ruleType] || 'Enter rule conditions in JSON format...';
+    const conditionHtml = `
+        <div class="condition-row border rounded p-3 mb-3" id="${conditionId}" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-primary">
+                        <i class="fas fa-database"></i> Field
+                    </label>
+                    <select class="form-select condition-field" onchange="updateOperators('${conditionId}')">
+                        <option value="">Select field...</option>
+                        ${fieldOptions}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-success">
+                        <i class="fas fa-filter"></i> Operator
+                    </label>
+                    <select class="form-select condition-operator">
+                        <option value="">Select operator...</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-warning">
+                        <i class="fas fa-edit"></i> Value
+                    </label>
+                    <input type="text" class="form-control condition-value" 
+                           placeholder="Enter value..." onchange="updatePreview()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-info">Case Sensitive</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input condition-case-sensitive" type="checkbox">
+                        <label class="form-check-label">Sensitive</label>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                            onclick="removeCondition('${conditionId}')" title="Remove Condition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('conditionsContainer').insertAdjacentHTML('beforeend', conditionHtml);
+    updatePreview();
 }
 
-function submitRule() {
-    const formData = new FormData(document.getElementById('addRuleForm'));
-    const data = {
-        rule_type: formData.get('rule_type'),
-        conditions: formData.get('conditions'),
-        action: formData.get('action'),
-        is_active: formData.get('is_active') ? true : false
-    };
+function updateOperators(conditionId) {
+    const row = document.getElementById(conditionId);
+    const fieldSelect = row.querySelector('.condition-field');
+    const operatorSelect = row.querySelector('.condition-operator');
+    const field = fieldSelect.value;
     
-    // Validate JSON
-    try {
-        JSON.parse(data.conditions);
-    } catch (e) {
-        alert('Invalid JSON format in conditions. Please check your syntax.');
+    if (field) {
+        const fieldType = fieldTypes[field] || 'text';
+        const operators = fieldOperators[fieldType] || fieldOperators['text'];
+        
+        operatorSelect.innerHTML = '<option value="">Select operator...</option>' +
+            operators.map(op => `<option value="${op}">${op.replace('_', ' ')}</option>`).join('');
+    } else {
+        operatorSelect.innerHTML = '<option value="">Select operator...</option>';
+    }
+    
+    updatePreview();
+}
+
+function removeCondition(conditionId) {
+    document.getElementById(conditionId).remove();
+    updatePreview();
+}
+
+function clearAllConditions() {
+    document.getElementById('conditionsContainer').innerHTML = '';
+    updatePreview();
+}
+
+function updatePreview() {
+    const conditions = [];
+    document.querySelectorAll('.condition-row').forEach(row => {
+        const field = row.querySelector('.condition-field').value;
+        const operator = row.querySelector('.condition-operator').value;
+        const value = row.querySelector('.condition-value').value;
+        const caseSensitive = row.querySelector('.condition-case-sensitive').checked;
+
+        if (field && operator && value) {
+            conditions.push({
+                field: field,
+                operator: operator,
+                value: value,
+                case_sensitive: caseSensitive
+            });
+        }
+    });
+
+    const logicType = document.querySelector('input[name="logic_type"]:checked')?.value || 'AND';
+    const ruleName = document.getElementById('ruleName').value || 'Enter rule name...';
+
+    const preview = {
+        rule_name: ruleName,
+        logic_type: logicType,
+        conditions: conditions,
+        total_conditions: conditions.length,
+        description: conditions.length > 0 ? 
+            `This rule will trigger when ${logicType === 'AND' ? 'ALL' : 'ANY'} of the ${conditions.length} condition(s) match.` :
+            'No conditions defined yet. Add conditions above.'
+    };
+
+    document.getElementById('rulePreview').textContent = JSON.stringify(preview, null, 2);
+}
+
+function testRule() {
+    const conditions = [];
+    document.querySelectorAll('.condition-row').forEach(row => {
+        const field = row.querySelector('.condition-field').value;
+        const operator = row.querySelector('.condition-operator').value;
+        const value = row.querySelector('.condition-value').value;
+        const caseSensitive = row.querySelector('.condition-case-sensitive').checked;
+
+        if (field && operator && value) {
+            conditions.push({ field, operator, value, case_sensitive: caseSensitive });
+        }
+    });
+
+    if (conditions.length === 0) {
+        alert('Please add at least one condition to test.');
         return;
     }
-    
+
+    const testData = {
+        conditions: conditions,
+        logic_type: document.querySelector('input[name="logic_type"]:checked').value
+    };
+
+    fetch('/api/admin/test-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(`Rule test completed!\n\nMatching emails: ${result.matching_count}\nTotal emails checked: ${result.total_count}\n\nFirst few matches:\n${result.sample_matches.join('\n')}`);
+        } else {
+            alert('Test failed: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Test error:', error);
+        alert('Test failed: ' + error.message);
+    });
+}
+
+function submitAdvancedRule() {
+    const form = document.getElementById('addRuleForm');
+    const formData = new FormData(form);
+
+    // Collect conditions
+    const conditions = [];
+    document.querySelectorAll('.condition-row').forEach(row => {
+        const field = row.querySelector('.condition-field').value;
+        const operator = row.querySelector('.condition-operator').value;
+        const value = row.querySelector('.condition-value').value;
+        const caseSensitive = row.querySelector('.condition-case-sensitive').checked;
+
+        if (field && operator && value) {
+            conditions.push({ field, operator, value, case_sensitive: caseSensitive });
+        }
+    });
+
+    if (conditions.length === 0) {
+        alert('Please add at least one condition.');
+        return;
+    }
+
+    const ruleData = {
+        rule_name: formData.get('rule_name'),
+        rule_type: formData.get('rule_type'),
+        action: formData.get('action'),
+        logic_type: formData.get('logic_type'),
+        conditions: JSON.stringify({
+            rule_name: formData.get('rule_name'),
+            logic_type: formData.get('logic_type'),
+            conditions: conditions
+        }),
+        is_active: formData.get('is_active') ? true : false
+    };
+
     fetch('/api/add-admin-rule', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ruleData)
     })
     .then(response => response.json())
     .then(result => {
@@ -418,8 +731,84 @@ function submitRule() {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while adding the rule.');
+        alert('An error occurred while saving the rule.');
     });
+}
+
+// Advanced rule templates
+const advancedTemplates = {
+    high_risk_sender: {
+        rule_name: 'High-Risk External Sender',
+        rule_type: 'advanced_rule',
+        action: 'escalate',
+        logic_type: 'AND',
+        conditions: [
+            { field: 'sender', operator: 'not_contains', value: '@company.com', case_sensitive: false },
+            { field: 'attachments', operator: 'not_equals', value: '-', case_sensitive: false },
+            { field: 'subject', operator: 'contains', value: 'urgent|confidential|verify', case_sensitive: false }
+        ]
+    },
+    department_alert: {
+        rule_name: 'Sensitive Department Monitor',
+        rule_type: 'advanced_rule',
+        action: 'flag',
+        logic_type: 'OR',
+        conditions: [
+            { field: 'department', operator: 'equals', value: 'Finance', case_sensitive: false },
+            { field: 'department', operator: 'equals', value: 'Legal', case_sensitive: false }
+        ]
+    },
+    former_employee: {
+        rule_name: 'Former Employee Block',
+        rule_type: 'advanced_rule',
+        action: 'block',
+        logic_type: 'AND',
+        conditions: [
+            { field: 'leaver', operator: 'equals', value: 'Yes', case_sensitive: false },
+            { field: 'attachments', operator: 'contains', value: '.pdf|.doc|.xls', case_sensitive: false }
+        ]
+    },
+    after_hours: {
+        rule_name: 'After Hours Activity',
+        rule_type: 'advanced_rule',
+        action: 'flag',
+        logic_type: 'OR',
+        conditions: [
+            { field: '_time', operator: 'regex', value: '(Sat|Sun)', case_sensitive: false },
+            { field: '_time', operator: 'regex', value: '(18:|19:|20:|21:|22:|23:)', case_sensitive: false }
+        ]
+    }
+};
+
+function useAdvancedTemplate(templateName) {
+    const template = advancedTemplates[templateName];
+    if (!template) return;
+
+    // Fill form fields
+    document.getElementById('ruleName').value = template.rule_name;
+    document.getElementById('ruleType').value = template.rule_type;
+    document.getElementById('ruleAction').value = template.action;
+    document.querySelector(`input[name="logic_type"][value="${template.logic_type}"]`).checked = true;
+
+    // Clear existing conditions
+    clearAllConditions();
+
+    // Add template conditions
+    template.conditions.forEach(condition => {
+        addCondition();
+        const lastCondition = document.querySelector('.condition-row:last-child');
+        lastCondition.querySelector('.condition-field').value = condition.field;
+        updateOperators(lastCondition.id);
+        setTimeout(() => {
+            lastCondition.querySelector('.condition-operator').value = condition.operator;
+            lastCondition.querySelector('.condition-value').value = condition.value;
+            lastCondition.querySelector('.condition-case-sensitive').checked = condition.case_sensitive;
+            updatePreview();
+        }, 100);
+    });
+
+    // Show modal
+    new bootstrap.Modal(document.getElementById('addRuleModal')).show();
 }
 
 function toggleRule(ruleId, isActive) {
@@ -428,13 +817,72 @@ function toggleRule(ruleId, isActive) {
         return;
     }
     
-    // Implementation would need an API endpoint for toggling rules
-    alert(`Rule ${action} functionality would be implemented with an update API endpoint`);
+    fetch('/api/admin/toggle-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rule_id: ruleId, is_active: isActive })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the rule.');
+    });
 }
 
 function editRule(ruleId) {
-    // Implementation would need an API endpoint for getting rule details
-    alert('Edit rule functionality would be implemented with rule update endpoints');
+    fetch(`/api/admin/rule/${ruleId}`)
+    .then(response => response.json())
+    .then(rule => {
+        if (rule.error) {
+            alert('Error loading rule: ' + rule.error);
+            return;
+        }
+
+        // Populate form with rule data
+        document.getElementById('ruleName').value = rule.rule_name || '';
+        document.getElementById('ruleType').value = rule.rule_type || '';
+        document.getElementById('ruleAction').value = rule.action || '';
+        
+        // Parse conditions if they exist
+        try {
+            const conditionsData = JSON.parse(rule.conditions || '{}');
+            if (conditionsData.conditions && Array.isArray(conditionsData.conditions)) {
+                clearAllConditions();
+                conditionsData.conditions.forEach(condition => {
+                    addCondition();
+                    const lastCondition = document.querySelector('.condition-row:last-child');
+                    lastCondition.querySelector('.condition-field').value = condition.field || '';
+                    updateOperators(lastCondition.id);
+                    setTimeout(() => {
+                        lastCondition.querySelector('.condition-operator').value = condition.operator || '';
+                        lastCondition.querySelector('.condition-value').value = condition.value || '';
+                        lastCondition.querySelector('.condition-case-sensitive').checked = condition.case_sensitive || false;
+                        updatePreview();
+                    }, 100);
+                });
+                
+                if (conditionsData.logic_type) {
+                    document.querySelector(`input[name="logic_type"][value="${conditionsData.logic_type}"]`).checked = true;
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing rule conditions:', e);
+        }
+
+        // Show modal
+        new bootstrap.Modal(document.getElementById('addRuleModal')).show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to load rule details.');
+    });
 }
 
 function deleteRule(ruleId) {
@@ -442,21 +890,48 @@ function deleteRule(ruleId) {
         return;
     }
     
-    // Implementation would need an API endpoint for deleting rules
-    alert('Delete rule functionality would be implemented with a delete API endpoint');
+    fetch(`/api/admin/delete-rule/${ruleId}`, { method: 'DELETE' })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the rule.');
+    });
 }
 
-// Initialize DataTable if we have rules
-{% if rules %}
-$(document).ready(function() {
-    $('#rulesTable').DataTable({
-        order: [[5, 'desc']],
-        pageLength: 25,
-        columnDefs: [
-            { orderable: false, targets: [6] }
-        ]
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadAvailableFields();
+    
+    // Add initial condition when modal is shown
+    document.getElementById('addRuleModal').addEventListener('shown.bs.modal', function() {
+        if (document.querySelectorAll('.condition-row').length === 0) {
+            addCondition();
+        }
     });
+
+    // Update preview when logic type changes
+    document.querySelectorAll('input[name="logic_type"]').forEach(radio => {
+        radio.addEventListener('change', updatePreview);
+    });
+
+    // Update preview when rule name changes
+    document.getElementById('ruleName').addEventListener('input', updatePreview);
+
+    {% if rules %}
+    // Initialize DataTable
+    $('#rulesTable').DataTable({
+        order: [[6, 'desc']],
+        pageLength: 25,
+        columnDefs: [{ orderable: false, targets: [7] }]
+    });
+    {% endif %}
 });
-{% endif %}
 </script>
 {% endblock %}
