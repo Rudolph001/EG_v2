@@ -450,9 +450,19 @@ if __name__ == "__main__":
         print(f"❌ Error starting application: {e}")
         input("Press Enter to exit...")
 '''
-    
-    with open('startup.py', 'w') as f:
+def create_startup_script():
+    dist_dir = os.path.join(os.getcwd(), "dist")
+    os.makedirs(dist_dir, exist_ok=True)
+    startup_script_path = os.path.join(dist_dir, "start_email_guardian.bat")
+
+    startup_content = """@echo off
+python app.py
+pause
+"""
+    with open(startup_script_path, "w", encoding="utf-8") as f:
         f.write(startup_content.strip())
+    #with open('startup.py', 'w') as f:
+    #    f.write(startup_content.strip())
     
     print("✓ Startup script created")
 
