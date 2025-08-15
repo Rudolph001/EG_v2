@@ -890,6 +890,27 @@ function scheduleReport() {
 
 // Helper function to show alerts
 function showAlert(type, message) {
+    // Find or create alert container
+    let alertContainer = document.querySelector('.alert-container');
+    if (!alertContainer) {
+        // If no alert container exists, create one at the top of the page
+        alertContainer = document.createElement('div');
+        alertContainer.className = 'alert-container';
+        
+        // Try to find a good place to insert the container
+        const targetContainer = document.querySelector('.container') || 
+                               document.querySelector('.container-fluid') || 
+                               document.querySelector('main') ||
+                               document.body.firstElementChild ||
+                               document.body;
+        
+        if (targetContainer && targetContainer.parentNode) {
+            targetContainer.parentNode.insertBefore(alertContainer, targetContainer);
+        } else {
+            document.body.insertBefore(alertContainer, document.body.firstChild);
+        }
+    }
+    
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
     alertDiv.role = 'alert';
@@ -897,7 +918,15 @@ function showAlert(type, message) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
-    document.querySelector('.content').prepend(alertDiv);
+    
+    alertContainer.prepend(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}
