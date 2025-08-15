@@ -51,7 +51,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Professional Card Styling */
@@ -137,7 +139,7 @@
     padding: 0.875rem 0.75rem;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) > td {
+.table-striped>tbody>tr:nth-of-type(odd)>td {
     background-color: var(--gray-50);
 }
 
@@ -162,7 +164,7 @@
     border-radius: 6px;
 }
 
-.badge + .badge {
+.badge+.badge {
     margin-left: 0.25rem;
 }
 
@@ -244,9 +246,17 @@
     box-shadow: var(--shadow-sm);
 }
 
-.status-flagged { background-color: var(--danger-red); }
-.status-approved { background-color: var(--success-green); }
-.status-pending { background-color: var(--accent-amber); }
+.status-flagged {
+    background-color: var(--danger-red);
+}
+
+.status-approved {
+    background-color: var(--success-green);
+}
+
+.status-pending {
+    background-color: var(--accent-amber);
+}
 
 /* Professional File Upload Area */
 .upload-area {
@@ -271,10 +281,12 @@
     color: var(--danger-red) !important;
     font-weight: 600;
 }
+
 .risk-medium {
     color: var(--accent-amber) !important;
     font-weight: 600;
 }
+
 .risk-low {
     color: var(--success-green) !important;
     font-weight: 600;
@@ -481,11 +493,11 @@
 }
 
 /* Professional Utility Classes */
-.gap-2 > * + * {
+.gap-2>*+* {
     margin-left: 0.5rem !important;
 }
 
-.gap-3 > * + * {
+.gap-3>*+* {
     margin-left: 1rem !important;
 }
 
@@ -495,7 +507,8 @@ body {
     color: var(--gray-800);
 }
 
-.container, .container-fluid {
+.container,
+.container-fluid {
     background: transparent;
 }
 
@@ -799,7 +812,7 @@ footer {
 
 /* Admin Panel Tab Specific Styling */
 #adminTabs .nav-link {
-    color: #1e293b !important;
+    color: #171717 !important;
     background: #f1f5f9 !important;
     border: 2px solid #cbd5e1 !important;
     margin-right: 0.5rem;
@@ -812,7 +825,7 @@ footer {
 
 #adminTabs .nav-link.active {
     background: #2563eb !important;
-    color: #ffffff !important;
+    color: #121212 !important;
     border-color: #2563eb !important;
     box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25) !important;
 }
@@ -859,7 +872,7 @@ footer {
 }
 
 /* Button group radio button styling for better visibility */
-.btn-group .btn-check:checked + .btn,
+.btn-group .btn-check:checked+.btn,
 .btn-group .btn.active {
     background-color: var(--primary-blue) !important;
     border-color: var(--primary-blue) !important;
