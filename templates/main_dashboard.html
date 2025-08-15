@@ -4,6 +4,8 @@
 {% block title %}Main Dashboard - Email Guardian{% endblock %}
 
 {% block content %}
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <div class="row">
     <div class="col-12">
         <h1 class="mb-4">
@@ -609,5 +611,25 @@ function submitFlagSender() {
         window.EmailGuardian.showNotification('Failed to flag sender', 'error');
     });
 }
+
+// Initialize the flag sender functionality specifically for this page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Main dashboard loaded, setting up flag sender handlers');
+    
+    // Add event listener for flag sender buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-action="flag-sender"]')) {
+            e.preventDefault();
+            const button = e.target.closest('[data-action="flag-sender"]');
+            const sender = button.dataset.sender;
+            console.log('Flag sender clicked for:', sender);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('flagSenderModal'));
+            document.getElementById('flagSenderEmail').value = sender;
+            modal.show();
+        }
+    });
+});
 </script>
 {% endblock %}
