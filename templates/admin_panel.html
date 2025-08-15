@@ -748,6 +748,47 @@ function clearFlaggedSenders() {
     });
 }
 
+function clearEmails() {
+    if (!confirm('Are you sure you want to delete ALL email records? This action cannot be undone.')) {
+        return;
+    }
+
+    if (prompt('Type "DELETE" to confirm:') !== 'DELETE') {
+        return;
+    }
+
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="loading-spinner"></span> Clearing...';
+    button.disabled = true;
+
+    fetch('/api/admin/clear-emails', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(`Successfully deleted ${result.deleted_count} email records`, 'success');
+            refreshDatabaseStats();
+        } else {
+            showAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to clear email data', 'danger');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
 function clearAllData() {
     if (!confirm('⚠️ DANGER: This will delete ALL data including emails, cases, and flagged senders. This action cannot be undone.')) {
         return;

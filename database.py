@@ -53,10 +53,12 @@ def init_database():
             )
         """)
 
-        # Create flagged_senders table
+        # Create flagged_senders sequence and table
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS flagged_senders_id_seq START 1")
+        
         conn.execute("""
             CREATE TABLE IF NOT EXISTS flagged_senders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY DEFAULT nextval('flagged_senders_id_seq'),
                 sender TEXT NOT NULL,
                 reason TEXT NOT NULL,
                 flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -69,10 +71,12 @@ def init_database():
             ON flagged_senders(sender)
         """)
 
-        # Create admin_rules table
+        # Create admin_rules sequence and table
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS admin_rules_id_seq START 1")
+        
         conn.execute("""
             CREATE TABLE IF NOT EXISTS admin_rules (
-                id INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY DEFAULT nextval('admin_rules_id_seq'),
                 rule_type VARCHAR,
                 rule_name VARCHAR,
                 logic_type VARCHAR DEFAULT 'AND',
