@@ -1398,6 +1398,9 @@ function loadPolicyViolationsData() {
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary btn-sm" onclick="editPolicyByName('${violation.policy_name}')" title="Edit Policy">
+                            <i class="fas fa-edit"></i>
+                        </button>
                         <button class="btn btn-outline-success btn-sm" onclick="togglePolicyViolation('${violation.policy_name}', true)" title="Enable Detection">
                             <i class="fas fa-play"></i>
                         </button>
@@ -1414,6 +1417,33 @@ function loadPolicyViolationsData() {
         console.error('Error loading policy violations:', error);
         const tbody = document.getElementById('policyViolationsBody');
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load violations data</td></tr>';
+    });
+}
+
+function editPolicyByName(policyName) {
+    // First, find the policy by name from the loaded policies
+    fetch('/api/admin/policies')
+    .then(response => response.json())
+    .then(policies => {
+        const policy = policies.find(p => p.policy_name === policyName);
+        
+        if (policy) {
+            // Use the existing editPolicy function
+            editPolicy(policy.id);
+        } else {
+            // Create a new policy with the policy name pre-filled
+            document.getElementById('policyForm').reset();
+            document.getElementById('policyId').value = '';
+            document.getElementById('policyName').value = policyName;
+            document.getElementById('policyDescription').value = `Policy for ${policyName} violations`;
+            document.getElementById('policyModalTitle').textContent = 'Create Policy for ' + policyName;
+            
+            new bootstrap.Modal(document.getElementById('policyModal')).show();
+        }
+    })
+    .catch(error => {
+        console.error('Error finding policy:', error);
+        showAlert('Failed to load policy for editing', 'danger');
     });
 }
 

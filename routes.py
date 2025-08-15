@@ -1732,6 +1732,39 @@ def api_admin_get_policy(policy_id):
         logging.error(f"Get policy error: {e}")
         return jsonify({'error': 'Failed to load policy'}), 500
 
+@app.route('/api/admin/policy-by-name/<policy_name>')
+def api_admin_get_policy_by_name(policy_name):
+    """Get single policy by name"""
+    try:
+        conn = get_db_connection()
+        policy = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE rule_type = 'policy' AND JSON_EXTRACT(conditions, '$.policy_name') = ?
+        """, [policy_name]).fetchone()
+        conn.close()
+
+        if not policy:
+            return jsonify({'error': 'Policy not found'}), 404
+
+        conditions_data = json.loads(policy[2]) if policy[2] else {}
+        policy_data = {
+            'id': policy[0],
+            'policy_name': conditions_data.get('policy_name', f'Policy {policy[0]}'),
+            'description': conditions_data.get('description', ''),
+            'severity': conditions_data.get('severity', 'medium'),
+            'action': policy[3],
+            'keywords': conditions_data.get('keywords', ''),
+            'rules': conditions_data.get('rules', ''),
+            'is_active': policy[4],
+            'created_at': policy[5].strftime('%Y-%m-%d') if policy[5] else 'N/A'
+        }
+
+        return jsonify(policy_data)
+    except Exception as e:
+        logging.error(f"Get policy by name error: {e}")
+        return jsonify({'error': 'Failed to load policy'}), 500
+
 @app.route('/api/admin/save-policy', methods=['POST'])
 def api_admin_save_policy():
     """Save or update policy"""
