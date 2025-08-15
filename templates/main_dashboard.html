@@ -336,6 +336,45 @@
     </div>
 </div>
 
+<!-- Flag Sender Modal -->
+<div class="modal fade" id="flagSenderModal" tabindex="-1" aria-labelledby="flagSenderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="flagSenderModalLabel">Flag Sender</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="flagSenderForm">
+                    <div class="mb-3">
+                        <label for="flagSenderEmail" class="form-label">Sender Email</label>
+                        <input type="email" class="form-control" id="flagSenderEmail" name="sender" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="flagReason" class="form-label">Reason for Flagging</label>
+                        <select class="form-select" id="flagReason" name="reason" required>
+                            <option value="">Select a reason...</option>
+                            <option value="Suspicious Activity">Suspicious Activity</option>
+                            <option value="Policy Violation">Policy Violation</option>
+                            <option value="Security Concern">Security Concern</option>
+                            <option value="Spam/Phishing">Spam/Phishing</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="flagCustomReason" class="form-label">Additional Details (Optional)</label>
+                        <textarea class="form-control" id="flagCustomReason" name="custom_reason" rows="3" placeholder="Provide additional details..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitFlagSender()">Flag Sender</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Email Details Modal -->
 <div class="modal fade" id="emailDetailsModal" tabindex="-1" aria-labelledby="emailDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -529,6 +568,46 @@ function updateTotalCount() {
             totalElement.textContent = currentText.replace(/\(\d+ total\)/, `(${newTotal} total)`);
         }
     }
+}
+
+// Flag sender submit function
+function submitFlagSender() {
+    const form = document.getElementById('flagSenderForm');
+    const formData = new FormData(form);
+    
+    let reason = formData.get('reason');
+    const customReason = formData.get('custom_reason');
+    
+    if (customReason) {
+        reason = reason === 'Other' ? customReason : `${reason}: ${customReason}`;
+    }
+    
+    fetch('/api/flag-sender', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sender: formData.get('sender'),
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            window.EmailGuardian.showNotification(result.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('flagSenderModal')).hide();
+            form.reset();
+            // Reload page to update flagged status
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            window.EmailGuardian.showNotification(result.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error flagging sender:', error);
+        window.EmailGuardian.showNotification('Failed to flag sender', 'error');
+    });
 }
 </script>
 {% endblock %}
