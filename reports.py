@@ -122,15 +122,15 @@ class ReportGenerator:
             # Department analysis
             dept_query = f"""
                 SELECT 
-                    department,
+                    COALESCE(department, 'Unknown') as department,
                     COUNT(*) as total_emails,
-                    COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count,
-                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) * 100.0 / COUNT(*), 2) as risk_percentage
+                    COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) as high_risk_count,
+                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk', 'critical') THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as risk_percentage
                 FROM emails
                 WHERE DATE(_time) BETWEEN '{date_from}' AND '{date_to}'
-                AND department IS NOT NULL
+                AND department IS NOT NULL AND department != '' AND department != '-'
                 GROUP BY department
-                HAVING COUNT(*) >= 5
+                HAVING COUNT(*) >= 1
                 ORDER BY total_emails DESC
                 LIMIT 15
             """
