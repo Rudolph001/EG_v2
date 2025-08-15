@@ -616,17 +616,14 @@ def admin_rules():
     # Process rules to extract rule names from conditions JSON
     processed_rules = []
     for rule in rules_raw:
+        # Handle the rule row structure properly
         rule_dict = {
             'id': rule[0],
-            'rule_type': rule[1], 
-            'rule_name': rule[2] if len(rule) > 2 else None,
-            'logic_type': rule[3] if len(rule) > 3 else None,
-            'conditions': rule[4] if len(rule) > 4 else None,
-            'action': rule[5] if len(rule) > 5 else None,
-            'risk_level': rule[6] if len(rule) > 6 else None,
-            'is_active': rule[7] if len(rule) > 7 else None,
-            'created_at': rule[8] if len(rule) > 8 else None,
-            'updated_at': rule[9] if len(rule) > 9 else None
+            'rule_type': rule[1] if len(rule) > 1 else 'unknown',
+            'conditions': rule[2] if len(rule) > 2 else None,
+            'action': rule[3] if len(rule) > 3 else 'flag',
+            'is_active': bool(rule[4]) if len(rule) > 4 else False,
+            'created_at': rule[5].strftime('%Y-%m-%d') if len(rule) > 5 and rule[5] else 'N/A',
         }
         
         # Extract actual rule name from conditions JSON

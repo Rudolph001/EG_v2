@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Admin Rules - Email Guardian{% endblock %}
@@ -86,89 +87,50 @@
                             {% for rule in rules %}
                             <tr>
                                 <td>
-                                    <strong>#{{ rule[0] }}</strong>
+                                    <strong>#{{ rule.id }}</strong>
                                 </td>
                                 <td>
-                                    <strong>
-                                        {% set rule_name = 'Rule ' + rule[0]|string %}
-                                        {% if rule[2] %}
-                                            {% try %}
-                                                {% set conditions_json = rule[2]|from_json %}
-                                                {% set rule_name = conditions_json.get('rule_name', 'Rule ' + rule[0]|string) %}
-                                            {% except %}
-                                                {% set rule_name = 'Rule ' + rule[0]|string %}
-                                            {% endtry %}
-                                        {% endif %}
-                                        {{ rule_name }}
-                                    </strong>
+                                    <strong>{{ rule.display_name }}</strong>
                                 </td>
                                 <td>
-                                    {% if rule[1] == 'advanced_rule' %}
+                                    {% if rule.rule_type == 'advanced_rule' %}
                                         <span class="badge bg-primary">
                                             <i class="fas fa-brain"></i> Advanced Rule
                                         </span>
-                                    {% elif rule[1] == 'whitelist_sender' %}
+                                    {% elif rule.rule_type == 'whitelist_sender' %}
                                         <span class="badge bg-success">
                                             <i class="fas fa-user-check"></i> Whitelist Sender
                                         </span>
-                                    {% elif rule[1] == 'whitelist_domain' %}
+                                    {% elif rule.rule_type == 'whitelist_domain' %}
                                         <span class="badge bg-success">
                                             <i class="fas fa-globe"></i> Whitelist Domain
                                         </span>
                                     {% else %}
                                         <span class="badge bg-secondary">
-                                            <i class="fas fa-cog"></i> {{ rule[1]|title }}
+                                            <i class="fas fa-cog"></i> {{ rule.rule_type|title }}
                                         </span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <small class="text-muted">
-                                        {% if rule[2] %}
-                                            {% try %}
-                                                {% set conditions_json = rule[2]|from_json %}
-                                                {% if conditions_json.get('conditions') %}
-                                                    {{ conditions_json.conditions|length }} condition(s)
-                                                {% else %}
-                                                    {{ rule[2][:50] + '...' if rule[2]|length > 50 else rule[2] }}
-                                                {% endif %}
-                                            {% except %}
-                                                {{ rule[2][:50] + '...' if rule[2]|length > 50 else rule[2] }}
-                                            {% endtry %}
-                                        {% else %}
-                                            No conditions
-                                        {% endif %}
+                                        {{ rule.condition_count }} condition(s)
                                     </small>
                                 </td>
                                 <td>
-                                    {% if rule[2] %}
-                                        {% try %}
-                                            {% set conditions_json = rule[2]|from_json %}
-                                            <span class="badge bg-info">{{ conditions_json.get('logic_type', 'Simple') }}</span>
-                                        {% except %}
-                                            <span class="badge bg-info">Simple</span>
-                                        {% endtry %}
-                                    {% else %}
-                                        <span class="badge bg-info">Simple</span>
-                                    {% endif %}
+                                    <span class="badge bg-info">{{ rule.display_logic }}</span>
                                 </td>
                                 <td>
-                                    {% if rule[3] %}
-                                        <span class="badge bg-warning">{{ rule[3]|upper }}</span>
+                                    {% if rule.action %}
+                                        <span class="badge bg-warning">{{ rule.action|upper }}</span>
                                     {% else %}
                                         <span class="badge bg-secondary">FLAG</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if rule[4] %}
-                                        {% if rule[4] == 'true' or rule[4] == True %}
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check"></i> Active
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">
-                                                <i class="fas fa-pause"></i> Inactive
-                                            </span>
-                                        {% endif %}
+                                    {% if rule.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Active
+                                        </span>
                                     {% else %}
                                         <span class="badge bg-secondary">
                                             <i class="fas fa-pause"></i> Inactive
@@ -177,8 +139,8 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">
-                                        {% if rule[5] %}
-                                            {{ rule[5].strftime('%Y-%m-%d') if rule[5].strftime else rule[5] }}
+                                        {% if rule.created_at %}
+                                            {{ rule.created_at }}
                                         {% else %}
                                             N/A
                                         {% endif %}
@@ -187,17 +149,17 @@
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-outline-info" 
-                                                onclick="viewRule({{ rule[0] }})" 
+                                                onclick="viewRule({{ rule.id }})" 
                                                 title="View Rule Details">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-primary" 
-                                                onclick="editRule({{ rule[0] }})" 
+                                                onclick="editRule({{ rule.id }})" 
                                                 title="Edit Rule">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger" 
-                                                onclick="deleteRule({{ rule[0] }})" 
+                                                onclick="deleteRule({{ rule.id }})" 
                                                 title="Delete Rule">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -1214,6 +1176,43 @@ function togglePolicy(policyId, isActive) {
 function deletePolicy(policyId) {
     // Use existing deleteRule function
     deleteRule(policyId);
+}
+
+function viewRule(ruleId) {
+    // Simple view function - could open a modal with rule details
+    fetch(`/api/admin/rule/${ruleId}`)
+    .then(response => response.json())
+    .then(rule => {
+        if (rule.error) {
+            alert('Error loading rule: ' + rule.error);
+            return;
+        }
+
+        let details = `Rule ID: ${rule.id}\n`;
+        details += `Name: ${rule.rule_name}\n`;
+        details += `Type: ${rule.rule_type}\n`;
+        details += `Action: ${rule.action}\n`;
+        details += `Active: ${rule.is_active ? 'Yes' : 'No'}\n`;
+        details += `Created: ${rule.created_at}\n\n`;
+        
+        try {
+            const conditionsData = JSON.parse(rule.conditions || '{}');
+            if (conditionsData.conditions) {
+                details += `Conditions (${conditionsData.logic_type || 'AND'}):\n`;
+                conditionsData.conditions.forEach((condition, index) => {
+                    details += `${index + 1}. ${condition.field} ${condition.operator} "${condition.value}"\n`;
+                });
+            }
+        } catch (e) {
+            details += `Conditions: ${rule.conditions}\n`;
+        }
+
+        alert(details);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to load rule details.');
+    });
 }
 
 function escapeHtml(text) {
