@@ -1466,6 +1466,140 @@ def api_all_followup_history():
         logging.error(f"All followup history error: {e}")
         return jsonify({'error': 'Failed to load follow-up history'}), 500
 
+@app.route('/api/admin/policies')
+def api_admin_get_policies():
+    """Get all policies"""
+    try:
+        conn = get_db_connection()
+        policies = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE rule_type = 'policy'
+            ORDER BY created_at DESC
+        """).fetchall()
+        conn.close()
+
+        policies_list = []
+        for policy in policies:
+            try:
+                conditions_data = json.loads(policy[2]) if policy[2] else {}
+                policies_list.append({
+                    'id': policy[0],
+                    'policy_name': conditions_data.get('policy_name', f'Policy {policy[0]}'),
+                    'description': conditions_data.get('description', ''),
+                    'severity': conditions_data.get('severity', 'medium'),
+                    'action': policy[3],
+                    'keywords': conditions_data.get('keywords', ''),
+                    'rules': conditions_data.get('rules', ''),
+                    'is_active': policy[4],
+                    'created_at': policy[5].strftime('%Y-%m-%d') if policy[5] else 'N/A'
+                })
+            except (json.JSONDecodeError, AttributeError):
+                continue
+
+        return jsonify(policies_list)
+    except Exception as e:
+        logging.error(f"Get policies error: {e}")
+        return jsonify({'error': 'Failed to load policies'}), 500
+
+@app.route('/api/admin/policy/<int:policy_id>')
+def api_admin_get_policy(policy_id):
+    """Get single policy by ID"""
+    try:
+        conn = get_db_connection()
+        policy = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE id = ? AND rule_type = 'policy'
+        """, [policy_id]).fetchone()
+        conn.close()
+
+        if not policy:
+            return jsonify({'error': 'Policy not found'}), 404
+
+        conditions_data = json.loads(policy[2]) if policy[2] else {}
+        policy_data = {
+            'id': policy[0],
+            'policy_name': conditions_data.get('policy_name', f'Policy {policy[0]}'),
+            'description': conditions_data.get('description', ''),
+            'severity': conditions_data.get('severity', 'medium'),
+            'action': policy[3],
+            'keywords': conditions_data.get('keywords', ''),
+            'rules': conditions_data.get('rules', ''),
+            'is_active': policy[4],
+            'created_at': policy[5].strftime('%Y-%m-%d') if policy[5] else 'N/A'
+        }
+
+        return jsonify(policy_data)
+    except Exception as e:
+        logging.error(f"Get policy error: {e}")
+        return jsonify({'error': 'Failed to load policy'}), 500
+
+@app.route('/api/admin/save-policy', methods=['POST'])
+def api_admin_save_policy():
+    """Save or update policy"""
+    data = request.json or {}
+
+    try:
+        # Validate required fields
+        if not data.get('policy_name'):
+            return jsonify({'error': 'Policy name is required'}), 400
+
+        # Prepare conditions JSON
+        conditions_data = {
+            'policy_name': data['policy_name'],
+            'description': data.get('description', ''),
+            'severity': data.get('severity', 'medium'),
+            'keywords': data.get('keywords', ''),
+            'rules': data.get('rules', '')
+        }
+
+        conn = get_db_connection()
+        
+        if data.get('policy_id'):
+            # Update existing policy
+            conn.execute("""
+                UPDATE admin_rules 
+                SET conditions = ?, action = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND rule_type = 'policy'
+            """, [
+                json.dumps(conditions_data),
+                data.get('action', 'flag'),
+                data.get('is_active', True),
+                data['policy_id']
+            ])
+        else:
+            # Create new policy
+            conn.execute("""
+                INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
+                VALUES (?, ?, ?, ?)
+            """, [
+                'policy',
+                json.dumps(conditions_data),
+                data.get('action', 'flag'),
+                data.get('is_active', True)
+            ])
+        
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Policy saved successfully'})
+    except Exception as e:
+        logging.error(f"Save policy error: {e}")
+        return jsonify({'error': 'Failed to save policy'}), 500
+
+@app.route('/api/admin/delete-policy/<int:policy_id>', methods=['DELETE'])
+def api_admin_delete_policy(policy_id):
+    """Delete policy"""
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM admin_rules WHERE id = ? AND rule_type = 'policy'", [policy_id])
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Policy deleted successfully'})
+    except Exception as e:
+        logging.error(f"Delete policy error: {e}")
+        return jsonify({'error': 'Failed to delete policy'}), 500
+
 @app.route('/api/user-activity')
 def api_user_activity():
     """Get user activity log"""
