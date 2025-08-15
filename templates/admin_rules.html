@@ -24,6 +24,10 @@
                     <i class="fas fa-flask"></i>
                     Test Rule Creation
                 </button>
+                <button type="button" class="btn btn-success" onclick="viewAllPolicies()">
+                    <i class="fas fa-list"></i>
+                    View All Policies
+                </button>
             </div>
         </div>
     </div>
@@ -157,7 +161,15 @@
                                 </td>
                                 <td>
                                     <small class="text-muted">
-                                        {{ rule[5].strftime('%Y-%m-%d %H:%M') if rule[5] else 'N/A' }}
+                                        {% if rule[5] %}
+                                            {% if rule[5].__class__.__name__ == 'datetime' %}
+                                                {{ rule[5].strftime('%Y-%m-%d %H:%M') }}
+                                            {% else %}
+                                                {{ rule[5] }}
+                                            {% endif %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
                                     </small>
                                 </td>
                                 <td>
@@ -337,6 +349,77 @@
     </div>
 </div>
 
+<!-- View All Policies Modal -->
+<div class="modal fade" id="viewPoliciesModal" tabindex="-1" aria-labelledby="viewPoliciesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="viewPoliciesModalLabel">
+                    <i class="fas fa-shield-alt"></i> All Security Policies
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0">Total Policies: <span id="totalPoliciesCount">Loading...</span></h6>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" onclick="refreshPolicies()">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="policiesLoadingIndicator" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading policies...</span>
+                    </div>
+                    <p class="mt-2">Loading policies...</p>
+                </div>
+                
+                <div id="policiesContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="policiesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Policy Name</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="policiesTableBody">
+                                <!-- Policies will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div id="policiesErrorContainer" style="display: none;" class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Error Loading Policies</h6>
+                    <p id="policiesErrorMessage">An error occurred while loading policies.</p>
+                    <button class="btn btn-outline-danger" onclick="refreshPolicies()">
+                        <i class="fas fa-retry"></i> Try Again
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Close
+                </button>
+                <button type="button" class="btn btn-primary" onclick="createNewPolicy()">
+                    <i class="fas fa-plus"></i> Create New Policy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Quick Rule Templates -->
 <div class="row mt-4">
     <div class="col-12">
@@ -423,11 +506,11 @@
 </div>
 
 <script>
-// Available database fields
+// Available database fields - will be loaded from API
 let availableFields = [
-    'sender', 'subject', 'recipients', 'attachments', 'department', 'bunit', 
-    'leaver', 'termination_date', '_time', 'time_month', 'user_response', 
-    'final_outcome', 'policy_name', 'justifications', 'id', 'created_at'
+    'id', '_time', 'sender', 'subject', 'attachments', 'recipients', 
+    'time_month', 'leaver', 'termination_date', 'bunit', 'department',
+    'user_response', 'final_outcome', 'policy_name', 'justifications', 'created_at'
 ];
 
 // Field types and operators mapping
@@ -976,6 +1059,164 @@ function testRuleCreation() {
         console.error('Test rule creation error:', error);
         alert(`❌ Rule creation test FAILED!\n\nNetwork/System Error: ${error.message}`);
     });
+}
+
+// Policy Management Functions
+function viewAllPolicies() {
+    const modal = new bootstrap.Modal(document.getElementById('viewPoliciesModal'));
+    modal.show();
+    loadAllPolicies();
+}
+
+function loadAllPolicies() {
+    // Show loading indicator
+    document.getElementById('policiesLoadingIndicator').style.display = 'block';
+    document.getElementById('policiesContainer').style.display = 'none';
+    document.getElementById('policiesErrorContainer').style.display = 'none';
+    
+    fetch('/api/admin/policies')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Policies loaded:', data);
+            
+            if (data.success) {
+                displayPolicies(data.policies);
+                document.getElementById('totalPoliciesCount').textContent = data.total_count;
+            } else {
+                showPoliciesError(data.error || 'Failed to load policies');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading policies:', error);
+            showPoliciesError('Network error: ' + error.message);
+        })
+        .finally(() => {
+            document.getElementById('policiesLoadingIndicator').style.display = 'none';
+        });
+}
+
+function displayPolicies(policies) {
+    const tbody = document.getElementById('policiesTableBody');
+    
+    if (policies.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-shield-alt fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No policies found</p>
+                </td>
+            </tr>
+        `;
+    } else {
+        tbody.innerHTML = policies.map(policy => {
+            const statusBadge = policy.is_active 
+                ? '<span class="badge bg-success"><i class="fas fa-check"></i> Active</span>'
+                : '<span class="badge bg-secondary"><i class="fas fa-pause"></i> Disabled</span>';
+            
+            const typeBadge = getTypeBadge(policy.rule_type);
+            const actionBadge = getActionBadge(policy.action);
+            
+            return `
+                <tr>
+                    <td><strong class="text-primary">#${policy.id}</strong></td>
+                    <td>
+                        <strong>${escapeHtml(policy.policy_name)}</strong>
+                    </td>
+                    <td>${typeBadge}</td>
+                    <td>
+                        <div class="text-break" style="max-width: 250px;">
+                            <small class="text-muted">${escapeHtml(policy.description.substring(0, 100))}${policy.description.length > 100 ? '...' : ''}</small>
+                        </div>
+                    </td>
+                    <td>${actionBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td><small class="text-muted">${escapeHtml(policy.created_at)}</small></td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="editPolicy(${policy.id})" title="Edit Policy">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-${policy.is_active ? 'warning' : 'success'}" 
+                                    onclick="togglePolicy(${policy.id}, ${!policy.is_active})" 
+                                    title="${policy.is_active ? 'Disable' : 'Enable'} Policy">
+                                <i class="fas fa-${policy.is_active ? 'pause' : 'play'}"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="deletePolicy(${policy.id})" title="Delete Policy">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    document.getElementById('policiesContainer').style.display = 'block';
+}
+
+function getTypeBadge(ruleType) {
+    const badges = {
+        'policy': '<span class="badge bg-primary"><i class="fas fa-shield-alt"></i> Policy</span>',
+        'security_rule': '<span class="badge bg-danger"><i class="fas fa-lock"></i> Security</span>',
+        'content_filter': '<span class="badge bg-warning text-dark"><i class="fas fa-filter"></i> Content</span>',
+        'sender_filter': '<span class="badge bg-info"><i class="fas fa-user"></i> Sender</span>',
+        'attachment_filter': '<span class="badge bg-secondary"><i class="fas fa-paperclip"></i> Attachment</span>',
+        'advanced_rule': '<span class="badge bg-success"><i class="fas fa-brain"></i> Advanced</span>'
+    };
+    return badges[ruleType] || '<span class="badge bg-light text-dark">' + ruleType + '</span>';
+}
+
+function getActionBadge(action) {
+    const badges = {
+        'flag': '<span class="badge bg-warning text-dark"><i class="fas fa-flag"></i> Flag</span>',
+        'block': '<span class="badge bg-danger"><i class="fas fa-ban"></i> Block</span>',
+        'escalate': '<span class="badge bg-info"><i class="fas fa-arrow-up"></i> Escalate</span>',
+        'notify': '<span class="badge bg-primary"><i class="fas fa-bell"></i> Notify</span>',
+        'quarantine': '<span class="badge bg-dark"><i class="fas fa-shield-virus"></i> Quarantine</span>',
+        'whitelist': '<span class="badge bg-success"><i class="fas fa-check"></i> Whitelist</span>'
+    };
+    return badges[action] || '<span class="badge bg-secondary">' + action + '</span>';
+}
+
+function showPoliciesError(message) {
+    document.getElementById('policiesErrorMessage').textContent = message;
+    document.getElementById('policiesErrorContainer').style.display = 'block';
+}
+
+function refreshPolicies() {
+    loadAllPolicies();
+}
+
+function createNewPolicy() {
+    // Close the policies modal and open the rule builder
+    bootstrap.Modal.getInstance(document.getElementById('viewPoliciesModal')).hide();
+    setTimeout(() => {
+        document.getElementById('ruleType').value = 'policy';
+        document.getElementById('ruleAction').value = 'flag';
+        new bootstrap.Modal(document.getElementById('addRuleModal')).show();
+    }, 300);
+}
+
+function editPolicy(policyId) {
+    // Use existing editRule function
+    editRule(policyId);
+    bootstrap.Modal.getInstance(document.getElementById('viewPoliciesModal')).hide();
+}
+
+function togglePolicy(policyId, isActive) {
+    // Use existing toggleRule function
+    toggleRule(policyId, isActive);
+}
+
+function deletePolicy(policyId) {
+    // Use existing deleteRule function
+    deleteRule(policyId);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Initialize

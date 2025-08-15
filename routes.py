@@ -2282,6 +2282,71 @@ def api_admin_delete_policy(policy_id):
         logging.error(f"Delete policy error: {e}")
         return jsonify({'error': 'Failed to delete policy'}), 500
 
+@app.route('/api/admin/policies')
+def api_admin_get_all_policies():
+    """Get all policies for the View All Policies button"""
+    try:
+        conn = get_db_connection()
+        
+        # Get all admin rules that are policy-related
+        policies = conn.execute("""
+            SELECT id, rule_type, conditions, action, is_active, created_at
+            FROM admin_rules 
+            WHERE rule_type IN ('policy', 'security_rule', 'content_filter', 'sender_filter', 'attachment_filter')
+            ORDER BY created_at DESC
+        """).fetchall()
+        
+        policies_list = []
+        for policy in policies:
+            try:
+                # Try to parse conditions as JSON
+                try:
+                    conditions_data = json.loads(policy[2]) if policy[2] else {}
+                except (json.JSONDecodeError, TypeError):
+                    # If not JSON, treat as simple text condition
+                    conditions_data = {'description': policy[2] or 'Legacy rule'}
+                
+                policy_info = {
+                    'id': policy[0],
+                    'rule_type': policy[1],
+                    'policy_name': conditions_data.get('policy_name', conditions_data.get('rule_name', f'Policy {policy[0]}')),
+                    'description': conditions_data.get('description', policy[2][:100] + '...' if policy[2] and len(policy[2]) > 100 else policy[2] or 'No description'),
+                    'action': policy[3] or 'flag',
+                    'is_active': bool(policy[4]),
+                    'created_at': policy[5].strftime('%Y-%m-%d %H:%M') if hasattr(policy[5], 'strftime') else str(policy[5]) if policy[5] else 'N/A',
+                    'conditions_summary': conditions_data.get('conditions', policy[2])
+                }
+                policies_list.append(policy_info)
+                
+            except Exception as e:
+                logging.warning(f"Error processing policy {policy[0]}: {e}")
+                # Add basic policy info even if processing fails
+                policies_list.append({
+                    'id': policy[0],
+                    'rule_type': policy[1],
+                    'policy_name': f'Policy {policy[0]}',
+                    'description': 'Error loading policy details',
+                    'action': policy[3] or 'flag',
+                    'is_active': bool(policy[4]),
+                    'created_at': str(policy[5]) if policy[5] else 'N/A',
+                    'conditions_summary': 'Error loading conditions'
+                })
+        
+        conn.close()
+        return jsonify({
+            'success': True,
+            'policies': policies_list,
+            'total_count': len(policies_list)
+        })
+        
+    except Exception as e:
+        logging.error(f"Get all policies error: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to load policies: {str(e)}',
+            'policies': []
+        }), 500
+
 @app.route('/api/admin/policy-violations-data')
 def api_admin_get_policy_violations_data():
     """Get current policy violations data from the database"""
