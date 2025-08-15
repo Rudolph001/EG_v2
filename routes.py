@@ -1519,21 +1519,95 @@ def api_ml_insights(email_id):
         if not email_data:
             return jsonify({'error': 'Email not found'}), 404
 
-        # Get ML classification
-        text = f"{email_data[3] or ''} {email_data[14] or ''}"
-        classification = classify_email(text)
+        # Convert to dict for easier access
+        email_dict = {
+            'id': email_data[0],
+            'sender': email_data[2],
+            'subject': email_data[3],
+            'attachments': email_data[4],
+            'recipients': email_data[5],
+            'leaver': email_data[7],
+            'department': email_data[10],
+            'final_outcome': email_data[12],
+            'policy_name': email_data[13],
+            'justifications': email_data[14]
+        }
 
-        # Mock ML insights (in real implementation, this would come from your ML model)
+        # Get ML classification from processor
+        from ml_processor import classify_email, get_risk_score
+        text = f"{email_dict['subject'] or ''} {email_dict['justifications'] or ''}"
+        classification = classify_email(text)
+        risk_score = get_risk_score(email_dict)
+
+        # Analyze actual risk factors based on email content
+        risk_factors = []
+        
+        # Check for external recipients
+        recipients = email_dict.get('recipients', '')
+        if recipients and '@' in recipients and not any(domain in recipients.lower() for domain in ['company.com', 'internal.com']):
+            risk_factors.append({'name': 'External Recipient', 'severity': 'high'})
+        elif recipients and '@' in recipients:
+            risk_factors.append({'name': 'Internal Recipient', 'severity': 'low'})
+        
+        # Check for attachments
+        attachments = email_dict.get('attachments', '')
+        if attachments and attachments != '-' and attachments.strip():
+            # Check for risky file types
+            risky_extensions = ['.exe', '.zip', '.rar', '.bat', '.scr', '.doc', '.pdf']
+            if any(ext in attachments.lower() for ext in risky_extensions):
+                risk_factors.append({'name': 'Risky Attachment Type', 'severity': 'high'})
+            else:
+                risk_factors.append({'name': 'Attachment Present', 'severity': 'medium'})
+        
+        # Check if sender is a leaver
+        if email_dict.get('leaver') == 'Yes' or email_dict.get('leaver') == True:
+            risk_factors.append({'name': 'Sender is Former Employee', 'severity': 'high'})
+        
+        # Check for policy violations
+        if email_dict.get('policy_name'):
+            risk_factors.append({'name': 'Policy Violation Detected', 'severity': 'high'})
+        
+        # Check for flagged sender
+        conn = get_db_connection()
+        flagged_check = conn.execute("SELECT COUNT(*) FROM flagged_senders WHERE sender = ?", [email_dict['sender']]).fetchone()[0]
+        conn.close()
+        
+        if flagged_check > 0:
+            risk_factors.append({'name': 'Flagged Sender', 'severity': 'high'})
+        
+        # Check department risk
+        high_risk_depts = ['finance', 'legal', 'hr', 'executive']
+        if email_dict.get('department', '').lower() in high_risk_depts:
+            risk_factors.append({'name': 'High-Risk Department', 'severity': 'medium'})
+        
+        # Add default if no specific factors found
+        if not risk_factors:
+            risk_factors.append({'name': 'Standard Email Pattern', 'severity': 'low'})
+
+        # Calculate confidence based on actual data
+        confidence = min(0.95, max(0.3, (risk_score / 100) + 0.3))
+        
+        # Generate recommendations based on actual analysis
+        recommendations = []
+        if risk_score >= 70:
+            recommendations.append("Immediate escalation recommended due to high risk score")
+        elif risk_score >= 40:
+            recommendations.append("Enhanced monitoring recommended")
+        elif classification in ['high_risk', 'suspicious']:
+            recommendations.append("Manual review recommended based on content analysis")
+        else:
+            recommendations.append("Standard processing - no immediate concerns identified")
+        
+        if email_dict.get('leaver'):
+            recommendations.append("Verify sender access permissions")
+        
         insights = {
             'classification': classification,
-            'confidence': 0.85,  # Mock confidence score
-            'explanation': f"Email classified as '{classification}' based on content analysis",
-            'risk_factors': [
-                {'name': 'External Recipient', 'severity': 'medium'},
-                {'name': 'Attachment Present', 'severity': 'low'},
-                {'name': 'Policy Keyword Match', 'severity': 'high'}
-            ],
-            'recommendations': f"Based on the '{classification}' classification, recommend {'immediate review' if classification in ['high_risk', 'suspicious'] else 'standard processing'}."
+            'confidence': round(confidence, 2),
+            'risk_score': risk_score,
+            'explanation': f"Email analyzed with {len(risk_factors)} risk factors identified. Risk score: {risk_score}/100",
+            'risk_factors': risk_factors,
+            'recommendations': ' • '.join(recommendations)
         }
 
         return jsonify(insights)

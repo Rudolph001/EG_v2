@@ -150,27 +150,58 @@ def get_risk_score(email_data):
         ).fetchone()[0]
         
         if flagged > 0:
-            risk_score += 50
+            risk_score += 40
+        
+        # Check if sender is a leaver
+        if email_data.get('leaver') == 'Yes' or email_data.get('leaver') == True:
+            risk_score += 35
         
         # Check for suspicious attachments
         attachments = email_data.get('attachments', '')
-        suspicious_extensions = ['.exe', '.zip', '.rar', '.bat', '.scr']
-        if any(ext in attachments.lower() for ext in suspicious_extensions):
-            risk_score += 30
+        if attachments and attachments != '-':
+            suspicious_extensions = ['.exe', '.zip', '.rar', '.bat', '.scr']
+            if any(ext in attachments.lower() for ext in suspicious_extensions):
+                risk_score += 30
+            else:
+                risk_score += 10  # Any attachment adds some risk
         
         # Check for external recipients
         recipients = email_data.get('recipients', '')
-        if '@' in recipients and not any(domain in recipients for domain in ['company.com', 'internal.com']):
-            risk_score += 20
+        if recipients and '@' in recipients:
+            if not any(domain in recipients.lower() for domain in ['company.com', 'internal.com']):
+                risk_score += 25
+            # Multiple recipients increase risk
+            recipient_count = len(recipients.split(',')) if recipients else 0
+            if recipient_count > 5:
+                risk_score += 10
         
-        # Classify email content
+        # Policy violations
+        if email_data.get('policy_name'):
+            risk_score += 30
+        
+        # Department-based risk
+        department = email_data.get('department', '').lower()
+        high_risk_depts = ['finance', 'legal', 'hr', 'executive']
+        if department in high_risk_depts:
+            risk_score += 15
+        
+        # Content analysis
         text = f"{email_data.get('subject', '')} {email_data.get('justifications', '')}"
-        classification = classify_email(text)
-        
-        if classification in ['high_risk', 'suspicious']:
-            risk_score += 40
-        elif classification in ['medium_risk', 'warning']:
-            risk_score += 20
+        if text.strip():
+            classification = classify_email(text)
+            
+            if classification in ['high_risk', 'suspicious', 'escalated']:
+                risk_score += 35
+            elif classification in ['medium_risk', 'warning', 'pending_review']:
+                risk_score += 20
+            elif classification in ['cleared', 'approved']:
+                risk_score = max(0, risk_score - 10)  # Reduce risk for cleared items
+            
+            # Keyword analysis
+            high_risk_keywords = ['urgent', 'confidential', 'personal', 'private', 'secret', 'transfer', 'payment', 'invoice']
+            text_lower = text.lower()
+            keyword_matches = sum(1 for keyword in high_risk_keywords if keyword in text_lower)
+            risk_score += keyword_matches * 5
         
         conn.close()
         return min(risk_score, 100)  # Cap at 100
