@@ -984,12 +984,13 @@ def add_admin_rule():
             conditions = json.dumps(conditions)
         
         conn = get_db_connection()
-        cursor = conn.execute("""
+        conn.execute("""
             INSERT INTO admin_rules (rule_type, conditions, action, is_active, created_at) 
             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         """, [rule_type, conditions, action, is_active])
         
-        rule_id = cursor.lastrowid
+        # Get the ID of the newly created rule
+        rule_id = conn.execute("SELECT MAX(id) FROM admin_rules").fetchone()[0]
         conn.close()
         
         logging.info(f"Successfully created rule with ID: {rule_id}")
