@@ -2044,14 +2044,31 @@ def api_admin_get_policy_violations_data():
             ORDER BY count DESC
         """).fetchall()
         
+        # Get policy active status
+        policy_status = conn.execute("""
+            SELECT JSON_EXTRACT(conditions, '$.policy_name') as policy_name, is_active
+            FROM admin_rules 
+            WHERE rule_type = 'policy'
+        """).fetchall()
+        
         conn.close()
+
+        # Create status mapping
+        status_map = {}
+        for status in policy_status:
+            if status[0]:  # policy_name exists
+                status_map[status[0]] = status[1]
 
         violations_list = []
         for violation in violations:
+            policy_name = violation[0]
+            is_active = status_map.get(policy_name, True)  # Default to active if not found
+            
             violations_list.append({
-                'policy_name': violation[0],
+                'policy_name': policy_name,
                 'count': violation[1],
-                'percentage': violation[2]
+                'percentage': violation[2],
+                'is_active': is_active
             })
 
         return jsonify(violations_list)
@@ -2069,25 +2086,33 @@ def api_admin_toggle_policy_violation():
     try:
         conn = get_db_connection()
         
-        if is_active:
-            # Enable: Remove any disable rule for this policy
+        # Find the actual policy in admin_rules table
+        policy_rule = conn.execute("""
+            SELECT id, conditions FROM admin_rules 
+            WHERE rule_type = 'policy' AND JSON_EXTRACT(conditions, '$.policy_name') = ?
+        """, [policy_name]).fetchone()
+        
+        if policy_rule:
+            # Update the actual policy's is_active status
             conn.execute("""
-                DELETE FROM admin_rules 
-                WHERE rule_type = 'policy_disable' AND conditions = ?
-            """, [policy_name])
+                UPDATE admin_rules 
+                SET is_active = ?
+                WHERE id = ?
+            """, [is_active, policy_rule[0]])
         else:
-            # Disable: Add a disable rule for this policy
-            conn.execute("""
-                INSERT OR REPLACE INTO admin_rules (rule_type, conditions, action, is_active) 
-                VALUES ('policy_disable', ?, 'disable', 1)
-            """, [policy_name])
+            # If policy doesn't exist as a rule, create a disable rule
+            if not is_active:
+                conn.execute("""
+                    INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
+                    VALUES ('policy_disable', ?, 'disable', 1)
+                """, [policy_name])
         
         conn.close()
 
-        return jsonify({'success': True, 'message': f'Policy {policy_name} {"enabled" if is_active else "disabled"} successfully'})
+        return jsonify({'success': True, 'message': f'Policy "{policy_name}" {"enabled" if is_active else "disabled"} successfully'})
     except Exception as e:
         logging.error(f"Toggle policy violation error: {e}")
-        return jsonify({'error': 'Failed to toggle policy'}), 500
+        return jsonify({'error': f'Failed to toggle policy: {str(e)}'}), 500
 
 @app.route('/api/user-activity')
 def api_user_activity():

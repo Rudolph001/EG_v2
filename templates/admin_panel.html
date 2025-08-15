@@ -1369,53 +1369,55 @@ function loadPolicyViolationsData() {
     fetch('/api/admin/policy-violations-data')
     .then(response => response.json())
     .then(violations => {
-        const tbody = document.getElementById('policyViolationsBody');
-        tbody.innerHTML = '';
+        console.log('Loaded policy violations:', violations.length);
 
-        if (violations.error) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${violations.error}</td></tr>`;
-            return;
-        }
+        const container = document.getElementById('policyViolationsList');
+        container.innerHTML = '';
 
         if (violations.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No policy violations found</td></tr>';
+            container.innerHTML = '<div class="text-muted small">No policy violations found</div>';
             return;
         }
 
-        violations.forEach(violation => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    <strong>${violation.policy_name}</strong>
-                    <br><small class="text-muted">${violation.percentage}% of violations</small>
-                </td>
-                <td>
-                    <span class="badge bg-success">Active</span>
-                </td>
-                <td>
-                    <span class="badge bg-warning">${violation.count}</span>
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary btn-sm" onclick="editPolicyByName('${violation.policy_name}')" title="Edit Policy">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" onclick="togglePolicyViolation('${violation.policy_name}', true)" title="Enable Detection">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <button class="btn btn-outline-warning btn-sm" onclick="togglePolicyViolation('${violation.policy_name}', false)" title="Disable Detection">
-                            <i class="fas fa-pause"></i>
-                        </button>
+        // Also get policy status from admin_rules
+        fetch('/api/admin/policies')
+        .then(response => response.json())
+        .then(policies => {
+            const policyStatusMap = {};
+            policies.forEach(policy => {
+                policyStatusMap[policy.policy_name] = policy.is_active;
+            });
+
+            violations.forEach(violation => {
+                const isActive = policyStatusMap[violation.policy_name] !== false;
+                const violationDiv = document.createElement('div');
+                violationDiv.className = 'mb-2 p-2 border rounded';
+                violationDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${violation.policy_name}</strong>
+                            <br><small class="text-muted">${violation.count} violations (${violation.percentage}%)</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-${isActive ? 'success' : 'secondary'} me-2">
+                                ${isActive ? 'Active' : 'Disabled'}
+                            </span>
+                            <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                                    onclick="togglePolicyViolation('${violation.policy_name}', ${!isActive})">
+                                <i class="fas fa-${isActive ? 'ban' : 'check'}"></i> 
+                                ${isActive ? 'Disable' : 'Enable'}
+                            </button>
+                        </div>
                     </div>
-                </td>
-            `;
-            tbody.appendChild(row);
+                `;
+                container.appendChild(violationDiv);
+            });
         });
     })
     .catch(error => {
         console.error('Error loading policy violations:', error);
-        const tbody = document.getElementById('policyViolationsBody');
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load violations data</td></tr>';
+        document.getElementById('policyViolationsList').innerHTML = 
+            '<div class="text-danger small">Error loading violations</div>';
     });
 }
 
