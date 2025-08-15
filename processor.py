@@ -70,6 +70,9 @@ class EmailProcessor:
             # Data risk keywords
             'personal data', 'pii', 'gdpr', 'hipaa', 'sox', 'customer data',
             'financial records', 'bank account', 'social security', 'credit card'
+            
+            # Add your custom risk keywords here
+            # 'custom_keyword1', 'custom_keyword2'
         ]
         
         self.exclusion_keywords = [
@@ -81,6 +84,9 @@ class EmailProcessor:
             # Common safe communications
             'meeting invite', 'calendar', 'reminder', 'thank you', 'congratulations',
             'welcome', 'birthday', 'holiday', 'lunch', 'coffee', 'social event'
+            
+            # Add your custom safe keywords here that should result in clearing
+            # 'custom_safe_keyword1', 'custom_safe_keyword2'
         ]
         
         # Compile regex patterns for better performance
@@ -338,15 +344,19 @@ class EmailProcessor:
             if sender.endswith('.gov') or sender.endswith('.edu'):
                 risk_score -= 5  # Reduce risk for trusted domains
         
-        # Attachment risk
+        # Attachment risk - Modify this list to change what's considered risky
         attachments = email.get('attachments') or ''
         if attachments:
             risky_extensions = ['.exe', '.zip', '.rar', '.bat', '.scr', '.com']
+            # Add or remove extensions as needed:
+            # risky_extensions = ['.exe', '.bat', '.scr', '.com']  # More permissive (allows .zip, .rar)
+            # risky_extensions.extend(['.doc', '.docx', '.pdf'])  # More strict (includes documents)
+            
             if any(ext in attachments.lower() for ext in risky_extensions):
-                risk_score += 30
+                risk_score += 30  # Lower this number to be less strict about risky attachments
                 risk_factors.append('risky_attachments')
             elif attachments.strip() != '-':  # Has attachments but not risky
-                risk_score += 5
+                risk_score += 5  # Lower this to be less strict about any attachments
                 risk_factors.append('has_attachments')
         
         # Policy violation indicators
@@ -361,11 +371,12 @@ class EmailProcessor:
             risk_factors.append('user_concern')
         
         # Determine risk level based on score
-        if risk_score >= 60:
+        # You can adjust these thresholds to make clearing more or less strict
+        if risk_score >= 60:  # Increase this to make CRITICAL harder to reach
             risk_level = RiskLevel.CRITICAL
-        elif risk_score >= 40:
+        elif risk_score >= 40:  # Increase this to make HIGH harder to reach
             risk_level = RiskLevel.HIGH
-        elif risk_score >= 20:
+        elif risk_score >= 20:  # Increase this to make MEDIUM harder to reach
             risk_level = RiskLevel.MEDIUM
         elif risk_score >= 0:
             risk_level = RiskLevel.LOW
@@ -436,13 +447,13 @@ class EmailProcessor:
         if any(action.action_type == 'whitelist' for action in admin_actions):
             return ProcessingResult.WHITELISTED
         
-        # Risk-based routing
+        # Risk-based routing - Modify these rules to change when emails are cleared
         if risk_level == RiskLevel.CRITICAL:
             return ProcessingResult.ESCALATED
         elif risk_level == RiskLevel.HIGH:
             # High risk emails need review unless ML says they're safe
-            if ml_classification and ml_classification.lower() in ['low_risk', 'safe', 'clear']:
-                return ProcessingResult.PENDING_REVIEW
+            if ml_classification and ml_classification.lower() in ['low_risk', 'safe', 'clear', 'cleared', 'approved']:
+                return ProcessingResult.CLEARED  # Change to CLEARED if you want more clearing
             else:
                 return ProcessingResult.ESCALATED
         elif risk_level == RiskLevel.MEDIUM:
@@ -450,7 +461,7 @@ class EmailProcessor:
             if ml_classification and ml_classification.lower() in ['high_risk', 'critical']:
                 return ProcessingResult.ESCALATED
             else:
-                return ProcessingResult.PENDING_REVIEW
+                return ProcessingResult.CLEARED  # Change to CLEARED for more automatic clearing
         else:
             # Low risk emails are generally cleared
             if ml_classification and ml_classification.lower() in ['high_risk', 'critical']:

@@ -199,12 +199,13 @@ def get_risk_score(email_data):
         if text.strip():
             classification = classify_email(text)
             
+            # Modify these classifications and scores to change clearing behavior
             if classification in ['high_risk', 'suspicious', 'escalated']:
-                risk_score += 35
+                risk_score += 35  # Lower this to be less strict
             elif classification in ['medium_risk', 'warning', 'pending_review']:
-                risk_score += 20
-            elif classification in ['cleared', 'approved']:
-                risk_score = max(0, risk_score - 10)  # Reduce risk for cleared items
+                risk_score += 20  # Lower this to be less strict
+            elif classification in ['cleared', 'approved', 'safe', 'low_risk']:
+                risk_score = max(0, risk_score - 15)  # Increase reduction for more clearing
             
             # Keyword analysis
             high_risk_keywords = ['urgent', 'confidential', 'personal', 'private', 'secret', 'transfer', 'payment', 'invoice']
