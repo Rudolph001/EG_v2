@@ -302,7 +302,8 @@
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="fas fa-gavel"></i>
-                            Policy Definitions
+                            Policy Violations Breakdown
+                            <small class="text-muted">(Manage detected policies)</small>
                         </h5>
                         <button class="btn btn-primary" onclick="showPolicyModal()">
                             <i class="fas fa-plus"></i> Add Policy
@@ -313,11 +314,11 @@
                             <table class="table table-striped" id="policiesTable">
                                 <thead>
                                     <tr>
-                                        <th>Policy Name</th>
+                                        <th>Policy Name & Violations</th>
                                         <th>Description</th>
                                         <th>Severity</th>
-                                        <th>Keywords/Rules</th>
-                                        <th>Active</th>
+                                        <th>Detection Rules</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -1254,25 +1255,54 @@ function savePolicy() {
 }
 
 function loadPolicies() {
-    fetch('/api/admin/policies')
-    .then(response => response.json())
-    .then(policies => {
+    // Load both defined policies and active policy violations
+    Promise.all([
+        fetch('/api/admin/policies'),
+        fetch('/api/admin/policy-violations-data')
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([policies, violations]) => {
         const tbody = document.getElementById('policiesTableBody');
         tbody.innerHTML = '';
 
+        // Create a map of existing policies
+        const policyMap = new Map();
         policies.forEach(policy => {
-            const row = createPolicyRow(policy);
+            policyMap.set(policy.policy_name, policy);
+        });
+
+        // Add existing policies first
+        policies.forEach(policy => {
+            const violationData = violations.find(v => v.policy_name === policy.policy_name);
+            const row = createPolicyRow(policy, violationData);
             tbody.appendChild(row);
         });
 
-        updatePolicyStats(policies);
+        // Add policy violations that don't have defined policies yet
+        violations.forEach(violation => {
+            if (!policyMap.has(violation.policy_name)) {
+                const syntheticPolicy = {
+                    id: `violation_${violation.policy_name}`,
+                    policy_name: violation.policy_name,
+                    description: `Auto-detected policy (${violation.count} violations)`,
+                    severity: violation.count > 20 ? 'high' : violation.count > 10 ? 'medium' : 'low',
+                    action: 'flag',
+                    is_active: true,
+                    is_synthetic: true
+                };
+                const row = createPolicyRow(syntheticPolicy, violation);
+                tbody.appendChild(row);
+            }
+        });
+
+        updatePolicyStats([...policies, ...violations.filter(v => !policyMap.has(v.policy_name))]);
     })
     .catch(error => {
         console.error('Error loading policies:', error);
     });
 }
 
-function createPolicyRow(policy) {
+function createPolicyRow(policy, violationData = null) {
     const row = document.createElement('tr');
     
     const severityBadges = {
@@ -1282,24 +1312,45 @@ function createPolicyRow(policy) {
         critical: 'bg-dark'
     };
 
+    const violationInfo = violationData ? 
+        `<br><small class="text-info"><i class="fas fa-chart-bar"></i> ${violationData.count} violations (${violationData.percentage}%)</small>` : '';
+
+    const policyId = policy.is_synthetic ? `'${policy.policy_name}'` : policy.id;
+    const isActive = policy.is_active;
+
     row.innerHTML = `
-        <td><strong>${policy.policy_name}</strong></td>
+        <td>
+            <strong>${policy.policy_name}</strong>
+            ${violationInfo}
+        </td>
         <td><small>${policy.description || 'No description'}</small></td>
         <td><span class="badge ${severityBadges[policy.severity] || 'bg-secondary'}">${policy.severity}</span></td>
-        <td><small>${policy.keywords || 'No keywords'}</small></td>
+        <td><small>${policy.keywords || 'Auto-detected'}</small></td>
         <td>
-            <span class="badge bg-${policy.is_active ? 'success' : 'secondary'}">
-                ${policy.is_active ? 'Active' : 'Inactive'}
-            </span>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="policy_${policyId}" 
+                       ${isActive ? 'checked' : ''} 
+                       onchange="togglePolicy(${policyId}, this.checked, ${policy.is_synthetic || false})">
+                <label class="form-check-label" for="policy_${policyId}">
+                    <span class="badge bg-${isActive ? 'success' : 'secondary'}">
+                        ${isActive ? 'Active' : 'Disabled'}
+                    </span>
+                </label>
+            </div>
         </td>
         <td>
             <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary" onclick="editPolicy(${policy.id})" title="Edit Policy">
+                <button class="btn btn-outline-primary" onclick="editPolicy(${policyId}, ${policy.is_synthetic || false})" title="Edit Policy">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-outline-danger" onclick="deletePolicy(${policy.id})" title="Delete Policy">
-                    <i class="fas fa-trash"></i>
-                </button>
+                ${policy.is_synthetic ? 
+                    `<button class="btn btn-outline-success" onclick="convertToPolicy('${policy.policy_name}')" title="Convert to Managed Policy">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>` :
+                    `<button class="btn btn-outline-danger" onclick="deletePolicy(${policy.id})" title="Delete Policy">
+                        <i class="fas fa-trash"></i>
+                    </button>`
+                }
             </div>
         </td>
     `;
@@ -1338,6 +1389,105 @@ function updatePolicyStats(policies) {
 }
 
 function editPolicy(policyId) {
+    fetch(`/api/admin/policy/${policyId}`)
+    .then(response => response.json())
+    .then(policy => {
+        document.getElementById('policyModalTitle').textContent = 'Edit Policy';
+        document.getElementById('policyId').value = policy.id;
+        document.getElementById('policyName').value = policy.policy_name;
+        document.getElementById('policyDescription').value = policy.description || '';
+        document.getElementById('policySeverity').value = policy.severity;
+        document.getElementById('policyAction').value = policy.action;
+        document.getElementById('policyKeywords').value = policy.keywords || '';
+        document.getElementById('policyRules').value = policy.rules || '';
+        document.getElementById('policyActive').checked = policy.is_active;
+        
+        new bootstrap.Modal(document.getElementById('policyModal')).show();
+    })
+    .catch(error => {
+        console.error('Error loading policy:', error);
+        showAlert('Error loading policy details', 'danger');
+    });
+}
+
+function togglePolicy(policyId, isActive, isSynthetic = false) {
+    if (isSynthetic) {
+        // For synthetic policies, we toggle the policy_name in admin_rules
+        fetch('/api/admin/toggle-policy-violation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                policy_name: policyId,
+                is_active: isActive
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showAlert(`Policy ${isActive ? 'enabled' : 'disabled'} successfully`, 'success');
+            } else {
+                showAlert('Error: ' + result.error, 'danger');
+                // Revert the toggle
+                document.getElementById(`policy_${policyId}`).checked = !isActive;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error toggling policy', 'danger');
+            document.getElementById(`policy_${policyId}`).checked = !isActive;
+        });
+    } else {
+        // For regular policies, update via the normal API
+        fetch('/api/admin/save-policy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                policy_id: policyId,
+                is_active: isActive
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showAlert(`Policy ${isActive ? 'enabled' : 'disabled'} successfully`, 'success');
+            } else {
+                showAlert('Error: ' + result.error, 'danger');
+                document.getElementById(`policy_${policyId}`).checked = !isActive;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error toggling policy', 'danger');
+            document.getElementById(`policy_${policyId}`).checked = !isActive;
+        });
+    }
+}
+
+function convertToPolicy(policyName) {
+    // Pre-fill the policy modal with data from the violation
+    document.getElementById('policyModalTitle').textContent = 'Convert to Managed Policy';
+    document.getElementById('policyId').value = '';
+    document.getElementById('policyName').value = policyName;
+    document.getElementById('policyDescription').value = `Converted from auto-detected policy: ${policyName}`;
+    document.getElementById('policySeverity').value = 'medium';
+    document.getElementById('policyAction').value = 'flag';
+    document.getElementById('policyKeywords').value = '';
+    document.getElementById('policyRules').value = '';
+    document.getElementById('policyActive').checked = true;
+    
+    new bootstrap.Modal(document.getElementById('policyModal')).show();
+}
+
+function editPolicy(policyId, isSynthetic = false) {
+    if (isSynthetic) {
+        convertToPolicy(policyId);
+        return;
+    }
+    
     fetch(`/api/admin/policy/${policyId}`)
     .then(response => response.json())
     .then(policy => {

@@ -1600,6 +1600,69 @@ def api_admin_delete_policy(policy_id):
         logging.error(f"Delete policy error: {e}")
         return jsonify({'error': 'Failed to delete policy'}), 500
 
+@app.route('/api/admin/policy-violations-data')
+def api_admin_get_policy_violations_data():
+    """Get current policy violations data from the database"""
+    try:
+        conn = get_db_connection()
+        
+        # Get policy violation counts
+        violations = conn.execute("""
+            SELECT 
+                policy_name, 
+                COUNT(*) as count,
+                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM emails WHERE policy_name IS NOT NULL), 1) as percentage
+            FROM emails 
+            WHERE policy_name IS NOT NULL AND policy_name != ''
+            GROUP BY policy_name
+            ORDER BY count DESC
+        """).fetchall()
+        
+        conn.close()
+
+        violations_list = []
+        for violation in violations:
+            violations_list.append({
+                'policy_name': violation[0],
+                'count': violation[1],
+                'percentage': violation[2]
+            })
+
+        return jsonify(violations_list)
+    except Exception as e:
+        logging.error(f"Get policy violations data error: {e}")
+        return jsonify({'error': 'Failed to load policy violations data'}), 500
+
+@app.route('/api/admin/toggle-policy-violation', methods=['POST'])
+def api_admin_toggle_policy_violation():
+    """Toggle policy violation detection on/off"""
+    data = request.json or {}
+    policy_name = data.get('policy_name')
+    is_active = data.get('is_active', True)
+
+    try:
+        conn = get_db_connection()
+        
+        if is_active:
+            # Enable: Remove any disable rule for this policy
+            conn.execute("""
+                DELETE FROM admin_rules 
+                WHERE rule_type = 'policy_disable' AND conditions = ?
+            """, [policy_name])
+        else:
+            # Disable: Add a disable rule for this policy
+            conn.execute("""
+                INSERT OR REPLACE INTO admin_rules (rule_type, conditions, action, is_active) 
+                VALUES ('policy_disable', ?, 'disable', 1)
+            """, [policy_name])
+        
+        conn.close()
+
+        return jsonify({'success': True, 'message': f'Policy {policy_name} {"enabled" if is_active else "disabled"} successfully'})
+    except Exception as e:
+        logging.error(f"Toggle policy violation error: {e}")
+        return jsonify({'error': 'Failed to toggle policy'}), 500
+
 @app.route('/api/user-activity')
 def api_user_activity():
     """Get user activity log"""
