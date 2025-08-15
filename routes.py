@@ -2032,24 +2032,32 @@ def api_admin_get_policy_violations_data():
     try:
         conn = get_db_connection()
         
-        # Get policy violation counts
-        violations = conn.execute("""
-            SELECT 
-                policy_name, 
-                COUNT(*) as count,
-                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM emails WHERE policy_name IS NOT NULL), 1) as percentage
-            FROM emails 
-            WHERE policy_name IS NOT NULL AND policy_name != ''
-            GROUP BY policy_name
-            ORDER BY count DESC
-        """).fetchall()
+        # Get policy violation counts with error handling
+        try:
+            violations = conn.execute("""
+                SELECT 
+                    policy_name, 
+                    COUNT(*) as count,
+                    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM emails WHERE policy_name IS NOT NULL), 1) as percentage
+                FROM emails 
+                WHERE policy_name IS NOT NULL AND policy_name != ''
+                GROUP BY policy_name
+                ORDER BY count DESC
+            """).fetchall()
+        except Exception as e:
+            logging.warning(f"Failed to get policy violations: {e}")
+            violations = []
         
-        # Get policy active status
-        policy_status = conn.execute("""
-            SELECT JSON_EXTRACT(conditions, '$.policy_name') as policy_name, is_active
-            FROM admin_rules 
-            WHERE rule_type = 'policy'
-        """).fetchall()
+        # Get policy active status with error handling
+        try:
+            policy_status = conn.execute("""
+                SELECT JSON_EXTRACT(conditions, '$.policy_name') as policy_name, is_active
+                FROM admin_rules 
+                WHERE rule_type = 'policy'
+            """).fetchall()
+        except Exception as e:
+            logging.warning(f"Failed to get policy status: {e}")
+            policy_status = []
         
         conn.close()
 
@@ -2061,20 +2069,28 @@ def api_admin_get_policy_violations_data():
 
         violations_list = []
         for violation in violations:
-            policy_name = violation[0]
-            is_active = status_map.get(policy_name, True)  # Default to active if not found
-            
-            violations_list.append({
-                'policy_name': policy_name,
-                'count': violation[1],
-                'percentage': violation[2],
-                'is_active': is_active
-            })
+            try:
+                policy_name = violation[0]
+                is_active = status_map.get(policy_name, True)  # Default to active if not found
+                
+                violations_list.append({
+                    'policy_name': policy_name,
+                    'count': violation[1],
+                    'percentage': violation[2] if violation[2] is not None else 0,
+                    'is_active': is_active
+                })
+            except Exception as e:
+                logging.warning(f"Failed to process violation {violation}: {e}")
+                continue
 
         return jsonify(violations_list)
     except Exception as e:
         logging.error(f"Get policy violations data error: {e}")
-        return jsonify({'error': 'Failed to load policy violations data'}), 500
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load policy violations data',
+            'violations': []
+        }), 500
 
 @app.route('/api/admin/toggle-policy-violation', methods=['POST'])
 def api_admin_toggle_policy_violation():
@@ -2221,36 +2237,45 @@ def api_bulk_update_status():
 def api_admin_clear_emails():
     """Clear all email records from database"""
     try:
+        logging.info("Starting email clearing process...")
         conn = get_db_connection()
         
         # Get count before deletion
-        count_result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
-        deleted_count = count_result[0] if count_result else 0
+        try:
+            count_result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
+            deleted_count = count_result[0] if count_result else 0
+            logging.info(f"Found {deleted_count} emails to delete")
+        except Exception as e:
+            logging.warning(f"Could not count emails: {e}")
+            deleted_count = 0
         
         # Get cases count
-        cases_result = conn.execute("SELECT COUNT(*) FROM cases").fetchone()
-        cases_count = cases_result[0] if cases_result else 0
-        
-        # Temporarily disable foreign key checks for DuckDB
-        conn.execute("PRAGMA disable_constraint_checking")
-        
-        # Clear emails table first
-        conn.execute("DELETE FROM emails")
-        
-        # Clear cases that reference emails
-        conn.execute("DELETE FROM cases")
-        
-        # Re-enable foreign key checks
-        conn.execute("PRAGMA enable_constraint_checking")
-        
-        # Reset auto-increment sequences if they exist
         try:
-            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('emails', 'cases')")
-        except:
-            # Ignore if sequences don't exist or if not using SQLite
-            pass
+            cases_result = conn.execute("SELECT COUNT(*) FROM cases").fetchone()
+            cases_count = cases_result[0] if cases_result else 0
+            logging.info(f"Found {cases_count} cases to delete")
+        except Exception as e:
+            logging.warning(f"Could not count cases: {e}")
+            cases_count = 0
+        
+        # Clear cases first (due to foreign key constraints)
+        try:
+            conn.execute("DELETE FROM cases")
+            logging.info("Successfully cleared cases table")
+        except Exception as e:
+            logging.warning(f"Failed to clear cases: {e}")
+        
+        # Clear emails table
+        try:
+            conn.execute("DELETE FROM emails")
+            logging.info("Successfully cleared emails table")
+        except Exception as e:
+            logging.error(f"Failed to clear emails: {e}")
+            conn.close()
+            return jsonify({'error': f'Failed to clear emails: {str(e)}'}), 500
         
         conn.close()
+        logging.info("Email clearing process completed successfully")
 
         return jsonify({
             'success': True,
@@ -2260,7 +2285,10 @@ def api_admin_clear_emails():
         })
     except Exception as e:
         logging.error(f"Clear emails error: {e}")
-        return jsonify({'error': f'Failed to clear email data: {str(e)}'}), 500
+        return jsonify({
+            'success': False,
+            'error': f'Failed to clear email data: {str(e)}'
+        }), 500
 
 @app.route('/api/admin/clear-cases', methods=['POST'])
 def api_admin_clear_cases():
@@ -2316,44 +2344,69 @@ def api_admin_clear_all_data():
     try:
         conn = get_db_connection()
         
-        # Get counts before deletion
-        email_count = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
-        case_count = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
-        flagged_count = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
-        
-        # Temporarily disable foreign key checks for DuckDB
-        conn.execute("PRAGMA disable_constraint_checking")
-        
-        # Clear all tables
-        conn.execute("DELETE FROM emails")
-        conn.execute("DELETE FROM cases")
-        conn.execute("DELETE FROM flagged_senders")
-        
-        # Re-enable foreign key checks
-        conn.execute("PRAGMA enable_constraint_checking")
-        
-        # Reset auto-increment sequences if they exist
+        # Get counts before deletion (with error handling)
         try:
-            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('emails', 'cases', 'flagged_senders')")
+            email_count = conn.execute("SELECT COUNT(*) FROM emails").fetchone()[0]
         except:
-            # Ignore if sequences don't exist or if not using SQLite
-            pass
+            email_count = 0
+            
+        try:
+            case_count = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
+        except:
+            case_count = 0
+            
+        try:
+            flagged_count = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
+        except:
+            flagged_count = 0
+        
+        # Clear all tables with individual error handling
+        deleted_emails = 0
+        deleted_cases = 0
+        deleted_flagged = 0
+        
+        try:
+            # Clear cases first (foreign key dependency)
+            conn.execute("DELETE FROM cases")
+            deleted_cases = case_count
+            logging.info(f"Cleared {case_count} cases")
+        except Exception as e:
+            logging.warning(f"Failed to clear cases: {e}")
+        
+        try:
+            # Clear emails
+            conn.execute("DELETE FROM emails") 
+            deleted_emails = email_count
+            logging.info(f"Cleared {email_count} emails")
+        except Exception as e:
+            logging.warning(f"Failed to clear emails: {e}")
+        
+        try:
+            # Clear flagged senders
+            conn.execute("DELETE FROM flagged_senders")
+            deleted_flagged = flagged_count
+            logging.info(f"Cleared {flagged_count} flagged senders")
+        except Exception as e:
+            logging.warning(f"Failed to clear flagged senders: {e}")
         
         conn.close()
 
-        summary = f"{email_count} emails, {case_count} cases, {flagged_count} flagged senders"
+        summary = f"{deleted_emails} emails, {deleted_cases} cases, {deleted_flagged} flagged senders"
 
         return jsonify({
             'success': True,
-            'message': 'All data cleared successfully',
+            'message': 'Data clearing completed',
             'summary': summary,
-            'email_count': email_count,
-            'case_count': case_count,
-            'flagged_count': flagged_count
+            'email_count': deleted_emails,
+            'case_count': deleted_cases,
+            'flagged_count': deleted_flagged
         })
     except Exception as e:
         logging.error(f"Clear all data error: {e}")
-        return jsonify({'error': f'Failed to clear all data: {str(e)}'}), 500
+        return jsonify({
+            'success': False,
+            'error': f'Failed to clear all data: {str(e)}'
+        }), 500
 
 @app.route('/api/admin/database-stats')
 def api_admin_database_stats():

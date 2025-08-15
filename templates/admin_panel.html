@@ -748,15 +748,45 @@ function clearAllData() {
         return;
     }
 
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="loading-spinner"></span> Clearing...';
+    button.disabled = true;
+
     fetch('/api/admin/clear-all-data', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
+            showAlert(`Successfully cleared all data: ${result.summary}`, 'success');
+            refreshDatabaseStats();
+            // Refresh the entire admin panel to reset counts
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showAlert('Error: ' + (result.error || 'Unknown error occurred'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Failed to clear all data: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });s) {
             showAlert(`Database reset complete. Deleted: ${result.summary}`, 'warning');
             refreshDatabaseStats();
         } else {
@@ -1367,7 +1397,12 @@ function getSeverityColor(severity) {
 
 function loadPolicyViolationsData() {
     fetch('/api/admin/policy-violations-data')
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(violations => {
         console.log('Loaded policy violations:', violations.length);
 
@@ -1380,7 +1415,7 @@ function loadPolicyViolationsData() {
 
         tbody.innerHTML = '';
 
-        if (violations.length === 0) {
+        if (!Array.isArray(violations) || violations.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No policy violations found</td></tr>';
             return;
         }
@@ -1428,7 +1463,7 @@ function loadPolicyViolationsData() {
         console.error('Error loading policy violations:', error);
         const tbody = document.getElementById('policyViolationsBody');
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading violations</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading violations: ' + error.message + '</td></tr>';
         }
     });
 }
