@@ -180,8 +180,54 @@ class EmailProcessor:
         conditions = rule['conditions']
         rule_type = rule['rule_type']
         
-        # Handle different rule types
-        if rule_type == 'sender_domain':
+        # Handle advanced rules with conditions array
+        if rule_type == 'advanced_rule' and isinstance(conditions, dict) and 'conditions' in conditions:
+            rule_conditions = conditions.get('conditions', [])
+            logic_type = conditions.get('logic_type', 'AND')
+            
+            if not rule_conditions:
+                return False
+            
+            matches = []
+            for condition in rule_conditions:
+                field = condition.get('field', '')
+                operator = condition.get('operator', '')
+                value = condition.get('value', '')
+                case_sensitive = condition.get('case_sensitive', False)
+                
+                # Get field value from email
+                field_value = email.get(field, '') or ''
+                if not case_sensitive:
+                    field_value = field_value.lower()
+                    value = value.lower()
+                
+                # Apply operator
+                condition_match = False
+                if operator == 'contains':
+                    condition_match = value in field_value
+                elif operator == 'equals':
+                    condition_match = field_value == value
+                elif operator == 'not_contains':
+                    condition_match = value not in field_value
+                elif operator == 'starts_with':
+                    condition_match = field_value.startswith(value)
+                elif operator == 'ends_with':
+                    condition_match = field_value.endswith(value)
+                elif operator == 'not_equals':
+                    condition_match = field_value != value
+                
+                matches.append(condition_match)
+            
+            # Apply logic type
+            if logic_type == 'AND':
+                return all(matches)
+            elif logic_type == 'OR':
+                return any(matches)
+            else:
+                return all(matches)  # Default to AND
+        
+        # Handle legacy rule types
+        elif rule_type == 'sender_domain':
             sender = email.get('sender', '').lower()
             domains = conditions.get('domains', [])
             return any(domain.lower() in sender for domain in domains)
@@ -434,16 +480,16 @@ class EmailProcessor:
                               risk_level: RiskLevel, ml_classification: Optional[str]) -> ProcessingResult:
         """Determine final processing status based on all analysis results"""
         
-        # Check for explicit admin rule actions first
+        # Check for explicit admin rule actions first - order matters!
         for action in admin_actions:
-            if action.action_type == 'exclude':
-                return ProcessingResult.EXCLUDED
-            elif action.action_type == 'whitelist':
+            if action.action_type in ['whitelist', 'clear', 'approve']:
                 return ProcessingResult.WHITELISTED
-            elif action.action_type == 'escalate':
+            elif action.action_type == 'exclude':
+                return ProcessingResult.EXCLUDED
+            elif action.action_type in ['escalate', 'flag', 'block']:
                 return ProcessingResult.ESCALATED
         
-        # Check whitelist actions
+        # Check if any whitelist action exists (legacy check)
         if any(action.action_type == 'whitelist' for action in admin_actions):
             return ProcessingResult.WHITELISTED
         
