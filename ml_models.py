@@ -485,19 +485,42 @@ class AdvancedAnalytics:
             if df.empty:
                 return {'error': 'No data available for correlation analysis'}
 
-            correlations = {}
+            # Create outcome numeric mapping for correlation analysis
+            outcome_mapping = {
+                'escalated': 3, 'high_risk': 3, 'critical': 3,
+                'medium_risk': 2, 'warning': 2, 'pending_review': 2,
+                'cleared': 1, 'approved': 1, 'resolved': 1,
+                'excluded': 0, 'whitelisted': 0
+            }
 
-            # Department vs outcome correlation
-            if 'department' in df.columns:
-                dept_outcome = df.groupby('department')['outcome_numeric'].agg(['mean', 'count'])
-                correlations['department_outcome'] = dept_outcome.to_dict('index')
+            # Add outcome_numeric column safely
+            if 'final_outcome' in df.columns:
+                df['outcome_numeric'] = df['final_outcome'].map(outcome_mapping).fillna(1)
+            else:
+                df['outcome_numeric'] = 1
 
-            # Sender risk patterns
-            sender_risk = df.groupby('sender')['outcome_numeric'].agg(['mean', 'count'])
-            high_risk_senders = sender_risk[sender_risk['mean'] > 0.5].head(10)
-            correlations['high_risk_senders'] = high_risk_senders.to_dict('index')
+            report = {}
+            # Correlation analysis
+            try:
+                correlations = {}
 
-            return correlations
+                # Check if we have the necessary columns
+                if 'outcome_numeric' in df.columns and not df.empty:
+                    # High-risk sender correlation
+                    high_risk_senders = df[df['outcome_numeric'] >= 2]['sender'].value_counts()
+                    correlations['high_risk_senders'] = high_risk_senders.head(10).to_dict() if not high_risk_senders.empty else {}
+
+                    # Department outcome correlation
+                    if 'department' in df.columns and not df['department'].isna().all():
+                        dept_outcome_corr = df.groupby('department')['outcome_numeric'].mean().sort_values(ascending=False)
+                        correlations['department_outcome'] = dept_outcome_corr.head(10).to_dict() if not dept_outcome_corr.empty else {}
+
+                report['correlations'] = correlations
+            except Exception as e:
+                logging.error(f"Correlation analysis error: {e}")
+                report['correlations'] = {}
+
+            return report
 
         except Exception as e:
             logger.error(f"Correlation analysis error: {e}")
@@ -519,7 +542,7 @@ class AdvancedAnalytics:
                 ORDER BY escalation_rate DESC, email_count DESC
                 LIMIT 20
             """
-            
+
             df_sender_anomalies = conn.execute(anomaly_query).df()
 
             # Unusual department activity

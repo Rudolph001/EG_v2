@@ -190,7 +190,7 @@ class ReportGenerator:
                     'sender': row[0],
                     'email_count': row[1],
                     'high_risk_count': row[2],
-                    'last_email_date': row[3]
+                    'last_email_date': str(row[3]) if row[3] else None
                 }
                 for row in senders_data
             ]
@@ -263,7 +263,7 @@ class ReportGenerator:
                 {
                     'sender': row[0],
                     'reason': row[1],
-                    'flagged_at': row[2],
+                    'flagged_at': str(row[2]) if row[2] else None,
                     'email_count_in_period': row[3]
                 }
                 for row in flagged_data
@@ -518,7 +518,7 @@ class ReportGenerator:
 
                 senders_table_data = [['Sender', 'Email Count', 'High Risk Count', 'Last Email']]
                 for item in data['top_senders'][:15]:
-                    last_date = item['last_email_date'][:10] if item['last_email_date'] else 'N/A'
+                    last_date = str(item['last_email_date'])[:10] if item['last_email_date'] else 'N/A'
                     senders_table_data.append([
                         item['sender'][:40],
                         str(item['email_count']),
@@ -608,7 +608,7 @@ class ReportGenerator:
 
                 flagged_table_data = [['Sender', 'Reason', 'Flagged Date', 'Recent Activity']]
                 for item in data['flagged_senders'][:15]:
-                    flagged_date = item['flagged_at'][:10] if item['flagged_at'] else 'N/A'
+                    flagged_date = str(item['flagged_at'])[:10] if item['flagged_at'] else 'N/A'
                     flagged_table_data.append([
                         item['sender'][:35],
                         item['reason'][:30],
@@ -812,7 +812,7 @@ class ReportGenerator:
                         item['sender'],
                         item['email_count'],
                         item['high_risk_count'],
-                        item['last_email_date'][:10] if item['last_email_date'] else 'N/A'
+                        str(item['last_email_date'])[:10] if item['last_email_date'] else 'N/A'
                     ])
 
             # Policy Violations Sheet
@@ -866,7 +866,7 @@ class ReportGenerator:
                     ws_flagged.append([
                         item['sender'],
                         item['reason'],
-                        item['flagged_at'][:10] if item['flagged_at'] else 'N/A',
+                        str(item['flagged_at'])[:10] if item['flagged_at'] else 'N/A',
                         item['email_count_in_period']
                     ])
 
