@@ -85,6 +85,12 @@ def dashboard():
         "SELECT COUNT(*) FROM emails WHERE final_outcome IN ('excluded', 'whitelisted')"
     ).fetchone()[0]
     stats['excluded_whitelisted'] = excluded_whitelisted_count
+    
+    # Add cleared count
+    cleared_count = conn.execute(
+        "SELECT COUNT(*) FROM emails WHERE final_outcome IN ('cleared', 'approved', 'resolved')"
+    ).fetchone()[0]
+    stats['cleared'] = cleared_count
 
     conn.close()
 

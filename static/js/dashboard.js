@@ -265,7 +265,8 @@ function updateDashboardStats(data) {
         'active_cases': '.stats-active-cases',
         'flagged_senders': '.stats-flagged-senders',
         'todays_emails': '.stats-todays-emails',
-        'excluded_whitelisted': '.stats-excluded-whitelisted'
+        'excluded_whitelisted': '.stats-excluded-whitelisted',
+        'cleared': '.stats-cleared'
     };
     
     Object.keys(statsSelectors).forEach(key => {

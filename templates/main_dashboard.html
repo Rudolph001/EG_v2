@@ -103,7 +103,25 @@
         </a>
     </div>
     
-    <div class="col-md-9">
+    <div class="col-md-3">
+        <a href="{{ url_for('cleared_emails') }}" class="text-decoration-none">
+            <div class="card bg-success text-white card-clickable">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Cleared</h5>
+                            <h2 class="mb-0 stats-cleared">{{ stats.get('cleared', 0) }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-6">
         <!-- Space for future KPI cards -->
     </div>
 </div>
