@@ -132,7 +132,7 @@ def get_dashboard_stats():
     # Today's emails
     today_count = conn.execute("""
         SELECT COUNT(*) FROM emails 
-        WHERE DATE(_time) = DATE(NOW())
+        WHERE DATE(_time) = CURRENT_DATE
     """).fetchone()[0]
     stats['todays_emails'] = today_count
 
@@ -151,7 +151,7 @@ def get_dashboard_stats():
     timeline_data = conn.execute("""
         SELECT DATE(_time) as date, COUNT(*) as count
         FROM emails 
-        WHERE _time >= CURRENT_DATE - INTERVAL 30 DAY
+        WHERE _time >= (CURRENT_DATE - INTERVAL 30 DAY)
         GROUP BY DATE(_time)
         ORDER BY date
     """).fetchall()

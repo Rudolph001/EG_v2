@@ -1,4 +1,3 @@
-
 import os
 import io
 import logging
@@ -36,7 +35,7 @@ os.makedirs('reports', exist_ok=True)
 
 class ReportGenerator:
     """Comprehensive report generator for Email Guardian"""
-    
+
     def __init__(self):
         self.report_styles = getSampleStyleSheet()
         self.colors = {
@@ -47,28 +46,28 @@ class ReportGenerator:
             'info': HexColor('#0dcaf0'),
             'secondary': HexColor('#6c757d')
         }
-        
+
         # Configure matplotlib style
         plt.style.use('seaborn-v0_8')
         sns.set_palette("husl")
-        
+
     def get_report_data(self, date_from: str = None, date_to: str = None) -> Dict[str, Any]:
         """Gather comprehensive data for reporting"""
         try:
             conn = get_db_connection()
-            
+
             # Set default date range if not provided
             if not date_to:
                 date_to = datetime.now().strftime('%Y-%m-%d')
             if not date_from:
                 date_from = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-            
+
             data = {
                 'date_from': date_from,
                 'date_to': date_to,
                 'generated_at': datetime.now()
             }
-            
+
             # Summary statistics
             summary_query = f"""
                 SELECT 
@@ -83,7 +82,7 @@ class ReportGenerator:
                 FROM emails 
                 WHERE DATE(_time) BETWEEN '{date_from}' AND '{date_to}'
             """
-            
+
             summary_result = conn.execute(summary_query).fetchone()
             data['summary'] = {
                 'total_emails': summary_result[0] or 0,
@@ -95,7 +94,7 @@ class ReportGenerator:
                 'emails_with_attachments': summary_result[6] or 0,
                 'escalation_rate': round(summary_result[7] or 0, 2)
             }
-            
+
             # Risk category distribution
             risk_query = f"""
                 SELECT 
@@ -113,13 +112,13 @@ class ReportGenerator:
                 GROUP BY risk_category
                 ORDER BY count DESC
             """
-            
+
             risk_data = conn.execute(risk_query).fetchall()
             data['risk_distribution'] = [
                 {'category': row[0], 'count': row[1], 'percentage': round(row[2], 1)}
                 for row in risk_data
             ]
-            
+
             # Department analysis
             dept_query = f"""
                 SELECT 
@@ -135,7 +134,7 @@ class ReportGenerator:
                 ORDER BY total_emails DESC
                 LIMIT 15
             """
-            
+
             dept_data = conn.execute(dept_query).fetchall()
             data['department_analysis'] = [
                 {
@@ -146,7 +145,7 @@ class ReportGenerator:
                 }
                 for row in dept_data
             ]
-            
+
             # Monthly trend analysis
             monthly_query = f"""
                 SELECT 
@@ -159,7 +158,7 @@ class ReportGenerator:
                 GROUP BY strftime('%Y-%m', _time)
                 ORDER BY month
             """
-            
+
             monthly_data = conn.execute(monthly_query).fetchall()
             data['monthly_trends'] = [
                 {
@@ -170,7 +169,7 @@ class ReportGenerator:
                 }
                 for row in monthly_data
             ]
-            
+
             # Top senders analysis
             senders_query = f"""
                 SELECT 
@@ -184,7 +183,7 @@ class ReportGenerator:
                 ORDER BY email_count DESC
                 LIMIT 20
             """
-            
+
             senders_data = conn.execute(senders_query).fetchall()
             data['top_senders'] = [
                 {
@@ -195,7 +194,7 @@ class ReportGenerator:
                 }
                 for row in senders_data
             ]
-            
+
             # Cases analysis
             cases_query = f"""
                 SELECT 
@@ -208,7 +207,7 @@ class ReportGenerator:
                 GROUP BY c.status
                 ORDER BY count DESC
             """
-            
+
             cases_data = conn.execute(cases_query).fetchall()
             data['cases_analysis'] = [
                 {
@@ -218,7 +217,7 @@ class ReportGenerator:
                 }
                 for row in cases_data
             ]
-            
+
             # Policy violations
             policy_query = f"""
                 SELECT 
@@ -233,7 +232,7 @@ class ReportGenerator:
                 ORDER BY violation_count DESC
                 LIMIT 10
             """
-            
+
             policy_data = conn.execute(policy_query).fetchall()
             data['policy_violations'] = [
                 {
@@ -243,7 +242,7 @@ class ReportGenerator:
                 }
                 for row in policy_data
             ]
-            
+
             # Flagged senders
             flagged_query = """
                 SELECT 
@@ -258,7 +257,7 @@ class ReportGenerator:
                 ORDER BY email_count_in_period DESC, fs.flagged_at DESC
                 LIMIT 15
             """
-            
+
             flagged_data = conn.execute(flagged_query, [date_from, date_to]).fetchall()
             data['flagged_senders'] = [
                 {
@@ -269,9 +268,9 @@ class ReportGenerator:
                 }
                 for row in flagged_data
             ]
-            
+
             conn.close()
-            
+
             # Get ML analytics if available
             try:
                 ml_analytics = get_analytics_report()
@@ -279,18 +278,18 @@ class ReportGenerator:
             except Exception as e:
                 logger.warning(f"Could not load ML insights: {e}")
                 data['ml_insights'] = {'error': 'ML insights unavailable'}
-            
+
             return data
-            
+
         except Exception as e:
             logger.error(f"Error gathering report data: {e}")
             raise
-    
+
     def generate_charts(self, data: Dict[str, Any], chart_dir: str = 'reports/charts') -> Dict[str, str]:
         """Generate chart images for reports"""
         os.makedirs(chart_dir, exist_ok=True)
         chart_files = {}
-        
+
         try:
             # Risk Distribution Pie Chart
             if data['risk_distribution']:
@@ -298,51 +297,51 @@ class ReportGenerator:
                 categories = [item['category'] for item in data['risk_distribution']]
                 counts = [item['count'] for item in data['risk_distribution']]
                 colors = ['#dc3545', '#ffc107', '#198754', '#6c757d', '#0dcaf0'][:len(categories)]
-                
+
                 plt.pie(counts, labels=categories, autopct='%1.1f%%', colors=colors, startangle=90)
                 plt.title('Risk Category Distribution', fontsize=14, fontweight='bold')
                 plt.tight_layout()
-                
+
                 risk_chart_path = os.path.join(chart_dir, f'risk_distribution_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png')
                 plt.savefig(risk_chart_path, dpi=300, bbox_inches='tight')
                 plt.close()
                 chart_files['risk_distribution'] = risk_chart_path
-            
+
             # Department Analysis Bar Chart
             if data['department_analysis']:
                 plt.figure(figsize=(12, 6))
                 departments = [item['department'][:15] for item in data['department_analysis'][:10]]
                 total_emails = [item['total_emails'] for item in data['department_analysis'][:10]]
                 high_risk_emails = [item['high_risk_count'] for item in data['department_analysis'][:10]]
-                
+
                 x = np.arange(len(departments))
                 width = 0.35
-                
+
                 plt.bar(x - width/2, total_emails, width, label='Total Emails', color='#0d6efd', alpha=0.8)
                 plt.bar(x + width/2, high_risk_emails, width, label='High Risk Emails', color='#dc3545', alpha=0.8)
-                
+
                 plt.xlabel('Department')
                 plt.ylabel('Email Count')
                 plt.title('Email Volume and Risk by Department')
                 plt.xticks(x, departments, rotation=45, ha='right')
                 plt.legend()
                 plt.tight_layout()
-                
+
                 dept_chart_path = os.path.join(chart_dir, f'department_analysis_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png')
                 plt.savefig(dept_chart_path, dpi=300, bbox_inches='tight')
                 plt.close()
                 chart_files['department_analysis'] = dept_chart_path
-            
+
             # Monthly Trends Line Chart
             if data['monthly_trends']:
                 plt.figure(figsize=(12, 6))
                 months = [item['month'] for item in data['monthly_trends']]
                 total_emails = [item['total_emails'] for item in data['monthly_trends']]
                 escalated_emails = [item['escalated_emails'] for item in data['monthly_trends']]
-                
+
                 plt.plot(months, total_emails, marker='o', linewidth=2, label='Total Emails', color='#0d6efd')
                 plt.plot(months, escalated_emails, marker='s', linewidth=2, label='Escalated Emails', color='#dc3545')
-                
+
                 plt.xlabel('Month')
                 plt.ylabel('Email Count')
                 plt.title('Email Volume Trends Over Time')
@@ -350,52 +349,52 @@ class ReportGenerator:
                 plt.legend()
                 plt.grid(True, alpha=0.3)
                 plt.tight_layout()
-                
+
                 trend_chart_path = os.path.join(chart_dir, f'monthly_trends_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png')
                 plt.savefig(trend_chart_path, dpi=300, bbox_inches='tight')
                 plt.close()
                 chart_files['monthly_trends'] = trend_chart_path
-            
+
             # Policy Violations Chart
             if data['policy_violations']:
                 plt.figure(figsize=(10, 6))
                 policies = [item['policy_name'][:20] + '...' if len(item['policy_name']) > 20 else item['policy_name'] 
                            for item in data['policy_violations'][:10]]
                 violations = [item['violation_count'] for item in data['policy_violations'][:10]]
-                
+
                 plt.barh(policies, violations, color='#ffc107', alpha=0.8)
                 plt.xlabel('Violation Count')
                 plt.title('Top Policy Violations')
                 plt.tight_layout()
-                
+
                 policy_chart_path = os.path.join(chart_dir, f'policy_violations_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png')
                 plt.savefig(policy_chart_path, dpi=300, bbox_inches='tight')
                 plt.close()
                 chart_files['policy_violations'] = policy_chart_path
-            
+
             logger.info(f"Generated {len(chart_files)} charts in {chart_dir}")
             return chart_files
-            
+
         except Exception as e:
             logger.error(f"Error generating charts: {e}")
             return {}
-    
+
     def generate_pdf_report(self, date_from: str = None, date_to: str = None) -> str:
         """Generate comprehensive PDF report"""
         try:
             # Get report data
             data = self.get_report_data(date_from, date_to)
-            
+
             # Generate charts
             chart_files = self.generate_charts(data)
-            
+
             # Create PDF filename
             filename = f"reports/email_guardian_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            
+
             # Create PDF document
             doc = SimpleDocTemplate(filename, pagesize=letter)
             story = []
-            
+
             # Title and header
             title_style = ParagraphStyle(
                 'CustomTitle',
@@ -405,12 +404,12 @@ class ReportGenerator:
                 alignment=1,
                 textColor=self.colors['primary']
             )
-            
+
             story.append(Paragraph("Email Guardian Comprehensive Report", title_style))
             story.append(Paragraph(f"Report Period: {data['date_from']} to {data['date_to']}", self.report_styles['Normal']))
             story.append(Paragraph(f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M:%S')}", self.report_styles['Normal']))
             story.append(Spacer(1, 20))
-            
+
             # Executive Summary
             story.append(Paragraph("Executive Summary", self.report_styles['Heading2']))
             summary_data = [
@@ -423,7 +422,7 @@ class ReportGenerator:
                 ['Filtered Emails', f"{data['summary']['filtered_emails']:,}", 'Excluded/whitelisted emails'],
                 ['Escalation Rate', f"{data['summary']['escalation_rate']}%", 'Percentage of emails escalated'],
             ]
-            
+
             summary_table = Table(summary_data, colWidths=[2.5*inch, 1.5*inch, 3*inch])
             summary_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), self.colors['primary']),
@@ -436,23 +435,23 @@ class ReportGenerator:
                 ('GRID', (0, 0), (-1, -1), 1, colors.black),
                 ('FONTSIZE', (0, 1), (-1, -1), 10),
             ]))
-            
+
             story.append(summary_table)
             story.append(Spacer(1, 20))
-            
+
             # Risk Analysis Section
             story.append(Paragraph("Risk Analysis", self.report_styles['Heading2']))
-            
+
             if 'risk_distribution' in chart_files:
                 story.append(Paragraph("Risk Category Distribution", self.report_styles['Heading3']))
                 img = Image(chart_files['risk_distribution'], width=6*inch, height=4*inch)
                 story.append(img)
                 story.append(Spacer(1, 10))
-            
+
             risk_table_data = [['Risk Category', 'Count', 'Percentage']]
             for item in data['risk_distribution']:
                 risk_table_data.append([item['category'], str(item['count']), f"{item['percentage']}%"])
-            
+
             risk_table = Table(risk_table_data)
             risk_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), self.colors['secondary']),
@@ -464,18 +463,18 @@ class ReportGenerator:
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black)
             ]))
-            
+
             story.append(risk_table)
             story.append(PageBreak())
-            
+
             # Department Analysis
             story.append(Paragraph("Department Analysis", self.report_styles['Heading2']))
-            
+
             if 'department_analysis' in chart_files:
                 img = Image(chart_files['department_analysis'], width=7*inch, height=4*inch)
                 story.append(img)
                 story.append(Spacer(1, 10))
-            
+
             dept_table_data = [['Department', 'Total Emails', 'High Risk', 'Risk %']]
             for item in data['department_analysis'][:10]:
                 dept_table_data.append([
@@ -484,7 +483,7 @@ class ReportGenerator:
                     str(item['high_risk_count']),
                     f"{item['risk_percentage']}%"
                 ])
-            
+
             dept_table = Table(dept_table_data, colWidths=[3*inch, 1.2*inch, 1.2*inch, 1*inch])
             dept_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), self.colors['info']),
@@ -496,23 +495,23 @@ class ReportGenerator:
                 ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                 ('GRID', (0, 0), (-1, -1), 1, colors.black)
             ]))
-            
+
             story.append(dept_table)
             story.append(PageBreak())
-            
+
             # Trend Analysis
             if data['monthly_trends']:
                 story.append(Paragraph("Email Volume Trends", self.report_styles['Heading2']))
-                
+
                 if 'monthly_trends' in chart_files:
                     img = Image(chart_files['monthly_trends'], width=7*inch, height=4*inch)
                     story.append(img)
                     story.append(Spacer(1, 15))
-            
+
             # Top Senders
             if data['top_senders']:
                 story.append(Paragraph("Top Email Senders", self.report_styles['Heading2']))
-                
+
                 senders_table_data = [['Sender', 'Email Count', 'High Risk Count', 'Last Email']]
                 for item in data['top_senders'][:15]:
                     last_date = item['last_email_date'][:10] if item['last_email_date'] else 'N/A'
@@ -522,7 +521,7 @@ class ReportGenerator:
                         str(item['high_risk_count']),
                         last_date
                     ])
-                
+
                 senders_table = Table(senders_table_data, colWidths=[3*inch, 1*inch, 1.2*inch, 1*inch])
                 senders_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), self.colors['success']),
@@ -535,23 +534,23 @@ class ReportGenerator:
                     ('GRID', (0, 0), (-1, -1), 1, colors.black),
                     ('FONTSIZE', (0, 1), (-1, -1), 9)
                 ]))
-                
+
                 story.append(senders_table)
                 story.append(PageBreak())
-            
+
             # Policy Violations
             if data['policy_violations']:
                 story.append(Paragraph("Policy Violations Analysis", self.report_styles['Heading2']))
-                
+
                 if 'policy_violations' in chart_files:
                     img = Image(chart_files['policy_violations'], width=6*inch, height=4*inch)
                     story.append(img)
                     story.append(Spacer(1, 15))
-            
+
             # Cases Analysis
             if data['cases_analysis']:
                 story.append(Paragraph("Cases Analysis", self.report_styles['Heading2']))
-                
+
                 cases_table_data = [['Status', 'Count', 'Avg Resolution Days']]
                 for item in data['cases_analysis']:
                     cases_table_data.append([
@@ -559,7 +558,7 @@ class ReportGenerator:
                         str(item['count']),
                         str(item['avg_resolution_days'])
                     ])
-                
+
                 cases_table = Table(cases_table_data)
                 cases_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), self.colors['warning']),
@@ -571,38 +570,38 @@ class ReportGenerator:
                     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                     ('GRID', (0, 0), (-1, -1), 1, colors.black)
                 ]))
-                
+
                 story.append(cases_table)
                 story.append(Spacer(1, 15))
-            
+
             # ML Insights Section
             if data['ml_insights'] and 'error' not in data['ml_insights']:
                 story.append(Paragraph("Machine Learning Insights", self.report_styles['Heading2']))
-                
+
                 if 'correlations' in data['ml_insights']:
                     story.append(Paragraph("Key Findings:", self.report_styles['Heading3']))
-                    
+
                     insights_text = []
                     correlations = data['ml_insights']['correlations']
-                    
+
                     if 'high_risk_senders' in correlations and correlations['high_risk_senders']:
                         insights_text.append("• High-risk senders identified with pattern analysis")
-                    
+
                     if 'department_outcome' in correlations:
                         insights_text.append("• Department-specific risk patterns detected")
-                    
+
                     if data['ml_insights'].get('anomalies'):
                         insights_text.append(f"• {len(data['ml_insights']['anomalies'])} anomalies detected in email patterns")
-                    
+
                     for insight in insights_text:
                         story.append(Paragraph(insight, self.report_styles['Normal']))
                         story.append(Spacer(1, 5))
-            
+
             # Flagged Senders
             if data['flagged_senders']:
                 story.append(PageBreak())
                 story.append(Paragraph("Flagged Senders Report", self.report_styles['Heading2']))
-                
+
                 flagged_table_data = [['Sender', 'Reason', 'Flagged Date', 'Recent Activity']]
                 for item in data['flagged_senders'][:15]:
                     flagged_date = item['flagged_at'][:10] if item['flagged_at'] else 'N/A'
@@ -612,7 +611,7 @@ class ReportGenerator:
                         flagged_date,
                         f"{item['email_count_in_period']} emails"
                     ])
-                
+
                 flagged_table = Table(flagged_table_data, colWidths=[2.5*inch, 2*inch, 1.2*inch, 1*inch])
                 flagged_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), self.colors['danger']),
@@ -625,46 +624,46 @@ class ReportGenerator:
                     ('GRID', (0, 0), (-1, -1), 1, colors.black),
                     ('FONTSIZE', (0, 1), (-1, -1), 9)
                 ]))
-                
+
                 story.append(flagged_table)
-            
+
             # Build PDF
             doc.build(story)
-            
+
             logger.info(f"PDF report generated: {filename}")
             return filename
-            
+
         except Exception as e:
             logger.error(f"Error generating PDF report: {e}")
             raise
-    
+
     def generate_excel_report(self, date_from: str = None, date_to: str = None) -> str:
         """Generate comprehensive Excel report with multiple sheets and charts"""
         try:
             # Get report data
             data = self.get_report_data(date_from, date_to)
-            
+
             # Create Excel filename
             filename = f"reports/email_guardian_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-            
+
             # Create workbook
             wb = Workbook()
-            
+
             # Remove default sheet
             wb.remove(wb.active)
-            
+
             # Summary Sheet
             ws_summary = wb.create_sheet("Executive Summary")
             ws_summary.append(["Email Guardian Report"])
             ws_summary.append([f"Period: {data['date_from']} to {data['date_to']}"])
             ws_summary.append([f"Generated: {data['generated_at'].strftime('%Y-%m-%d %H:%M:%S')}"])
             ws_summary.append([])
-            
+
             # Format header
             ws_summary['A1'].font = Font(size=18, bold=True, color='0d6efd')
             ws_summary['A2'].font = Font(size=12, italic=True)
             ws_summary['A3'].font = Font(size=10, italic=True)
-            
+
             # Summary metrics
             ws_summary.append(["Key Metrics", "Value", "Description"])
             summary_headers = ws_summary[5]
@@ -672,7 +671,7 @@ class ReportGenerator:
                 cell.font = Font(bold=True)
                 cell.fill = PatternFill(start_color="0d6efd", end_color="0d6efd", fill_type="solid")
                 cell.font = Font(color="FFFFFF", bold=True)
-            
+
             metrics = [
                 ("Total Emails", data['summary']['total_emails'], "All emails processed"),
                 ("Unique Senders", data['summary']['unique_senders'], "Distinct email senders"),
@@ -681,10 +680,10 @@ class ReportGenerator:
                 ("Cleared Emails", data['summary']['cleared_emails'], "Approved emails"),
                 ("Escalation Rate", f"{data['summary']['escalation_rate']}%", "Percentage escalated")
             ]
-            
+
             for metric, value, description in metrics:
                 ws_summary.append([metric, value, description])
-            
+
             # Auto-adjust column widths
             for column in ws_summary.columns:
                 max_length = 0
@@ -697,43 +696,43 @@ class ReportGenerator:
                         pass
                 adjusted_width = min(max_length + 2, 50)
                 ws_summary.column_dimensions[column_letter].width = adjusted_width
-            
+
             # Risk Distribution Sheet
             if data['risk_distribution']:
                 ws_risk = wb.create_sheet("Risk Distribution")
                 ws_risk.append(["Risk Category", "Count", "Percentage"])
-                
+
                 # Format header
                 for cell in ws_risk[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="dc3545", end_color="dc3545", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['risk_distribution']:
                     ws_risk.append([item['category'], item['count'], f"{item['percentage']}%"])
-                
+
                 # Create pie chart
                 chart = PieChart()
                 chart.title = "Risk Category Distribution"
-                
+
                 data_range = Reference(ws_risk, min_col=2, min_row=1, max_row=len(data['risk_distribution'])+1)
                 labels_range = Reference(ws_risk, min_col=1, min_row=2, max_row=len(data['risk_distribution'])+1)
                 chart.add_data(data_range, titles_from_data=True)
                 chart.set_categories(labels_range)
-                
+
                 ws_risk.add_chart(chart, "E2")
-            
+
             # Department Analysis Sheet
             if data['department_analysis']:
                 ws_dept = wb.create_sheet("Department Analysis")
                 ws_dept.append(["Department", "Total Emails", "High Risk Count", "Risk Percentage"])
-                
+
                 # Format header
                 for cell in ws_dept[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="0dcaf0", end_color="0dcaf0", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['department_analysis']:
                     ws_dept.append([
                         item['department'],
@@ -741,32 +740,32 @@ class ReportGenerator:
                         item['high_risk_count'],
                         f"{item['risk_percentage']}%"
                     ])
-                
+
                 # Create bar chart
                 chart = BarChart()
                 chart.title = "Email Volume by Department"
                 chart.x_axis.title = "Department"
                 chart.y_axis.title = "Email Count"
-                
+
                 data_range = Reference(ws_dept, min_col=2, min_row=1, max_col=3, max_row=len(data['department_analysis'])+1)
                 categories = Reference(ws_dept, min_col=1, min_row=2, max_row=len(data['department_analysis'])+1)
-                
+
                 chart.add_data(data_range, titles_from_data=True)
                 chart.set_categories(categories)
-                
+
                 ws_dept.add_chart(chart, "F2")
-            
+
             # Monthly Trends Sheet
             if data['monthly_trends']:
                 ws_trends = wb.create_sheet("Monthly Trends")
                 ws_trends.append(["Month", "Total Emails", "Escalated Emails", "Cleared Emails"])
-                
+
                 # Format header
                 for cell in ws_trends[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="198754", end_color="198754", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['monthly_trends']:
                     ws_trends.append([
                         item['month'],
@@ -774,32 +773,32 @@ class ReportGenerator:
                         item['escalated_emails'],
                         item['cleared_emails']
                     ])
-                
+
                 # Create line chart
                 chart = LineChart()
                 chart.title = "Email Volume Trends"
                 chart.x_axis.title = "Month"
                 chart.y_axis.title = "Email Count"
-                
+
                 data_range = Reference(ws_trends, min_col=2, min_row=1, max_col=4, max_row=len(data['monthly_trends'])+1)
                 categories = Reference(ws_trends, min_col=1, min_row=2, max_row=len(data['monthly_trends'])+1)
-                
+
                 chart.add_data(data_range, titles_from_data=True)
                 chart.set_categories(categories)
-                
+
                 ws_trends.add_chart(chart, "F2")
-            
+
             # Top Senders Sheet
             if data['top_senders']:
                 ws_senders = wb.create_sheet("Top Senders")
                 ws_senders.append(["Sender", "Email Count", "High Risk Count", "Last Email Date"])
-                
+
                 # Format header
                 for cell in ws_senders[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="ffc107", end_color="ffc107", fill_type="solid")
                     cell.font = Font(color="000000", bold=True)
-                
+
                 for item in data['top_senders']:
                     ws_senders.append([
                         item['sender'],
@@ -807,54 +806,54 @@ class ReportGenerator:
                         item['high_risk_count'],
                         item['last_email_date'][:10] if item['last_email_date'] else 'N/A'
                     ])
-            
+
             # Policy Violations Sheet
             if data['policy_violations']:
                 ws_policy = wb.create_sheet("Policy Violations")
                 ws_policy.append(["Policy Name", "Violation Count", "Escalated Count"])
-                
+
                 # Format header
                 for cell in ws_policy[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="6f42c1", end_color="6f42c1", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['policy_violations']:
                     ws_policy.append([
                         item['policy_name'],
                         item['violation_count'],
                         item['escalated_count']
                     ])
-            
+
             # Cases Analysis Sheet
             if data['cases_analysis']:
                 ws_cases = wb.create_sheet("Cases Analysis")
                 ws_cases.append(["Status", "Count", "Avg Resolution Days"])
-                
+
                 # Format header
                 for cell in ws_cases[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="fd7e14", end_color="fd7e14", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['cases_analysis']:
                     ws_cases.append([
                         item['status'].title(),
                         item['count'],
                         item['avg_resolution_days']
                     ])
-            
+
             # Flagged Senders Sheet
             if data['flagged_senders']:
                 ws_flagged = wb.create_sheet("Flagged Senders")
                 ws_flagged.append(["Sender", "Reason", "Flagged Date", "Recent Email Count"])
-                
+
                 # Format header
                 for cell in ws_flagged[1]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="dc3545", end_color="dc3545", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 for item in data['flagged_senders']:
                     ws_flagged.append([
                         item['sender'],
@@ -862,31 +861,31 @@ class ReportGenerator:
                         item['flagged_at'][:10] if item['flagged_at'] else 'N/A',
                         item['email_count_in_period']
                     ])
-            
+
             # ML Insights Sheet
             if data['ml_insights'] and 'error' not in data['ml_insights']:
                 ws_ml = wb.create_sheet("ML Insights")
                 ws_ml.append(["Machine Learning Analysis Results"])
                 ws_ml['A1'].font = Font(size=14, bold=True)
-                
+
                 ws_ml.append([])
                 ws_ml.append(["Analysis Type", "Results"])
-                
+
                 # Format header
                 for cell in ws_ml[3]:
                     cell.font = Font(bold=True)
                     cell.fill = PatternFill(start_color="20c997", end_color="20c997", fill_type="solid")
                     cell.font = Font(color="FFFFFF", bold=True)
-                
+
                 if 'correlations' in data['ml_insights']:
                     ws_ml.append(["Correlation Analysis", "Completed - patterns identified"])
-                
+
                 if 'anomalies' in data['ml_insights']:
                     anomaly_count = len(data['ml_insights']['anomalies'])
                     ws_ml.append(["Anomaly Detection", f"{anomaly_count} anomalies detected"])
-                
+
                 ws_ml.append(["Report Generated", data['ml_insights'].get('generated_at', 'N/A')])
-            
+
             # Auto-adjust all column widths
             for ws in wb.worksheets:
                 for column in ws.columns:
@@ -900,26 +899,26 @@ class ReportGenerator:
                             pass
                     adjusted_width = min(max_length + 2, 50)
                     ws.column_dimensions[column_letter].width = adjusted_width
-            
+
             # Save workbook
             wb.save(filename)
-            
+
             logger.info(f"Excel report generated: {filename}")
             return filename
-            
+
         except Exception as e:
             logger.error(f"Error generating Excel report: {e}")
             raise
-    
+
     def generate_summary_report(self, report_type: str = 'escalated', date_from: str = None, date_to: str = None) -> str:
         """Generate focused summary reports for specific categories"""
         try:
             data = self.get_report_data(date_from, date_to)
-            
+
             filename = f"reports/{report_type}_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             doc = SimpleDocTemplate(filename, pagesize=letter)
             story = []
-            
+
             # Title
             title_map = {
                 'escalated': 'Escalated Emails Summary',
@@ -927,26 +926,26 @@ class ReportGenerator:
                 'flagged': 'Flagged Senders Summary',
                 'department': 'Department Risk Summary'
             }
-            
+
             title = title_map.get(report_type, 'Email Summary Report')
             story.append(Paragraph(title, self.report_styles['Title']))
             story.append(Paragraph(f"Period: {data['date_from']} to {data['date_to']}", self.report_styles['Normal']))
             story.append(Spacer(1, 20))
-            
+
             if report_type == 'escalated':
                 story.append(Paragraph(f"Total Escalated: {data['summary']['escalated_emails']}", self.report_styles['Heading3']))
                 story.append(Paragraph(f"Escalation Rate: {data['summary']['escalation_rate']}%", self.report_styles['Heading3']))
-                
+
                 if data['risk_distribution']:
                     high_risk = next((item for item in data['risk_distribution'] if item['category'] == 'High Risk'), None)
                     if high_risk:
                         story.append(Paragraph(f"High Risk Emails: {high_risk['count']} ({high_risk['percentage']}%)", self.report_styles['Normal']))
-            
+
             elif report_type == 'cleared':
                 story.append(Paragraph(f"Total Cleared: {data['summary']['cleared_emails']}", self.report_styles['Heading3']))
                 clearance_rate = round((data['summary']['cleared_emails'] / max(data['summary']['total_emails'], 1)) * 100, 2)
                 story.append(Paragraph(f"Clearance Rate: {clearance_rate}%", self.report_styles['Normal']))
-            
+
             elif report_type == 'flagged':
                 story.append(Paragraph(f"Flagged Senders: {len(data['flagged_senders'])}", self.report_styles['Heading3']))
                 if data['flagged_senders']:
@@ -957,7 +956,7 @@ class ReportGenerator:
                             item['reason'][:30],
                             f"{item['email_count_in_period']} emails"
                         ])
-                    
+
                     flagged_table = Table(flagged_table_data)
                     flagged_table.setStyle(TableStyle([
                         ('BACKGROUND', (0, 0), (-1, 0), self.colors['danger']),
@@ -967,11 +966,11 @@ class ReportGenerator:
                         ('GRID', (0, 0), (-1, -1), 1, colors.black)
                     ]))
                     story.append(flagged_table)
-            
+
             doc.build(story)
             logger.info(f"Summary report generated: {filename}")
             return filename
-            
+
         except Exception as e:
             logger.error(f"Error generating summary report: {e}")
             raise
@@ -998,20 +997,20 @@ def cleanup_old_reports(days_old: int = 30):
     try:
         cutoff_date = datetime.now() - timedelta(days=days_old)
         reports_dir = 'reports'
-        
+
         if not os.path.exists(reports_dir):
             return
-        
+
         deleted_count = 0
         for filename in os.listdir(reports_dir):
             filepath = os.path.join(reports_dir, filename)
-            
+
             if os.path.isfile(filepath):
                 file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
                 if file_time < cutoff_date:
                     os.remove(filepath)
                     deleted_count += 1
-        
+
         # Also clean up chart images
         charts_dir = 'reports/charts'
         if os.path.exists(charts_dir):
@@ -1022,9 +1021,9 @@ def cleanup_old_reports(days_old: int = 30):
                     if file_time < cutoff_date:
                         os.remove(filepath)
                         deleted_count += 1
-        
+
         logger.info(f"Cleaned up {deleted_count} old report files")
-        
+
     except Exception as e:
         logger.error(f"Error cleaning up old reports: {e}")
 
@@ -1032,7 +1031,7 @@ def cleanup_old_reports(days_old: int = 30):
 if __name__ == "__main__":
     # Command line interface for report generation
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='Generate Email Guardian reports')
     parser.add_argument('--type', choices=['pdf', 'excel', 'summary'], default='pdf', help='Report type')
     parser.add_argument('--summary-type', choices=['escalated', 'cleared', 'flagged', 'department'], 
@@ -1040,9 +1039,9 @@ if __name__ == "__main__":
     parser.add_argument('--date-from', help='Start date (YYYY-MM-DD)')
     parser.add_argument('--date-to', help='End date (YYYY-MM-DD)')
     parser.add_argument('--cleanup', type=int, help='Clean up reports older than X days')
-    
+
     args = parser.parse_args()
-    
+
     try:
         if args.cleanup:
             cleanup_old_reports(args.cleanup)
