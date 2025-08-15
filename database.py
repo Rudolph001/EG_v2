@@ -14,8 +14,9 @@ def init_database():
     try:
         conn = get_db_connection()
         
-        # Create sequence for email IDs first
+        # Create sequences for IDs first
         conn.execute("CREATE SEQUENCE IF NOT EXISTS email_id_seq START 1")
+        conn.execute("CREATE SEQUENCE IF NOT EXISTS case_id_seq START 1")
         
         # Create emails table
         conn.execute("""
@@ -42,7 +43,7 @@ def init_database():
         # Create cases table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS cases (
-                id INTEGER PRIMARY KEY,
+                id INTEGER PRIMARY KEY DEFAULT nextval('case_id_seq'),
                 email_id INTEGER,
                 escalation_reason TEXT,
                 status VARCHAR DEFAULT 'open',

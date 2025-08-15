@@ -479,10 +479,13 @@ class EmailProcessor:
                                ". ".join(reasons[:3])  # Limit to first 3 reasons
             
             # Insert new case
-            case_id = conn.execute("""
+            conn.execute("""
                 INSERT INTO cases (email_id, escalation_reason, status) 
-                VALUES (?, ?, ?) RETURNING id
-            """, [email_id, escalation_reason, 'open']).fetchone()[0]
+                VALUES (?, ?, ?)
+            """, [email_id, escalation_reason, 'open'])
+            
+            # Get the case ID that was just inserted
+            case_id = conn.execute("SELECT currval('case_id_seq')").fetchone()[0]
             
             conn.close()
             
