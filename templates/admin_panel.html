@@ -1371,11 +1371,17 @@ function loadPolicyViolationsData() {
     .then(violations => {
         console.log('Loaded policy violations:', violations.length);
 
-        const container = document.getElementById('policyViolationsList');
-        container.innerHTML = '';
+        // Update the table body instead of creating a separate container
+        const tbody = document.getElementById('policyViolationsBody');
+        if (!tbody) {
+            console.error('Policy violations table body not found');
+            return;
+        }
+
+        tbody.innerHTML = '';
 
         if (violations.length === 0) {
-            container.innerHTML = '<div class="text-muted small">No policy violations found</div>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No policy violations found</td></tr>';
             return;
         }
 
@@ -1390,34 +1396,40 @@ function loadPolicyViolationsData() {
 
             violations.forEach(violation => {
                 const isActive = policyStatusMap[violation.policy_name] !== false;
-                const violationDiv = document.createElement('div');
-                violationDiv.className = 'mb-2 p-2 border rounded';
-                violationDiv.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${violation.policy_name}</strong>
-                            <br><small class="text-muted">${violation.count} violations (${violation.percentage}%)</small>
-                        </div>
-                        <div>
-                            <span class="badge bg-${isActive ? 'success' : 'secondary'} me-2">
-                                ${isActive ? 'Active' : 'Disabled'}
-                            </span>
-                            <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
-                                    onclick="togglePolicyViolation('${violation.policy_name}', ${!isActive})">
-                                <i class="fas fa-${isActive ? 'ban' : 'check'}"></i> 
-                                ${isActive ? 'Disable' : 'Enable'}
-                            </button>
-                        </div>
-                    </div>
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${violation.policy_name}</strong></td>
+                    <td>
+                        <span class="badge bg-${isActive ? 'success' : 'secondary'}">
+                            ${isActive ? 'Active' : 'Disabled'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-warning">${violation.count}</span>
+                        <small class="text-muted ms-2">(${violation.percentage}%)</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                                onclick="togglePolicyViolation('${violation.policy_name}', ${!isActive})">
+                            <i class="fas fa-${isActive ? 'ban' : 'check'}"></i> 
+                            ${isActive ? 'Disable' : 'Enable'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary ms-1" 
+                                onclick="editPolicyByName('${violation.policy_name}')">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                    </td>
                 `;
-                container.appendChild(violationDiv);
+                tbody.appendChild(row);
             });
         });
     })
     .catch(error => {
         console.error('Error loading policy violations:', error);
-        document.getElementById('policyViolationsList').innerHTML = 
-            '<div class="text-danger small">Error loading violations</div>';
+        const tbody = document.getElementById('policyViolationsBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading violations</td></tr>';
+        }
     });
 }
 
