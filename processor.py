@@ -325,12 +325,18 @@ class EmailProcessor:
         
         # Additional risk factors
         
-        # External sender risk
+        # Sender domain analysis (focus on suspicious patterns since all are external)
         sender = email.get('sender') or ''
-        if sender and not any(domain in sender.lower() for domain in ['company.com', 'internal.com']):
-            if not sender.endswith('.gov') and not sender.endswith('.edu'):
-                risk_score += 10
-                risk_factors.append('external_sender')
+        if sender:
+            # Check for personal email domains from company users
+            personal_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com']
+            if any(domain in sender.lower() for domain in personal_domains):
+                risk_score += 15
+                risk_factors.append('personal_email_domain')
+            
+            # Check for government/education domains (typically lower risk)
+            if sender.endswith('.gov') or sender.endswith('.edu'):
+                risk_score -= 5  # Reduce risk for trusted domains
         
         # Attachment risk
         attachments = email.get('attachments') or ''

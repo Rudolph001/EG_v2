@@ -1542,12 +1542,19 @@ def api_ml_insights(email_id):
         # Analyze actual risk factors based on email content
         risk_factors = []
         
-        # Check for external recipients
+        # Check recipient patterns (all emails are external)
         recipients = email_dict.get('recipients', '')
-        if recipients and '@' in recipients and not any(domain in recipients.lower() for domain in ['company.com', 'internal.com']):
-            risk_factors.append({'name': 'External Recipient', 'severity': 'high'})
-        elif recipients and '@' in recipients:
-            risk_factors.append({'name': 'Internal Recipient', 'severity': 'low'})
+        if recipients and '@' in recipients:
+            recipient_count = len(recipients.split(',')) if recipients else 0
+            if recipient_count > 10:
+                risk_factors.append({'name': 'Mass Distribution (10+ Recipients)', 'severity': 'high'})
+            elif recipient_count > 5:
+                risk_factors.append({'name': 'Multiple Recipients (5-10)', 'severity': 'medium'})
+            
+            # Check for personal email domains in recipients
+            personal_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com']
+            if any(domain in recipients.lower() for domain in personal_domains):
+                risk_factors.append({'name': 'Personal Email Domain Recipients', 'severity': 'medium'})
         
         # Check for attachments
         attachments = email_dict.get('attachments', '')

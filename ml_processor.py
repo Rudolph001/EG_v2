@@ -138,7 +138,11 @@ def classify_email(text):
         return "unknown"
 
 def get_risk_score(email_data):
-    """Calculate risk score for an email"""
+    """Calculate risk score for an email
+    
+    Note: All imported emails are external emails (sent outside the organization),
+    so we focus on other risk indicators rather than external recipient status.
+    """
     try:
         risk_score = 0
         
@@ -165,15 +169,20 @@ def get_risk_score(email_data):
             else:
                 risk_score += 10  # Any attachment adds some risk
         
-        # Check for external recipients
+        # Check recipient patterns (all emails are external, so focus on suspicious patterns)
         recipients = email_data.get('recipients', '')
         if recipients and '@' in recipients:
-            if not any(domain in recipients.lower() for domain in ['company.com', 'internal.com']):
-                risk_score += 25
-            # Multiple recipients increase risk
+            # Multiple recipients increase risk (mass distribution)
             recipient_count = len(recipients.split(',')) if recipients else 0
-            if recipient_count > 5:
-                risk_score += 10
+            if recipient_count > 10:
+                risk_score += 20  # Many recipients = potential data breach
+            elif recipient_count > 5:
+                risk_score += 10  # Moderate recipient count
+            
+            # Check for suspicious recipient domains
+            suspicious_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'protonmail.com']
+            if any(domain in recipients.lower() for domain in suspicious_domains):
+                risk_score += 15  # Personal email domains are higher risk
         
         # Policy violations
         if email_data.get('policy_name'):
