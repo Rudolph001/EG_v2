@@ -430,7 +430,7 @@ def analytics():
         SELECT DATE(_time) as date, COUNT(*) as count
         FROM emails 
         WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
-        AND _time >= CURRENT_DATE - INTERVAL 30 DAY
+        AND _time >= (CURRENT_DATE - INTERVAL 30 DAY)
         GROUP BY DATE(_time)
         ORDER BY date
     """).fetchall()
@@ -473,7 +473,7 @@ def analytics():
             COUNT(*) as total_emails,
             COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
         FROM emails
-        WHERE _time >= CURRENT_DATE - INTERVAL '12 months'
+        WHERE _time >= (CURRENT_DATE - INTERVAL 12 MONTH)
         GROUP BY strftime('%Y-%m', _time)
         ORDER BY month
     """).fetchall()
@@ -1083,8 +1083,20 @@ def api_admin_reset_model():
 @app.route('/api/dashboard-stats')
 def api_dashboard_stats():
     """API endpoint for dashboard statistics"""
-    stats = get_dashboard_stats()
-    return jsonify(stats)
+    try:
+        stats = get_dashboard_stats()
+        return jsonify(stats)
+    except Exception as e:
+        logging.error(f"Dashboard stats error: {e}")
+        return jsonify({
+            'total_emails': 0,
+            'active_cases': 0,
+            'flagged_senders': 0,
+            'todays_emails': 0,
+            'department_data': [],
+            'timeline_data': [],
+            'error': 'Failed to load dashboard statistics'
+        }), 500
 
 @app.route('/api/classify-email', methods=['POST'])
 def api_classify_email():

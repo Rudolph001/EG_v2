@@ -247,7 +247,7 @@ def generate_dashboard_charts_data():
         volume_data = conn.execute("""
             SELECT DATE(_time) as date, COUNT(*) as count
             FROM emails 
-            WHERE _time >= CURRENT_DATE - INTERVAL 30 DAY
+            WHERE _time >= (CURRENT_DATE - INTERVAL 30 DAY)
             GROUP BY DATE(_time)
             ORDER BY date
         """).fetchall()

@@ -155,7 +155,7 @@ class ReportGenerator:
                     COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails,
                     COUNT(CASE WHEN final_outcome IN ('cleared', 'approved') THEN 1 END) as cleared_emails
                 FROM emails
-                WHERE _time >= DATE('{date_from}', '-12 months')
+                WHERE _time >= (DATE '{date_from}' - INTERVAL 12 MONTH)
                 GROUP BY strftime('%Y-%m', _time)
                 ORDER BY month
             """

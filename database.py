@@ -13,11 +13,11 @@ def init_database():
     """Initialize the DuckDB database with required tables"""
     try:
         conn = get_db_connection()
-        
+
         # Create sequences for IDs first
         conn.execute("CREATE SEQUENCE IF NOT EXISTS email_id_seq START 1")
         conn.execute("CREATE SEQUENCE IF NOT EXISTS case_id_seq START 1")
-        
+
         # Create emails table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS emails (
@@ -39,7 +39,7 @@ def init_database():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Create cases table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS cases (
@@ -52,7 +52,7 @@ def init_database():
                 FOREIGN KEY (email_id) REFERENCES emails(id)
             )
         """)
-        
+
         # Create flagged_senders table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS flagged_senders (
@@ -62,7 +62,7 @@ def init_database():
                 flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Create admin_rules table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS admin_rules (
@@ -78,16 +78,16 @@ def init_database():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Create indexes for performance
         conn.execute("CREATE INDEX IF NOT EXISTS idx_emails_sender ON emails(sender)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_emails_time ON emails(_time)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_emails_department ON emails(department)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status)")
-        
+
         conn.close()
         logging.info("Database initialized successfully")
-        
+
     except Exception as e:
         logging.error(f"Database initialization error: {e}")
 
@@ -99,7 +99,7 @@ def execute_query(query, params=None, fetch=False):
             result = conn.execute(query, params)
         else:
             result = conn.execute(query)
-        
+
         if fetch:
             data = result.fetchall()
             conn.close()
@@ -114,25 +114,28 @@ def execute_query(query, params=None, fetch=False):
 def get_dashboard_stats():
     """Get statistics for dashboard"""
     conn = get_db_connection()
-    
+
     stats = {}
-    
+
     # Total emails
     result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
     stats['total_emails'] = result[0] if result else 0
-    
+
     # Active cases
     result = conn.execute("SELECT COUNT(*) FROM cases WHERE status = 'open'").fetchone()
     stats['active_cases'] = result[0] if result else 0
-    
+
     # Flagged senders
     result = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()
     stats['flagged_senders'] = result[0] if result else 0
-    
+
     # Today's emails
-    result = conn.execute("SELECT COUNT(*) FROM emails WHERE DATE(_time) = CURRENT_DATE").fetchone()
-    stats['todays_emails'] = result[0] if result else 0
-    
+    today_count = conn.execute("""
+        SELECT COUNT(*) FROM emails 
+        WHERE DATE(_time) = DATE(NOW())
+    """).fetchone()[0]
+    stats['todays_emails'] = today_count
+
     # Department breakdown
     dept_data = conn.execute("""
         SELECT department, COUNT(*) as count 
@@ -143,7 +146,7 @@ def get_dashboard_stats():
         LIMIT 10
     """).fetchall()
     stats['department_data'] = dept_data
-    
+
     # Timeline data (last 30 days)
     timeline_data = conn.execute("""
         SELECT DATE(_time) as date, COUNT(*) as count
@@ -153,6 +156,6 @@ def get_dashboard_stats():
         ORDER BY date
     """).fetchall()
     stats['timeline_data'] = timeline_data
-    
+
     conn.close()
     return stats
