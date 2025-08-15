@@ -775,6 +775,44 @@ def create_case():
         logging.error(f"Create case error: {e}")
         return jsonify({'error': 'Failed to create case'}), 500
 
+@app.route('/api/case-details/<int:case_id>')
+def api_case_details(case_id):
+    """Get detailed case information"""
+    try:
+        conn = get_db_connection()
+        case_data = conn.execute("""
+            SELECT c.id, c.email_id, c.escalation_reason, c.status, c.created_at, c.updated_at,
+                   e.sender, e.subject, e._time, e.department, e.justifications, e.final_outcome
+            FROM cases c
+            JOIN emails e ON c.email_id = e.id
+            WHERE c.id = ?
+        """, [case_id]).fetchone()
+        conn.close()
+
+        if not case_data:
+            return jsonify({'error': 'Case not found'}), 404
+
+        # Convert to dict for JSON response
+        case_details = {
+            'case_id': case_data[0],
+            'email_id': case_data[1],
+            'escalation_reason': case_data[2],
+            'status': case_data[3],
+            'created_at': case_data[4].isoformat() if case_data[4] else None,
+            'updated_at': case_data[5].isoformat() if case_data[5] else None,
+            'email_sender': case_data[6],
+            'email_subject': case_data[7],
+            'email_time': case_data[8].isoformat() if case_data[8] else None,
+            'email_department': case_data[9],
+            'email_justifications': case_data[10],
+            'email_final_outcome': case_data[11]
+        }
+
+        return jsonify(case_details)
+    except Exception as e:
+        logging.error(f"Case details error: {e}")
+        return jsonify({'error': 'Failed to load case details'}), 500
+
 @app.route('/api/update-case-status', methods=['POST'])
 def update_case_status():
     """Update case status"""

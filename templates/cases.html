@@ -241,6 +241,31 @@
 </div>
 {% endif %}
 
+<!-- Case Details Modal -->
+<div class="modal fade" id="caseDetailsModal" tabindex="-1" aria-labelledby="caseDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="caseDetailsModalLabel">Case Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="caseDetailsContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading case details...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function updateCaseStatus(caseId, newStatus) {
     if (!confirm(`Are you sure you want to update this case status to "${newStatus}"?`)) {
@@ -272,8 +297,107 @@ function updateCaseStatus(caseId, newStatus) {
 }
 
 function viewCaseDetails(caseId) {
-    // Implementation for viewing case details
-    alert('View details for case ID: ' + caseId);
+    // Fetch case details and show in modal
+    fetch(`/api/case-details/${caseId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            // Populate modal with case details
+            document.getElementById('caseDetailsModalLabel').textContent = `Case #${data.case_id} Details`;
+            document.getElementById('caseDetailsContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Case Information</h6>
+                        <p><strong>Case ID:</strong> #${data.case_id}</p>
+                        <p><strong>Status:</strong> <span class="badge bg-${getStatusBadgeColor(data.status)}">${formatStatus(data.status)}</span></p>
+                        <p><strong>Created:</strong> ${formatDateTime(data.created_at)}</p>
+                        <p><strong>Last Updated:</strong> ${formatDateTime(data.updated_at)}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Email Information</h6>
+                        <p><strong>From:</strong> ${data.email_sender || 'Unknown'}</p>
+                        <p><strong>Subject:</strong> ${data.email_subject || 'No Subject'}</p>
+                        <p><strong>Date:</strong> ${formatDateTime(data.email_time)}</p>
+                        <p><strong>Department:</strong> ${data.email_department || 'N/A'}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary">Escalation Details</h6>
+                        <p><strong>Reason:</strong></p>
+                        <div class="alert alert-light">${data.escalation_reason || 'No reason provided'}</div>
+                    </div>
+                </div>
+                ${data.email_justifications ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary">Additional Context</h6>
+                        <div class="alert alert-info">${data.email_justifications}</div>
+                    </div>
+                </div>
+                ` : ''}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-primary">Actions</h6>
+                        <div class="btn-group" role="group">
+                            ${data.status === 'open' ? `
+                            <button type="button" class="btn btn-warning btn-sm" onclick="updateCaseStatusFromModal(${data.case_id}, 'in_progress')">
+                                <i class="fas fa-play"></i> Start Progress
+                            </button>
+                            ` : ''}
+                            ${data.status !== 'closed' ? `
+                            <button type="button" class="btn btn-success btn-sm" onclick="updateCaseStatusFromModal(${data.case_id}, 'resolved')">
+                                <i class="fas fa-check"></i> Mark Resolved
+                            </button>
+                            ` : ''}
+                            ${data.status === 'resolved' ? `
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="updateCaseStatusFromModal(${data.case_id}, 'closed')">
+                                <i class="fas fa-times"></i> Close Case
+                            </button>
+                            ` : ''}
+                            <a href="/api/email-details/${data.email_id}" class="btn btn-info btn-sm" target="_blank">
+                                <i class="fas fa-envelope"></i> View Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Show the modal
+            new bootstrap.Modal(document.getElementById('caseDetailsModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load case details.');
+        });
+}
+
+function getStatusBadgeColor(status) {
+    switch(status) {
+        case 'open': return 'danger';
+        case 'in_progress': return 'warning';
+        case 'resolved': return 'success';
+        case 'closed': return 'secondary';
+        default: return 'info';
+    }
+}
+
+function formatStatus(status) {
+    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleString();
+}
+
+function updateCaseStatusFromModal(caseId, newStatus) {
+    updateCaseStatus(caseId, newStatus);
+    bootstrap.Modal.getInstance(document.getElementById('caseDetailsModal')).hide();
 }
 
 // Initialize DataTable if we have cases
