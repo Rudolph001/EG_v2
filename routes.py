@@ -1673,19 +1673,31 @@ def api_admin_get_policies():
                     'policy_name': conditions_data.get('policy_name', f'Policy {policy[0]}'),
                     'description': conditions_data.get('description', ''),
                     'severity': conditions_data.get('severity', 'medium'),
-                    'action': policy[3],
+                    'action': policy[3] or 'flag',
                     'keywords': conditions_data.get('keywords', ''),
                     'rules': conditions_data.get('rules', ''),
-                    'is_active': policy[4],
+                    'is_active': bool(policy[4]),
                     'created_at': policy[5].strftime('%Y-%m-%d') if policy[5] else 'N/A'
                 })
-            except (json.JSONDecodeError, AttributeError):
-                continue
+            except (json.JSONDecodeError, AttributeError) as e:
+                logging.warning(f"Failed to parse policy {policy[0]}: {e}")
+                # Add basic policy data even if JSON parsing fails
+                policies_list.append({
+                    'id': policy[0],
+                    'policy_name': f'Policy {policy[0]}',
+                    'description': 'Legacy policy - needs update',
+                    'severity': 'medium',
+                    'action': policy[3] or 'flag',
+                    'keywords': '',
+                    'rules': policy[2] or '',
+                    'is_active': bool(policy[4]),
+                    'created_at': policy[5].strftime('%Y-%m-%d') if policy[5] else 'N/A'
+                })
 
         return jsonify(policies_list)
     except Exception as e:
         logging.error(f"Get policies error: {e}")
-        return jsonify({'error': 'Failed to load policies'}), 500
+        return jsonify([])  # Return empty array instead of error to prevent UI issues
 
 @app.route('/api/admin/policy/<int:policy_id>')
 def api_admin_get_policy(policy_id):
@@ -1730,39 +1742,63 @@ def api_admin_save_policy():
         if not data.get('policy_name'):
             return jsonify({'error': 'Policy name is required'}), 400
 
+        if not data.get('description'):
+            return jsonify({'error': 'Policy description is required'}), 400
+
+        # Validate JSON if rules provided
+        if data.get('rules') and data['rules'].strip():
+            try:
+                json.loads(data['rules'])
+            except json.JSONDecodeError:
+                return jsonify({'error': 'Invalid JSON format in rules field'}), 400
+
         # Prepare conditions JSON
         conditions_data = {
-            'policy_name': data['policy_name'],
-            'description': data.get('description', ''),
+            'policy_name': data['policy_name'].strip(),
+            'description': data.get('description', '').strip(),
             'severity': data.get('severity', 'medium'),
-            'keywords': data.get('keywords', ''),
-            'rules': data.get('rules', '')
+            'keywords': data.get('keywords', '').strip(),
+            'rules': data.get('rules', '').strip()
         }
 
         conn = get_db_connection()
         
         if data.get('policy_id'):
             # Update existing policy
-            conn.execute("""
+            result = conn.execute("""
                 UPDATE admin_rules 
-                SET conditions = ?, action = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                SET conditions = ?, action = ?, is_active = ?
                 WHERE id = ? AND rule_type = 'policy'
             """, [
                 json.dumps(conditions_data),
                 data.get('action', 'flag'),
-                data.get('is_active', True),
-                data['policy_id']
+                bool(data.get('is_active', True)),
+                int(data['policy_id'])
             ])
+            
+            if result.rowcount == 0:
+                conn.close()
+                return jsonify({'error': 'Policy not found'}), 404
         else:
+            # Check for duplicate policy names
+            existing = conn.execute("""
+                SELECT id FROM admin_rules 
+                WHERE rule_type = 'policy' AND JSON_EXTRACT(conditions, '$.policy_name') = ?
+            """, [conditions_data['policy_name']]).fetchone()
+            
+            if existing:
+                conn.close()
+                return jsonify({'error': 'A policy with this name already exists'}), 400
+            
             # Create new policy
             conn.execute("""
-                INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
-                VALUES (?, ?, ?, ?)
+                INSERT INTO admin_rules (rule_type, conditions, action, is_active, created_at) 
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, [
                 'policy',
                 json.dumps(conditions_data),
                 data.get('action', 'flag'),
-                data.get('is_active', True)
+                bool(data.get('is_active', True))
             ])
         
         conn.close()
@@ -1770,7 +1806,7 @@ def api_admin_save_policy():
         return jsonify({'success': True, 'message': 'Policy saved successfully'})
     except Exception as e:
         logging.error(f"Save policy error: {e}")
-        return jsonify({'error': 'Failed to save policy'}), 500
+        return jsonify({'error': f'Failed to save policy: {str(e)}'}), 500
 
 @app.route('/api/admin/delete-policy/<int:policy_id>', methods=['DELETE'])
 def api_admin_delete_policy(policy_id):
