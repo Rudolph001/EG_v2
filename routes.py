@@ -57,7 +57,10 @@ def dashboard():
     # Get paginated results with ML insights
     offset = (page - 1) * per_page
     query = f"""
-        SELECT e.*, 
+        SELECT e.id, e._time, e.sender, e.subject, e.attachments, e.recipients, 
+               e.time_month, e.leaver, e.termination_date, e.bunit, e.department,
+               e.user_response, e.final_outcome, e.policy_name, e.justifications,
+               e.created_at,
                CASE 
                    WHEN e.final_outcome IN ('high_risk', 'suspicious') THEN 'High Risk'
                    WHEN e.final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'

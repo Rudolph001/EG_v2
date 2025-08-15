@@ -254,6 +254,11 @@
                                 </td>
                                 <td>
                                     <strong>{{ email[2] or 'Unknown' }}</strong>
+                                    {% if email[7] %}
+                                    <span class="badge bg-warning text-dark ms-2">
+                                        <i class="fas fa-user-times"></i> Leaver
+                                    </span>
+                                    {% endif %}
                                     {% if email[2] in flagged_senders %}
                                     <span class="badge bg-danger ms-2">Flagged</span>
                                     {% endif %}
@@ -421,6 +426,8 @@ function showEmailDetails(emailId) {
                             <tr><td><strong>Subject:</strong></td><td>${data.subject || 'N/A'}</td></tr>
                             <tr><td><strong>Date:</strong></td><td>${data._time || 'N/A'}</td></tr>
                             <tr><td><strong>Department:</strong></td><td>${data.department || 'N/A'}</td></tr>
+                            <tr><td><strong>Leaver Status:</strong></td><td>${data.leaver ? '<span class="badge bg-warning text-dark"><i class="fas fa-user-times"></i> Leaver</span>' : '<span class="badge bg-success">Active Employee</span>'}</td></tr>
+                            ${data.termination_date ? `<tr><td><strong>Termination Date:</strong></td><td>${data.termination_date}</td></tr>` : ''}
                         </table>
                     </div>
                     <div class="col-md-6">
