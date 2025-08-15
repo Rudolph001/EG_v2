@@ -127,6 +127,11 @@ def get_dashboard_stats():
             WHERE DATE(_time) = CURRENT_DATE
         """).fetchone()[0], 9999)
 
+        # Get excluded/whitelisted count
+        excluded_whitelisted = conn.execute(
+            "SELECT COUNT(*) FROM emails WHERE final_outcome IN ('excluded', 'whitelisted')"
+        ).fetchone()[0]
+
         # Department breakdown (limited to top 10)
         department_data = conn.execute("""
             SELECT department, COUNT(*) as count
@@ -165,6 +170,7 @@ def get_dashboard_stats():
             'active_cases': active_cases,
             'flagged_senders': flagged_senders,
             'todays_emails': todays_emails,
+            'excluded_whitelisted': excluded_whitelisted,
             'department_data': safe_department_data,
             'timeline_data': safe_timeline_data
         }
@@ -175,6 +181,7 @@ def get_dashboard_stats():
             'active_cases': 0,
             'flagged_senders': 0,
             'todays_emails': 0,
+            'excluded_whitelisted': 0,
             'department_data': [],
             'timeline_data': []
         }

@@ -83,6 +83,31 @@
     </div>
 </div>
 
+<!-- Second Row of KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <a href="{{ url_for('excluded_whitelisted') }}" class="text-decoration-none">
+            <div class="card bg-secondary text-white card-clickable">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Excluded/Whitelisted</h5>
+                            <h2 class="mb-0 stats-excluded-whitelisted">{{ stats.get('excluded_whitelisted', 0) }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-filter fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-9">
+        <!-- Space for future KPI cards -->
+    </div>
+</div>
+
 <!-- Advanced Search and Filters -->
 <div class="row mb-4">
     <div class="col-12">

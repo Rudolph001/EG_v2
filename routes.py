@@ -79,6 +79,12 @@ def dashboard():
 
     # Get dashboard stats
     stats = get_dashboard_stats()
+    
+    # Add excluded/whitelisted count
+    excluded_whitelisted_count = conn.execute(
+        "SELECT COUNT(*) FROM emails WHERE final_outcome IN ('excluded', 'whitelisted')"
+    ).fetchone()[0]
+    stats['excluded_whitelisted'] = excluded_whitelisted_count
 
     conn.close()
 
