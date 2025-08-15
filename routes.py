@@ -810,6 +810,19 @@ def flag_sender():
         logging.error(f"Flag sender error: {e}")
         return jsonify({'error': 'Failed to flag sender'}), 500
 
+@app.route('/api/unflag-sender/<int:flag_id>', methods=['DELETE'])
+def unflag_sender(flag_id):
+    """Remove flag from a sender"""
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM flagged_senders WHERE id = ?", [flag_id])
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Sender unflagged successfully'})
+    except Exception as e:
+        logging.error(f"Unflag sender error: {e}")
+        return jsonify({'error': 'Failed to unflag sender'}), 500
+
 @app.route('/api/create-case', methods=['POST'])
 def create_case():
     """Create a new case"""
