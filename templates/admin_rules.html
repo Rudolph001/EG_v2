@@ -20,6 +20,10 @@
                     <i class="fas fa-database"></i>
                     View Available Fields
                 </button>
+                <button type="button" class="btn btn-warning" onclick="testRuleCreation()">
+                    <i class="fas fa-flask"></i>
+                    Test Rule Creation
+                </button>
             </div>
         </div>
     </div>
@@ -420,7 +424,11 @@
 
 <script>
 // Available database fields
-let availableFields = [];
+let availableFields = [
+    'sender', 'subject', 'recipients', 'attachments', 'department', 'bunit', 
+    'leaver', 'termination_date', '_time', 'time_month', 'user_response', 
+    'final_outcome', 'policy_name', 'justifications', 'id', 'created_at'
+];
 
 // Field types and operators mapping
 const fieldOperators = {
@@ -431,22 +439,44 @@ const fieldOperators = {
     'list': ['contains', 'not_contains', 'in_list']
 };
 
-// Field type mapping
+// Field type mapping with descriptions
 const fieldTypes = {
+    'id': 'number',
+    '_time': 'date',
     'sender': 'text',
     'subject': 'text',
-    'recipients': 'text',
     'attachments': 'text',
-    'department': 'text',
-    'bunit': 'text',
+    'recipients': 'text',
+    'time_month': 'text',
     'leaver': 'boolean',
     'termination_date': 'date',
-    '_time': 'date',
-    'time_month': 'text',
+    'bunit': 'text',
+    'department': 'text',
     'user_response': 'text',
     'final_outcome': 'text',
     'policy_name': 'text',
-    'justifications': 'text'
+    'justifications': 'text',
+    'created_at': 'date'
+};
+
+// Field descriptions for better UX
+const fieldDescriptions = {
+    'id': 'Email ID (numeric)',
+    '_time': 'Email timestamp',
+    'sender': 'Email sender address',
+    'subject': 'Email subject line',
+    'attachments': 'File attachments',
+    'recipients': 'Email recipients',
+    'time_month': 'Month of email',
+    'leaver': 'Is sender a former employee',
+    'termination_date': 'Employee termination date',
+    'bunit': 'Business unit',
+    'department': 'Department',
+    'user_response': 'User response to email',
+    'final_outcome': 'Processing outcome',
+    'policy_name': 'Policy violation name',
+    'justifications': 'Email content/justifications',
+    'created_at': 'Record creation date'
 };
 
 let conditionCounter = 0;
@@ -476,10 +506,10 @@ function loadAvailableFields() {
 function displayAvailableFields(fields) {
     const container = document.getElementById('availableFieldsContainer');
     const fieldGroups = {
-        'Email Content': ['sender', 'subject', 'recipients', 'attachments'],
-        'Metadata': ['_time', 'time_month', 'department', 'bunit'],
+        'Email Content': ['sender', 'subject', 'recipients', 'attachments', 'justifications'],
+        'Metadata': ['id', '_time', 'time_month', 'department', 'bunit', 'created_at'],
         'User Info': ['leaver', 'termination_date', 'user_response'],
-        'Processing': ['final_outcome', 'policy_name', 'justifications']
+        'Processing': ['final_outcome', 'policy_name']
     };
 
     let html = '';
@@ -490,9 +520,10 @@ function displayAvailableFields(fields) {
                 <div class="col-md-3 mb-3">
                     <h6 class="text-primary"><i class="fas fa-folder"></i> ${groupName}</h6>
                     <div class="d-flex flex-wrap gap-1">
-                        ${availableInGroup.map(field => 
-                            `<span class="badge bg-light text-dark border">${field}</span>`
-                        ).join('')}
+                        ${availableInGroup.map(field => {
+                            const description = fieldDescriptions[field] || field;
+                            return `<span class="badge bg-light text-dark border" title="${description}">${field}</span>`;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -508,9 +539,10 @@ function displayAvailableFields(fields) {
             <div class="col-md-3 mb-3">
                 <h6 class="text-secondary"><i class="fas fa-plus-circle"></i> Other Fields</h6>
                 <div class="d-flex flex-wrap gap-1">
-                    ${otherFields.map(field => 
-                        `<span class="badge bg-secondary">${field}</span>`
-                    ).join('')}
+                    ${otherFields.map(field => {
+                        const description = fieldDescriptions[field] || field;
+                        return `<span class="badge bg-secondary" title="${description}">${field}</span>`;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -523,9 +555,10 @@ function addCondition() {
     conditionCounter++;
     const conditionId = `condition_${conditionCounter}`;
     
-    const fieldOptions = availableFields.map(field => 
-        `<option value="${field}">${field}</option>`
-    ).join('');
+    const fieldOptions = availableFields.map(field => {
+        const description = fieldDescriptions[field] || field;
+        return `<option value="${field}">${field} - ${description}</option>`;
+    }).join('');
     
     const conditionHtml = `
         <div class="condition-row border rounded p-3 mb-3" id="${conditionId}" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
@@ -902,6 +935,46 @@ function deleteRule(ruleId) {
     .catch(error => {
         console.error('Error:', error);
         alert('An error occurred while deleting the rule.');
+    });
+}
+
+// Test rule creation functionality
+function testRuleCreation() {
+    const testRuleData = {
+        rule_name: 'Test Rule - ' + new Date().toISOString(),
+        rule_type: 'advanced_rule',
+        action: 'flag',
+        logic_type: 'AND',
+        conditions: JSON.stringify({
+            rule_name: 'Test Rule',
+            logic_type: 'AND',
+            conditions: [
+                { field: 'sender', operator: 'contains', value: 'test', case_sensitive: false }
+            ]
+        }),
+        is_active: true
+    };
+
+    console.log('Testing rule creation with data:', testRuleData);
+
+    fetch('/api/add-admin-rule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testRuleData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log('Test rule creation result:', result);
+        if (result.success) {
+            alert(`✅ Rule creation test PASSED!\n\nRule created successfully with ID: ${result.rule_id}\nMessage: ${result.message}`);
+            location.reload(); // Refresh to show the new rule
+        } else {
+            alert(`❌ Rule creation test FAILED!\n\nError: ${result.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Test rule creation error:', error);
+        alert(`❌ Rule creation test FAILED!\n\nNetwork/System Error: ${error.message}`);
     });
 }
 

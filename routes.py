@@ -969,17 +969,39 @@ def add_admin_rule():
     data = request.json or {}
 
     try:
+        # Log the incoming data for debugging
+        logging.info(f"Creating admin rule with data: {data}")
+        
+        # Extract and validate required fields
+        rule_name = data.get('rule_name', 'Unnamed Rule')
+        rule_type = data.get('rule_type', 'advanced_rule')
+        action = data.get('action', 'flag')
+        conditions = data.get('conditions', '{}')
+        is_active = bool(data.get('is_active', True))
+        
+        # Ensure conditions is a string
+        if isinstance(conditions, dict):
+            conditions = json.dumps(conditions)
+        
         conn = get_db_connection()
-        conn.execute("""
-            INSERT INTO admin_rules (rule_type, conditions, action) 
-            VALUES (?, ?, ?)
-        """, [data.get('rule_type'), data.get('conditions'), data.get('action')])
+        cursor = conn.execute("""
+            INSERT INTO admin_rules (rule_type, conditions, action, is_active, created_at) 
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, [rule_type, conditions, action, is_active])
+        
+        rule_id = cursor.lastrowid
         conn.close()
+        
+        logging.info(f"Successfully created rule with ID: {rule_id}")
 
-        return jsonify({'success': True, 'message': 'Rule added successfully'})
+        return jsonify({
+            'success': True, 
+            'message': f'Rule "{rule_name}" added successfully',
+            'rule_id': rule_id
+        })
     except Exception as e:
         logging.error(f"Add rule error: {e}")
-        return jsonify({'error': 'Failed to add rule'}), 500
+        return jsonify({'error': f'Failed to add rule: {str(e)}'}), 500
 
 @app.route('/api/admin/save-rule', methods=['POST'])
 def api_admin_save_rule():
@@ -1056,12 +1078,26 @@ def api_admin_get_available_fields():
         columns_info = conn.execute("PRAGMA table_info(emails)").fetchall()
         fields = [col[1] for col in columns_info]  # col[1] is the column name
         
+        # Get sample data to show field contents
+        sample_data = {}
+        try:
+            sample_email = conn.execute("SELECT * FROM emails LIMIT 1").fetchone()
+            if sample_email:
+                for i, field in enumerate(fields):
+                    sample_value = sample_email[i] if i < len(sample_email) else None
+                    if sample_value is not None:
+                        sample_data[field] = str(sample_value)[:50]  # First 50 chars
+        except Exception as e:
+            logging.warning(f"Could not get sample data: {e}")
+        
         conn.close()
 
         return jsonify({
             'success': True,
             'fields': fields,
+            'sample_data': sample_data,
             'field_descriptions': {
+                'id': 'Email ID (numeric)',
                 '_time': 'Email timestamp',
                 'sender': 'Email sender address',
                 'subject': 'Email subject line',
@@ -1075,7 +1111,8 @@ def api_admin_get_available_fields():
                 'user_response': 'User response to email',
                 'final_outcome': 'Processing outcome',
                 'policy_name': 'Policy violation name',
-                'justifications': 'Email justifications/content'
+                'justifications': 'Email content/justifications',
+                'created_at': 'Record creation date'
             }
         })
     except Exception as e:
