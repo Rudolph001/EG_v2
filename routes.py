@@ -610,10 +610,45 @@ def analytics():
 def admin_rules():
     """Admin rules configuration"""
     conn = get_db_connection()
-    rules = conn.execute("SELECT * FROM admin_rules ORDER BY created_at DESC").fetchall()
+    rules_raw = conn.execute("SELECT * FROM admin_rules ORDER BY created_at DESC").fetchall()
     conn.close()
 
-    return render_template('admin_rules.html', rules=rules)
+    # Process rules to extract rule names from conditions JSON
+    processed_rules = []
+    for rule in rules_raw:
+        rule_dict = {
+            'id': rule[0],
+            'rule_type': rule[1], 
+            'rule_name': rule[2] if len(rule) > 2 else None,
+            'logic_type': rule[3] if len(rule) > 3 else None,
+            'conditions': rule[4] if len(rule) > 4 else None,
+            'action': rule[5] if len(rule) > 5 else None,
+            'risk_level': rule[6] if len(rule) > 6 else None,
+            'is_active': rule[7] if len(rule) > 7 else None,
+            'created_at': rule[8] if len(rule) > 8 else None,
+            'updated_at': rule[9] if len(rule) > 9 else None
+        }
+        
+        # Extract actual rule name from conditions JSON
+        try:
+            if rule_dict['conditions']:
+                import json
+                conditions_data = json.loads(rule_dict['conditions'])
+                rule_dict['display_name'] = conditions_data.get('rule_name', f"Rule {rule_dict['id']}")
+                rule_dict['condition_count'] = len(conditions_data.get('conditions', []))
+                rule_dict['display_logic'] = conditions_data.get('logic_type', 'Simple')
+            else:
+                rule_dict['display_name'] = f"Rule {rule_dict['id']}"
+                rule_dict['condition_count'] = 0
+                rule_dict['display_logic'] = 'Simple'
+        except (json.JSONDecodeError, TypeError):
+            rule_dict['display_name'] = f"Rule {rule_dict['id']}"
+            rule_dict['condition_count'] = 0 
+            rule_dict['display_logic'] = 'Simple'
+        
+        processed_rules.append(rule_dict)
+
+    return render_template('admin_rules.html', rules=processed_rules)
 
 @app.route('/admin-panel')
 def admin_panel():

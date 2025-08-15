@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}Admin Rules - Email Guardian{% endblock %}
@@ -72,101 +71,114 @@
                     <table class="table table-striped table-hover mb-0" id="rulesTable">
                         <thead class="table-dark">
                             <tr>
-                                <th>Rule ID</th>
-                                <th>Rule Type</th>
-                                <th>Conditions</th>
-                                <th>Logic</th>
-                                <th>Action</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
+                                <th>RULE ID</th>
+                                <th>RULE NAME</th>
+                                <th>RULE TYPE</th>
+                                <th>CONDITIONS</th>
+                                <th>LOGIC</th>
+                                <th>ACTION</th>
+                                <th>STATUS</th>
+                                <th>CREATED</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for rule in rules %}
                             <tr>
                                 <td>
-                                    <strong class="text-primary">#{{ rule[0] }}</strong>
+                                    <strong>#{{ rule[0] }}</strong>
                                 </td>
                                 <td>
-                                    {% if rule[1] == 'sender_filter' %}
-                                        <span class="badge bg-info">
-                                            <i class="fas fa-user"></i> Sender Filter
-                                        </span>
-                                    {% elif rule[1] == 'content_filter' %}
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="fas fa-filter"></i> Content Filter
-                                        </span>
-                                    {% elif rule[1] == 'attachment_filter' %}
-                                        <span class="badge bg-danger">
-                                            <i class="fas fa-paperclip"></i> Attachment Filter
-                                        </span>
-                                    {% elif rule[1] == 'auto_escalation' %}
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-arrow-up"></i> Auto Escalation
-                                        </span>
-                                    {% elif rule[1] == 'advanced_rule' %}
+                                    <strong>
+                                        {% set rule_name = 'Rule ' + rule[0]|string %}
+                                        {% if rule[2] %}
+                                            {% try %}
+                                                {% set conditions_json = rule[2]|from_json %}
+                                                {% set rule_name = conditions_json.get('rule_name', 'Rule ' + rule[0]|string) %}
+                                            {% except %}
+                                                {% set rule_name = 'Rule ' + rule[0]|string %}
+                                            {% endtry %}
+                                        {% endif %}
+                                        {{ rule_name }}
+                                    </strong>
+                                </td>
+                                <td>
+                                    {% if rule[1] == 'advanced_rule' %}
                                         <span class="badge bg-primary">
                                             <i class="fas fa-brain"></i> Advanced Rule
                                         </span>
+                                    {% elif rule[1] == 'whitelist_sender' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-user-check"></i> Whitelist Sender
+                                        </span>
+                                    {% elif rule[1] == 'whitelist_domain' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-globe"></i> Whitelist Domain
+                                        </span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ rule[1] or 'Unknown' }}</span>
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-cog"></i> {{ rule[1]|title }}
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="text-break" style="max-width: 300px;">
-                                        <small class="text-muted">{{ rule[2][:100] + '...' if rule[2] and rule[2]|length > 100 else (rule[2] or 'No conditions') }}</small>
-                                    </div>
+                                    <small class="text-muted">
+                                        {% if rule[2] %}
+                                            {% try %}
+                                                {% set conditions_json = rule[2]|from_json %}
+                                                {% if conditions_json.get('conditions') %}
+                                                    {{ conditions_json.conditions|length }} condition(s)
+                                                {% else %}
+                                                    {{ rule[2][:50] + '...' if rule[2]|length > 50 else rule[2] }}
+                                                {% endif %}
+                                            {% except %}
+                                                {{ rule[2][:50] + '...' if rule[2]|length > 50 else rule[2] }}
+                                            {% endtry %}
+                                        {% else %}
+                                            No conditions
+                                        {% endif %}
+                                    </small>
                                 </td>
                                 <td>
-                                    {% if 'AND' in (rule[2] or '') %}
-                                        <span class="badge bg-success">AND</span>
-                                    {% elif 'OR' in (rule[2] or '') %}
-                                        <span class="badge bg-warning">OR</span>
+                                    {% if rule[2] %}
+                                        {% try %}
+                                            {% set conditions_json = rule[2]|from_json %}
+                                            <span class="badge bg-info">{{ conditions_json.get('logic_type', 'Simple') }}</span>
+                                        {% except %}
+                                            <span class="badge bg-info">Simple</span>
+                                        {% endtry %}
                                     {% else %}
-                                        <span class="badge bg-secondary">Simple</span>
+                                        <span class="badge bg-info">Simple</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if rule[3] == 'block' %}
-                                        <span class="badge bg-danger">
-                                            <i class="fas fa-ban"></i> Block
-                                        </span>
-                                    {% elif rule[3] == 'flag' %}
-                                        <span class="badge bg-warning text-dark">
-                                            <i class="fas fa-flag"></i> Flag
-                                        </span>
-                                    {% elif rule[3] == 'escalate' %}
-                                        <span class="badge bg-info">
-                                            <i class="fas fa-exclamation-triangle"></i> Escalate
-                                        </span>
-                                    {% elif rule[3] == 'notify' %}
-                                        <span class="badge bg-primary">
-                                            <i class="fas fa-bell"></i> Notify
-                                        </span>
+                                    {% if rule[3] %}
+                                        <span class="badge bg-warning">{{ rule[3]|upper }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">{{ rule[3] or 'None' }}</span>
+                                        <span class="badge bg-secondary">FLAG</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if rule[4] %}
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check"></i> Active
-                                        </span>
+                                        {% if rule[4] == 'true' or rule[4] == True %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Active
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-pause"></i> Inactive
+                                            </span>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge bg-secondary">
-                                            <i class="fas fa-pause"></i> Disabled
+                                            <i class="fas fa-pause"></i> Inactive
                                         </span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <small class="text-muted">
                                         {% if rule[5] %}
-                                            {% if rule[5].__class__.__name__ == 'datetime' %}
-                                                {{ rule[5].strftime('%Y-%m-%d %H:%M') }}
-                                            {% else %}
-                                                {{ rule[5] }}
-                                            {% endif %}
+                                            {{ rule[5].strftime('%Y-%m-%d') if rule[5].strftime else rule[5] }}
                                         {% else %}
                                             N/A
                                         {% endif %}
@@ -174,20 +186,11 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        {% if rule[4] %}
-                                        <button type="button" class="btn btn-outline-warning" 
-                                                onclick="toggleRule({{ rule[0] }}, false)" 
-                                                title="Disable Rule">
-                                            <i class="fas fa-pause"></i>
+                                        <button type="button" class="btn btn-outline-info" 
+                                                onclick="viewRule({{ rule[0] }})" 
+                                                title="View Rule Details">
+                                            <i class="fas fa-eye"></i>
                                         </button>
-                                        {% else %}
-                                        <button type="button" class="btn btn-outline-success" 
-                                                onclick="toggleRule({{ rule[0] }}, true)" 
-                                                title="Enable Rule">
-                                            <i class="fas fa-play"></i>
-                                        </button>
-                                        {% endif %}
-                                        
                                         <button type="button" class="btn btn-outline-primary" 
                                                 onclick="editRule({{ rule[0] }})" 
                                                 title="Edit Rule">
@@ -274,7 +277,7 @@
                                 <label class="btn btn-outline-success" for="logicAnd">
                                     <i class="fas fa-link"></i> ALL conditions must match (AND)
                                 </label>
-                                
+
                                 <input type="radio" class="btn-check" name="logic_type" id="logicOr" value="OR">
                                 <label class="btn btn-outline-warning" for="logicOr">
                                     <i class="fas fa-code-branch"></i> ANY condition can match (OR)
@@ -370,14 +373,14 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <div id="policiesLoadingIndicator" class="text-center py-4">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading policies...</span>
                     </div>
                     <p class="mt-2">Loading policies...</p>
                 </div>
-                
+
                 <div id="policiesContainer" style="display: none;">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover" id="policiesTable">
@@ -399,7 +402,7 @@
                         </table>
                     </div>
                 </div>
-                
+
                 <div id="policiesErrorContainer" style="display: none;" class="alert alert-danger">
                     <h6><i class="fas fa-exclamation-triangle"></i> Error Loading Policies</h6>
                     <p id="policiesErrorMessage">An error occurred while loading policies.</p>
@@ -448,7 +451,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card h-100 border-warning">
                             <div class="card-body">
@@ -465,7 +468,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card h-100 border-danger">
                             <div class="card-body">
@@ -482,7 +485,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-3 mb-3">
                         <div class="card h-100 border-info">
                             <div class="card-body">
@@ -637,12 +640,12 @@ function displayAvailableFields(fields) {
 function addCondition() {
     conditionCounter++;
     const conditionId = `condition_${conditionCounter}`;
-    
+
     const fieldOptions = availableFields.map(field => {
         const description = fieldDescriptions[field] || field;
         return `<option value="${field}">${field} - ${description}</option>`;
     }).join('');
-    
+
     const conditionHtml = `
         <div class="condition-row border rounded p-3 mb-3" id="${conditionId}" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
             <div class="row g-3 align-items-end">
@@ -696,17 +699,17 @@ function updateOperators(conditionId) {
     const fieldSelect = row.querySelector('.condition-field');
     const operatorSelect = row.querySelector('.condition-operator');
     const field = fieldSelect.value;
-    
+
     if (field) {
         const fieldType = fieldTypes[field] || 'text';
         const operators = fieldOperators[fieldType] || fieldOperators['text'];
-        
+
         operatorSelect.innerHTML = '<option value="">Select operator...</option>' +
             operators.map(op => `<option value="${op}">${op.replace('_', ' ')}</option>`).join('');
     } else {
         operatorSelect.innerHTML = '<option value="">Select operator...</option>';
     }
-    
+
     updatePreview();
 }
 
@@ -932,7 +935,7 @@ function toggleRule(ruleId, isActive) {
     if (!confirm(`Are you sure you want to ${action} this rule?`)) {
         return;
     }
-    
+
     fetch('/api/admin/toggle-rule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -965,7 +968,7 @@ function editRule(ruleId) {
         document.getElementById('ruleName').value = rule.rule_name || '';
         document.getElementById('ruleType').value = rule.rule_type || '';
         document.getElementById('ruleAction').value = rule.action || '';
-        
+
         // Parse conditions if they exist
         try {
             const conditionsData = JSON.parse(rule.conditions || '{}');
@@ -983,7 +986,7 @@ function editRule(ruleId) {
                         updatePreview();
                     }, 100);
                 });
-                
+
                 if (conditionsData.logic_type) {
                     document.querySelector(`input[name="logic_type"][value="${conditionsData.logic_type}"]`).checked = true;
                 }
@@ -1005,7 +1008,7 @@ function deleteRule(ruleId) {
     if (!confirm('Are you sure you want to delete this rule? This action cannot be undone.')) {
         return;
     }
-    
+
     fetch(`/api/admin/delete-rule/${ruleId}`, { method: 'DELETE' })
     .then(response => response.json())
     .then(result => {
@@ -1073,12 +1076,12 @@ function loadAllPolicies() {
     document.getElementById('policiesLoadingIndicator').style.display = 'block';
     document.getElementById('policiesContainer').style.display = 'none';
     document.getElementById('policiesErrorContainer').style.display = 'none';
-    
+
     fetch('/api/admin/policies')
         .then(response => response.json())
         .then(data => {
             console.log('Policies loaded:', data);
-            
+
             if (data.success) {
                 displayPolicies(data.policies);
                 document.getElementById('totalPoliciesCount').textContent = data.total_count;
@@ -1097,7 +1100,7 @@ function loadAllPolicies() {
 
 function displayPolicies(policies) {
     const tbody = document.getElementById('policiesTableBody');
-    
+
     if (policies.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -1111,11 +1114,11 @@ function displayPolicies(policies) {
         tbody.innerHTML = policies.map(policy => {
             const statusBadge = policy.is_active 
                 ? '<span class="badge bg-success"><i class="fas fa-check"></i> Active</span>'
-                : '<span class="badge bg-secondary"><i class="fas fa-pause"></i> Disabled</span>';
-            
+                : '<span class="badge bg-secondary"><i class="fas fa-pause"></i> Inactive</span>';
+
             const typeBadge = getTypeBadge(policy.rule_type);
             const actionBadge = getActionBadge(policy.action);
-            
+
             return `
                 <tr>
                     <td><strong class="text-primary">#${policy.id}</strong></td>
@@ -1150,7 +1153,7 @@ function displayPolicies(policies) {
             `;
         }).join('');
     }
-    
+
     document.getElementById('policiesContainer').style.display = 'block';
 }
 
@@ -1222,7 +1225,7 @@ function escapeHtml(text) {
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     loadAvailableFields();
-    
+
     // Add initial condition when modal is shown
     document.getElementById('addRuleModal').addEventListener('shown.bs.modal', function() {
         if (document.querySelectorAll('.condition-row').length === 0) {
