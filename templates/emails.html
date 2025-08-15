@@ -297,8 +297,76 @@ function flagSender(senderEmail) {
 }
 
 function viewDetails(emailId) {
-    // Implementation for viewing email details
-    alert('View details for email ID: ' + emailId);
+    showEmailDetails(emailId);
+}
+
+function showEmailDetails(emailId) {
+    fetch(`/api/email-details/${emailId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('emailDetailsContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Basic Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Sender:</strong></td><td>${data.sender || 'N/A'}</td></tr>
+                            <tr><td><strong>Subject:</strong></td><td>${data.subject || 'N/A'}</td></tr>
+                            <tr><td><strong>Date:</strong></td><td>${data._time || 'N/A'}</td></tr>
+                            <tr><td><strong>Department:</strong></td><td>${data.department || 'N/A'}</td></tr>
+                            <tr><td><strong>Recipients:</strong></td><td>${data.recipients || 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Status Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Status:</strong></td><td>${data.final_outcome || 'Pending'}</td></tr>
+                            <tr><td><strong>Policy:</strong></td><td>${data.policy_name || 'N/A'}</td></tr>
+                            <tr><td><strong>Business Unit:</strong></td><td>${data.bunit || 'N/A'}</td></tr>
+                            <tr><td><strong>Attachments:</strong></td><td>${data.attachments || 'None'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                ${data.justifications ? `
+                    <div class="mt-3">
+                        <h6>Justifications</h6>
+                        <div class="alert alert-info">${data.justifications}</div>
+                    </div>
+                ` : ''}
+                <div class="mt-3 text-end">
+                    <button class="btn btn-warning" onclick="updateEmailStatus(${emailId}, 'escalated')">Escalate</button>
+                    <button class="btn btn-secondary" onclick="updateEmailStatus(${emailId}, 'excluded')">Exclude</button>
+                    <button class="btn btn-success" onclick="updateEmailStatus(${emailId}, 'cleared')">Clear</button>
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('emailDetailsModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading email details:', error);
+            alert('Failed to load email details');
+        });
+}
+
+function updateEmailStatus(emailId, status) {
+    fetch(`/api/update-email-status/${emailId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({status: status})
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('emailDetailsModal')).hide();
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating email status:', error);
+        alert('Failed to update email status');
+    });
 }
 
 function submitCase() {
@@ -363,4 +431,20 @@ function submitFlag() {
     });
 }
 </script>
+
+<!-- Email Details Modal -->
+<div class="modal fade" id="emailDetailsModal" tabindex="-1" aria-labelledby="emailDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailDetailsModalLabel">Email Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="emailDetailsContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
