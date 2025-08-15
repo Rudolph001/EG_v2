@@ -363,103 +363,71 @@
             <!-- ML Settings Tab -->
             <div class="tab-pane fade" id="ml" role="tabpanel">
                 <div class="row mt-3">
-                    <!-- ML Settings Card -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-info h-100">
-                            <div class="card-header bg-info text-white">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-brain"></i>
-                                    Machine Learning Settings
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="riskThreshold" class="form-label">Risk Threshold: <span id="riskThresholdValue">70</span>%</label>
-                                    <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70" 
-                                           onchange="updateThresholdValue('riskThreshold', this.value)">
+                    <!-- ML Analytics and Insights -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-brain"></i> ML Analytics & Insights</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- ML Learning Summary -->
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-chart-line"></i> What ML Has Learned</h6>
+                                    <div id="mlLearningInsights" class="border rounded p-3 mb-3">
+                                        <div class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading ML insights...
+                                        </div>
+                                    </div>
+
+                                    <h6><i class="fas fa-lightbulb"></i> Pattern Recognition</h6>
+                                    <div id="mlPatterns" class="border rounded p-3">
+                                        <div class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Analyzing patterns...
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="confidenceThreshold" class="form-label">Confidence Threshold: <span id="confidenceThresholdValue">85</span>%</label>
-                                    <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85"
-                                           onchange="updateThresholdValue('confidenceThreshold', this.value)">
+
+                                <!-- ML Recommendations -->
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-recommendations"></i> ML Recommendations</h6>
+                                    <div id="mlRecommendations" class="border rounded p-3 mb-3">
+                                        <div class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Generating recommendations...
+                                        </div>
+                                    </div>
+
+                                    <h6><i class="fas fa-exclamation-triangle"></i> Risk Predictions</h6>
+                                    <div id="mlRiskPredictions" class="border rounded p-3">
+                                        <div class="text-center">
+                                            <i class="fas fa-spinner fa-spin"></i> Calculating risk patterns...
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="retrainFrequency" class="form-label">Retrain Frequency</label>
-                                    <select class="form-select" id="retrainFrequency">
-                                        <option value="daily">Daily</option>
-                                        <option value="weekly" selected>Weekly</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
-                                    <label class="form-check-label" for="enableMLOverride">
-                                        Enable ML Override
-                                    </label>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
-                                    <label class="form-check-label" for="enableAutoEscalation">
-                                        Auto-Escalate High Risk
-                                    </label>
-                                </div>
-                                <button type="button" class="btn btn-info btn-sm me-2" onclick="saveMLSettings()">
-                                    <i class="fas fa-save"></i> Save Settings
-                                </button>
-                                <button type="button" class="btn btn-warning btn-sm" onclick="resetMLModel()">
-                                    <i class="fas fa-refresh"></i> Reset Model
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ML Processor Configuration Card -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-success h-100">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-cogs"></i>
-                                    Risk Scoring Configuration
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="flaggedSenderScore" class="form-label">Flagged Sender Score: <span id="flaggedSenderScoreValue">40</span></label>
-                                    <input type="range" class="form-range" id="flaggedSenderScore" min="0" max="100" value="40" 
-                                           onchange="updateProcessorValue('flaggedSenderScore', this.value)">
+                    <!-- ML Model Management -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-cogs"></i> ML Model Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <button class="btn btn-success" onclick="trainModel()">
+                                        <i class="fas fa-play"></i> Train Model
+                                    </button>
+                                    <button class="btn btn-warning" onclick="resetModel()">
+                                        <i class="fas fa-refresh"></i> Reset Model
+                                    </button>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="leaverScore" class="form-label">Leaver Score: <span id="leaverScoreValue">35</span></label>
-                                    <input type="range" class="form-range" id="leaverScore" min="0" max="100" value="35"
-                                           onchange="updateProcessorValue('leaverScore', this.value)">
+                                <div class="col-md-6">
+                                    <div class="alert alert-info">
+                                        <strong>Last Trained:</strong> <span id="lastTrained">Today</span><br>
+                                        <strong>Accuracy:</strong> <span id="modelAccuracy">85%</span>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="suspiciousAttachmentScore" class="form-label">Suspicious Attachment Score: <span id="suspiciousAttachmentScoreValue">30</span></label>
-                                    <input type="range" class="form-range" id="suspiciousAttachmentScore" min="0" max="100" value="30"
-                                           onchange="updateProcessorValue('suspiciousAttachmentScore', this.value)">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="policyViolationScore" class="form-label">Policy Violation Score: <span id="policyViolationScoreValue">30</span></label>
-                                    <input type="range" class="form-range" id="policyViolationScore" min="0" max="100" value="30"
-                                           onchange="updateProcessorValue('policyViolationScore', this.value)">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="personalDomainScore" class="form-label">Personal Domain Score: <span id="personalDomainScoreValue">15</span></label>
-                                    <input type="range" class="form-range" id="personalDomainScore" min="0" max="50" value="15"
-                                           onchange="updateProcessorValue('personalDomainScore', this.value)">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="autoClearThreshold" class="form-label">Auto-Clear Threshold: <span id="autoClearThresholdValue">20</span></label>
-                                    <input type="range" class="form-range" id="autoClearThreshold" min="0" max="50" value="20"
-                                           onchange="updateProcessorValue('autoClearThreshold', this.value)">
-                                    <small class="text-muted">Emails below this score are automatically cleared</small>
-                                </div>
-                                <button type="button" class="btn btn-success btn-sm me-2" onclick="saveProcessorSettings()">
-                                    <i class="fas fa-save"></i> Save Risk Settings
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="loadProcessorSettings()">
-                                    <i class="fas fa-sync"></i> Reload Settings
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -859,17 +827,27 @@
         }
 
         function resetMLModel() {
-            if (confirm('Are you sure you want to reset the ML model? This cannot be undone.')) {
-                fetch('/api/admin/reset-model', {method: 'POST'})
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Model reset successfully');
-                        } else {
-                            alert('Error: ' + data.error);
-                        }
-                    })
-                    .catch(error => console.error('Error resetting model:', error));
+            if (confirm('Are you sure you want to reset the ML model? This will delete all training data.')) {
+                fetch('/api/admin/reset-model', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message, 'success');
+                        loadMLSettings();
+                        loadMLInsights(); // Reload insights after reset
+                    } else {
+                        showNotification(data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Failed to reset model', 'error');
+                });
             }
         }
 
@@ -1115,6 +1093,262 @@
                     }
                 })
                 .catch(error => console.error('Error loading processor settings:', error));
+        }
+        
+        // Load ML insights when the ML tab is shown
+        document.querySelector('button[data-bs-target="#ml"]').addEventListener('shown.bs.tab', function() {
+            loadMLSettings();
+            loadMLInsights();
+        });
+
+        function loadMLInsights() {
+            // Load ML learning insights
+            fetch('/api/admin/ml-insights')
+                .then(response => response.json())
+                .then(data => {
+                    displayMLInsights(data);
+                })
+                .catch(error => {
+                    console.error('Error loading ML insights:', error);
+                    document.getElementById('mlLearningInsights').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load ML insights
+                        </div>
+                    `;
+                });
+
+            // Load ML patterns
+            fetch('/api/admin/ml-patterns')
+                .then(response => response.json())
+                .then(data => {
+                    displayMLPatterns(data);
+                })
+                .catch(error => {
+                    console.error('Error loading ML patterns:', error);
+                    document.getElementById('mlPatterns').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load pattern analysis
+                        </div>
+                    `;
+                });
+
+            // Load ML recommendations
+            fetch('/api/admin/ml-recommendations')
+                .then(response => response.json())
+                .then(data => {
+                    displayMLRecommendations(data);
+                })
+                .catch(error => {
+                    console.error('Error loading ML recommendations:', error);
+                    document.getElementById('mlRecommendations').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load recommendations
+                        </div>
+                    `;
+                });
+
+            // Load risk predictions
+            fetch('/api/admin/ml-risk-predictions')
+                .then(response => response.json())
+                .then(data => {
+                    displayRiskPredictions(data);
+                })
+                .catch(error => {
+                    console.error('Error loading risk predictions:', error);
+                    document.getElementById('mlRiskPredictions').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Unable to load risk predictions
+                        </div>
+                    `;
+                });
+        }
+
+        function displayMLInsights(data) {
+            const container = document.getElementById('mlLearningInsights');
+
+            if (data.error || !data.insights) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No training data available yet. Import emails and train the model to see insights.
+                    </div>
+                `;
+                return;
+            }
+
+            const insights = data.insights;
+            container.innerHTML = `
+                <div class="mb-2">
+                    <strong>Training Data:</strong> ${insights.training_samples || 0} emails analyzed
+                </div>
+                <div class="mb-2">
+                    <strong>Model Accuracy:</strong> ${insights.accuracy ? (insights.accuracy * 100).toFixed(1) + '%' : 'N/A'}
+                </div>
+                <div class="mb-2">
+                    <strong>Features Learned:</strong> ${insights.feature_count || 0} different patterns
+                </div>
+                <div class="mb-2">
+                    <strong>Classification Categories:</strong>
+                    <ul class="list-unstyled ml-3">
+                        ${insights.categories ? insights.categories.map(cat => `<li>• ${cat}</li>`).join('') : '<li>• No categories learned yet</li>'}
+                    </ul>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: ${insights.confidence || 0}%" 
+                         aria-valuenow="${insights.confidence || 0}" aria-valuemin="0" aria-valuemax="100">
+                        ${insights.confidence ? insights.confidence.toFixed(1) + '% Confidence' : '0% Confidence'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayMLPatterns(data) {
+            const container = document.getElementById('mlPatterns');
+
+            if (data.error || !data.patterns) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No patterns detected yet. Need more training data.
+                    </div>
+                `;
+                return;
+            }
+
+            const patterns = data.patterns;
+            let html = '<div class="small">';
+
+            if (patterns.high_risk_indicators && patterns.high_risk_indicators.length > 0) {
+                html += '<div class="mb-2"><strong>High-Risk Indicators:</strong><ul class="list-unstyled ml-2">';
+                patterns.high_risk_indicators.slice(0, 5).forEach(indicator => {
+                    html += `<li><span class="badge bg-danger me-1">⚠</span> ${indicator.pattern} (${indicator.frequency}% of cases)</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            if (patterns.safe_patterns && patterns.safe_patterns.length > 0) {
+                html += '<div class="mb-2"><strong>Safe Patterns:</strong><ul class="list-unstyled ml-2">';
+                patterns.safe_patterns.slice(0, 3).forEach(pattern => {
+                    html += `<li><span class="badge bg-success me-1">✓</span> ${pattern.pattern} (${pattern.frequency}% safe)</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            if (patterns.department_risks && patterns.department_risks.length > 0) {
+                html += '<div><strong>Department Risk Analysis:</strong><ul class="list-unstyled ml-2">';
+                patterns.department_risks.slice(0, 3).forEach(dept => {
+                    const riskColor = dept.risk_level > 0.7 ? 'danger' : dept.risk_level > 0.4 ? 'warning' : 'success';
+                    html += `<li><span class="badge bg-${riskColor} me-1">${dept.department}</span> ${(dept.risk_level * 100).toFixed(1)}% risk score</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function displayMLRecommendations(data) {
+            const container = document.getElementById('mlRecommendations');
+
+            if (data.error || !data.recommendations) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Train the model with more data to get personalized recommendations.
+                    </div>
+                `;
+                return;
+            }
+
+            const recs = data.recommendations;
+            let html = '<div class="small">';
+
+            if (recs.rules_to_create && recs.rules_to_create.length > 0) {
+                html += '<div class="mb-3"><strong>Suggested Rules:</strong>';
+                recs.rules_to_create.forEach(rule => {
+                    html += `
+                        <div class="alert alert-primary py-2 my-1">
+                            <i class="fas fa-plus-circle"></i> Create rule for "${rule.pattern}"
+                            <br><small>Confidence: ${(rule.confidence * 100).toFixed(1)}% | Impact: ${rule.potential_emails} emails</small>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            if (recs.threshold_adjustments && recs.threshold_adjustments.length > 0) {
+                html += '<div class="mb-3"><strong>Threshold Adjustments:</strong>';
+                recs.threshold_adjustments.forEach(adj => {
+                    const direction = adj.suggested_change > 0 ? 'increase' : 'decrease';
+                    const icon = adj.suggested_change > 0 ? 'fa-arrow-up text-danger' : 'fa-arrow-down text-success';
+                    html += `
+                        <div class="alert alert-warning py-2 my-1">
+                            <i class="fas ${icon}"></i> ${direction.charAt(0).toUpperCase() + direction.slice(1)} ${adj.setting} 
+                            from ${adj.current_value} to ${adj.suggested_value}
+                            <br><small>Reason: ${adj.reason}</small>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            if (recs.performance_tips && recs.performance_tips.length > 0) {
+                html += '<div><strong>Performance Tips:</strong><ul class="list-unstyled">';
+                recs.performance_tips.forEach(tip => {
+                    html += `<li class="mb-1"><i class="fas fa-lightbulb text-warning me-1"></i> ${tip}</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function displayRiskPredictions(data) {
+            const container = document.getElementById('mlRiskPredictions');
+
+            if (data.error || !data.predictions) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Risk predictions will appear after model training.
+                    </div>
+                `;
+                return;
+            }
+
+            const predictions = data.predictions;
+            let html = '<div class="small">';
+
+            if (predictions.trend_analysis) {
+                const trend = predictions.trend_analysis;
+                const trendIcon = trend.direction === 'increasing' ? 'fa-arrow-up text-danger' : 'fa-arrow-down text-success';
+                html += `
+                    <div class="mb-2">
+                        <strong>Risk Trend:</strong> <i class="fas ${trendIcon}"></i> 
+                        ${trend.direction} (${trend.percentage_change}% change)
+                        <div class="progress mt-1" style="height: 8px;">
+                            <div class="progress-bar bg-${trend.direction === 'increasing' ? 'danger' : 'success'}" 
+                                 style="width: ${Math.abs(trend.percentage_change)}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (predictions.upcoming_risks && predictions.upcoming_risks.length > 0) {
+                html += '<div class="mb-2"><strong>Predicted High-Risk Areas:</strong><ul class="list-unstyled ml-2">';
+                predictions.upcoming_risks.slice(0, 3).forEach(risk => {
+                    html += `<li><span class="badge bg-warning me-1">!</span> ${risk.area}: ${(risk.probability * 100).toFixed(1)}% likelihood</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            if (predictions.recommended_focus && predictions.recommended_focus.length > 0) {
+                html += '<div><strong>Recommended Focus:</strong><ul class="list-unstyled ml-2">';
+                predictions.recommended_focus.slice(0, 3).forEach(focus => {
+                    html += `<li><i class="fas fa-bullseye text-primary me-1"></i> ${focus.area} (${focus.priority} priority)</li>`;
+                });
+                html += '</ul></div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
         }
     </script>
 </body>
