@@ -161,14 +161,25 @@ class EmailProcessor:
         for rule in rules:
             try:
                 if self._rule_matches(email, rule):
+                    # Map different action types to consistent internal actions
+                    action_type = rule['action']
+                    if action_type in ['Add to Whitelist', 'whitelist']:
+                        action_type = 'whitelist'
+                    elif action_type in ['Add to Exclusion', 'exclude']:
+                        action_type = 'exclude'
+                    elif action_type in ['Flag for Review', 'flag']:
+                        action_type = 'flag'
+                    elif action_type in ['Create Case', 'escalate']:
+                        action_type = 'escalate'
+                    
                     action = ProcessingAction(
-                        action_type=rule['action'],
+                        action_type=action_type,
                         rule_applied=f"Admin Rule {rule['id']}",
-                        reason=f"Rule type: {rule['rule_type']}",
+                        reason=f"Rule type: {rule['rule_type']}, Action: {rule['action']}",
                         details=rule['conditions']
                     )
                     actions.append(action)
-                    logger.debug(f"Email {email.get('id')} matched rule {rule['id']}")
+                    logger.info(f"Email {email.get('id')} matched rule {rule['id']} - Action: {action_type}")
                     
             except Exception as e:
                 logger.warning(f"Error applying rule {rule['id']}: {e}")
@@ -482,7 +493,7 @@ class EmailProcessor:
         
         # Check for explicit admin rule actions first - order matters!
         for action in admin_actions:
-            if action.action_type in ['whitelist', 'clear', 'approve']:
+            if action.action_type in ['whitelist', 'clear', 'approve'] or action.rule_applied and 'whitelist' in action.rule_applied.lower():
                 return ProcessingResult.WHITELISTED
             elif action.action_type == 'exclude':
                 return ProcessingResult.EXCLUDED
@@ -569,16 +580,29 @@ class EmailProcessor:
             if result.ml_classification:
                 notes += f", ML: {result.ml_classification}"
             
+            # Map final status to database outcome
+            db_outcome = result.final_status.value
+            if result.final_status == ProcessingResult.WHITELISTED:
+                db_outcome = 'whitelisted'
+            elif result.final_status == ProcessingResult.EXCLUDED:
+                db_outcome = 'excluded'
+            elif result.final_status == ProcessingResult.ESCALATED:
+                db_outcome = 'escalated'
+            elif result.final_status == ProcessingResult.CLEARED:
+                db_outcome = 'cleared'
+            elif result.final_status == ProcessingResult.PENDING_REVIEW:
+                db_outcome = 'pending_review'
+            
             # Update email record
             conn.execute("""
                 UPDATE emails 
                 SET final_outcome = ?, user_response = ? 
                 WHERE id = ?
-            """, [result.final_status.value, notes, email_id])
+            """, [db_outcome, notes, email_id])
             
             conn.close()
             
-            logger.debug(f"Updated email {email_id} status to {result.final_status.value}")
+            logger.info(f"Updated email {email_id} status to {db_outcome}")
             return True
             
         except Exception as e:
