@@ -35,35 +35,39 @@
     </div>
     
     <div class="col-md-3">
-        <div class="card bg-warning text-dark">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">Active Cases</h5>
-                        <h2 class="mb-0 stats-active-cases">{{ stats.active_cases }}</h2>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+        <a href="{{ url_for('cases') }}" class="text-decoration-none">
+            <div class="card bg-warning text-dark card-clickable">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Active Cases</h5>
+                            <h2 class="mb-0 stats-active-cases">{{ stats.active_cases }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-md-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">Flagged Senders</h5>
-                        <h2 class="mb-0 stats-flagged-senders">{{ stats.flagged_senders }}</h2>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-flag fa-2x"></i>
+        <a href="{{ url_for('flagged_senders') }}" class="text-decoration-none">
+            <div class="card bg-danger text-white card-clickable">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Flagged Senders</h5>
+                            <h2 class="mb-0 stats-flagged-senders">{{ stats.flagged_senders }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-flag fa-2x"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     
     <div class="col-md-3">
