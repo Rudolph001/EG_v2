@@ -571,20 +571,33 @@
                         let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Policy Name</th><th>Violations</th><th>Percentage</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
                         data.forEach(violation => {
                             html += `<tr>
-                                <td>${violation.policy_name}</td>
+                                <td>
+                                    <strong>${violation.policy_name}</strong>
+                                    <br><small class="text-muted">Click Edit to modify policy rules</small>
+                                </td>
                                 <td><span class="badge bg-warning">${violation.count}</span></td>
                                 <td>${violation.percentage}%</td>
                                 <td><span class="badge ${violation.is_active ? 'bg-success' : 'bg-secondary'}">${violation.is_active ? 'Active' : 'Disabled'}</span></td>
                                 <td>
-                                    <button class="btn btn-sm ${violation.is_active ? 'btn-outline-danger' : 'btn-outline-success'}" 
-                                            onclick="togglePolicyViolation('${violation.policy_name}', ${!violation.is_active})">
-                                        <i class="fas ${violation.is_active ? 'fa-ban' : 'fa-check'}"></i>
-                                        ${violation.is_active ? 'Disable' : 'Enable'}
-                                    </button>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-primary" onclick="editPolicyByName('${violation.policy_name}')" title="Edit Policy">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn ${violation.is_active ? 'btn-outline-danger' : 'btn-outline-success'}" 
+                                                onclick="togglePolicyViolation('${violation.policy_name}', ${!violation.is_active})" 
+                                                title="${violation.is_active ? 'Disable' : 'Enable'} Policy">
+                                            <i class="fas ${violation.is_active ? 'fa-ban' : 'fa-check'}"></i>
+                                            ${violation.is_active ? 'Disable' : 'Enable'}
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="createPolicyRule('${violation.policy_name}')" title="Create Rule for Policy">
+                                            <i class="fas fa-plus"></i> Rule
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>`;
                         });
                         html += '</tbody></table></div>';
+                        html += '<div class="mt-3"><small class="text-muted"><i class="fas fa-info-circle"></i> These policies are detected from email data. Use "Edit" to modify or "Rule" to create admin rules for these policies.</small></div>';
                         content.innerHTML = html;
                     }
                 })
@@ -895,6 +908,10 @@
         }
 
         function togglePolicyViolation(policyName, isActive) {
+            if (!confirm(`Are you sure you want to ${isActive ? 'enable' : 'disable'} the policy "${policyName}"?`)) {
+                return;
+            }
+
             fetch('/api/admin/toggle-policy-violation', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -903,12 +920,45 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    alert(data.message);
                     loadViolations();
                 } else {
                     alert('Error: ' + data.error);
                 }
             })
-            .catch(error => console.error('Error toggling policy:', error));
+            .catch(error => {
+                console.error('Error toggling policy:', error);
+                alert('Network error: Failed to toggle policy');
+            });
+        }
+
+        function editPolicyByName(policyName) {
+            // Check if policy exists as admin rule first
+            fetch(`/api/admin/policy-by-name/${encodeURIComponent(policyName)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        // Policy doesn't exist as admin rule, create one
+                        createPolicyRule(policyName);
+                    } else {
+                        // Policy exists, redirect to admin rules for editing
+                        window.open(`/admin-rules#edit-${data.id}`, '_blank');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking policy:', error);
+                    // Fallback to creating new rule
+                    createPolicyRule(policyName);
+                });
+        }
+
+        function createPolicyRule(policyName) {
+            const confirmed = confirm(`The policy "${policyName}" doesn't have an admin rule yet. Would you like to create one?`);
+            if (confirmed) {
+                // Open admin rules page with policy creation form
+                const url = `/admin-rules?create_policy=${encodeURIComponent(policyName)}`;
+                window.open(url, '_blank');
+            }
         }
 
         function viewAllPolicies() {

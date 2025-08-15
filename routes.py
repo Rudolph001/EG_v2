@@ -2165,21 +2165,30 @@ def api_admin_get_policy_by_name(policy_name):
     """Get single policy by name"""
     try:
         conn = get_db_connection()
+        
+        # Try to find policy in admin_rules first
         policy = conn.execute("""
             SELECT id, rule_type, conditions, action, is_active, created_at
             FROM admin_rules 
-            WHERE rule_type = 'policy' AND JSON_EXTRACT(conditions, '$.policy_name') = ?
-        """, [policy_name]).fetchone()
+            WHERE rule_type IN ('policy', 'policy_control') 
+            AND (JSON_EXTRACT(conditions, '$.policy_name') = ? OR conditions = ?)
+        """, [policy_name, policy_name]).fetchone()
+        
         conn.close()
 
         if not policy:
-            return jsonify({'error': 'Policy not found'}), 404
+            return jsonify({'error': 'Policy not found as admin rule'}), 404
 
-        conditions_data = json.loads(policy[2]) if policy[2] else {}
+        try:
+            conditions_data = json.loads(policy[2]) if policy[2] else {}
+        except (json.JSONDecodeError, TypeError):
+            conditions_data = {'policy_name': policy_name}
+
         policy_data = {
             'id': policy[0],
-            'policy_name': conditions_data.get('policy_name', f'Policy {policy[0]}'),
-            'description': conditions_data.get('description', ''),
+            'rule_type': policy[1],
+            'policy_name': conditions_data.get('policy_name', policy_name),
+            'description': conditions_data.get('description', f'Policy rule for {policy_name}'),
             'severity': conditions_data.get('severity', 'medium'),
             'action': policy[3],
             'keywords': conditions_data.get('keywords', ''),
@@ -2369,12 +2378,19 @@ def api_admin_get_policy_violations_data():
             logging.warning(f"Failed to get policy violations: {e}")
             violations = []
         
-        # Get policy active status with error handling
+        # Get policy active status with better handling for different rule types
         try:
             policy_status = conn.execute("""
-                SELECT JSON_EXTRACT(conditions, '$.policy_name') as policy_name, is_active
+                SELECT 
+                    CASE 
+                        WHEN rule_type = 'policy' THEN JSON_EXTRACT(conditions, '$.policy_name')
+                        WHEN rule_type = 'policy_control' THEN JSON_EXTRACT(conditions, '$.policy_name')
+                        ELSE conditions
+                    END as policy_name, 
+                    is_active,
+                    rule_type
                 FROM admin_rules 
-                WHERE rule_type = 'policy'
+                WHERE rule_type IN ('policy', 'policy_control', 'policy_disable')
             """).fetchall()
         except Exception as e:
             logging.warning(f"Failed to get policy status: {e}")
@@ -2382,23 +2398,36 @@ def api_admin_get_policy_violations_data():
         
         conn.close()
 
-        # Create status mapping
+        # Create status mapping - prioritize explicit policy rules over control rules
         status_map = {}
         for status in policy_status:
-            if status[0]:  # policy_name exists
-                status_map[status[0]] = status[1]
+            policy_name = status[0]
+            is_active = status[1]
+            rule_type = status[2]
+            
+            if policy_name:
+                # If we already have this policy and it's a direct policy rule, keep it
+                if policy_name in status_map and status_map[policy_name].get('rule_type') == 'policy':
+                    continue
+                    
+                status_map[policy_name] = {
+                    'is_active': is_active,
+                    'rule_type': rule_type
+                }
 
         violations_list = []
         for violation in violations:
             try:
                 policy_name = violation[0]
-                is_active = status_map.get(policy_name, True)  # Default to active if not found
+                policy_info = status_map.get(policy_name, {'is_active': True, 'rule_type': 'none'})
+                is_active = policy_info['is_active']
                 
                 violations_list.append({
                     'policy_name': policy_name,
                     'count': violation[1],
                     'percentage': violation[2] if violation[2] is not None else 0,
-                    'is_active': is_active
+                    'is_active': is_active,
+                    'has_admin_rule': policy_info['rule_type'] != 'none'
                 })
             except Exception as e:
                 logging.warning(f"Failed to process violation {violation}: {e}")
@@ -2407,11 +2436,7 @@ def api_admin_get_policy_violations_data():
         return jsonify(violations_list)
     except Exception as e:
         logging.error(f"Get policy violations data error: {e}")
-        return jsonify({
-            'success': False,
-            'error': 'Failed to load policy violations data',
-            'violations': []
-        }), 500
+        return jsonify([])  # Return empty array instead of error to prevent UI issues
 
 @app.route('/api/admin/toggle-policy-violation', methods=['POST'])
 def api_admin_toggle_policy_violation():
@@ -2433,20 +2458,32 @@ def api_admin_toggle_policy_violation():
             # Update the actual policy's is_active status
             conn.execute("""
                 UPDATE admin_rules 
-                SET is_active = ?
+                SET is_active = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             """, [is_active, policy_rule[0]])
+            logging.info(f"Updated existing policy rule {policy_rule[0]} for '{policy_name}' to {'active' if is_active else 'inactive'}")
         else:
-            # If policy doesn't exist as a rule, create a disable rule
-            if not is_active:
-                conn.execute("""
-                    INSERT INTO admin_rules (rule_type, conditions, action, is_active) 
-                    VALUES ('policy_disable', ?, 'disable', 1)
-                """, [policy_name])
+            # Create a new policy control rule
+            rule_type = 'policy_control'
+            conditions_data = {
+                'policy_name': policy_name,
+                'description': f'Auto-created control for policy: {policy_name}',
+                'control_type': 'enable_disable'
+            }
+            
+            conn.execute("""
+                INSERT INTO admin_rules (rule_type, conditions, action, is_active, created_at) 
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, [rule_type, json.dumps(conditions_data), 'control', is_active])
+            logging.info(f"Created new policy control rule for '{policy_name}' with status {'active' if is_active else 'inactive'}")
         
         conn.close()
 
-        return jsonify({'success': True, 'message': f'Policy "{policy_name}" {"enabled" if is_active else "disabled"} successfully'})
+        status_text = "enabled" if is_active else "disabled"
+        return jsonify({
+            'success': True, 
+            'message': f'Policy "{policy_name}" {status_text} successfully'
+        })
     except Exception as e:
         logging.error(f"Toggle policy violation error: {e}")
         return jsonify({'error': f'Failed to toggle policy: {str(e)}'}), 500
