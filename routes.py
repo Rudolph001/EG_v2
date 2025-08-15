@@ -2202,26 +2202,40 @@ def api_admin_clear_emails():
         count_result = conn.execute("SELECT COUNT(*) FROM emails").fetchone()
         deleted_count = count_result[0] if count_result else 0
         
-        # Delete dependent records first to avoid foreign key constraint violations
+        # Get cases count
+        cases_result = conn.execute("SELECT COUNT(*) FROM cases").fetchone()
+        cases_count = cases_result[0] if cases_result else 0
+        
+        # Temporarily disable foreign key checks for DuckDB
+        conn.execute("PRAGMA disable_constraint_checking")
+        
+        # Clear emails table first
+        conn.execute("DELETE FROM emails")
+        
         # Clear cases that reference emails
         conn.execute("DELETE FROM cases")
         
-        # Clear emails table
-        conn.execute("DELETE FROM emails")
+        # Re-enable foreign key checks
+        conn.execute("PRAGMA enable_constraint_checking")
         
-        # Reset sequence
-        conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
+        # Reset auto-increment sequences if they exist
+        try:
+            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('emails', 'cases')")
+        except:
+            # Ignore if sequences don't exist or if not using SQLite
+            pass
         
         conn.close()
 
         return jsonify({
             'success': True,
-            'message': f'Cleared {deleted_count} email records and their associated cases',
-            'deleted_count': deleted_count
+            'message': f'Cleared {deleted_count} email records and {cases_count} associated cases',
+            'deleted_count': deleted_count,
+            'cases_cleared': cases_count
         })
     except Exception as e:
         logging.error(f"Clear emails error: {e}")
-        return jsonify({'error': 'Failed to clear email data'}), 500
+        return jsonify({'error': f'Failed to clear email data: {str(e)}'}), 500
 
 @app.route('/api/admin/clear-cases', methods=['POST'])
 def api_admin_clear_cases():
@@ -2282,19 +2296,23 @@ def api_admin_clear_all_data():
         case_count = conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
         flagged_count = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()[0]
         
-        # Clear tables in the correct order to avoid foreign key constraint violations
-        # Delete dependent records first
-        conn.execute("DELETE FROM cases")
+        # Temporarily disable foreign key checks for DuckDB
+        conn.execute("PRAGMA disable_constraint_checking")
         
-        # Then delete the main records
+        # Clear all tables
         conn.execute("DELETE FROM emails")
+        conn.execute("DELETE FROM cases")
         conn.execute("DELETE FROM flagged_senders")
         
-        # Reset sequences
+        # Re-enable foreign key checks
+        conn.execute("PRAGMA enable_constraint_checking")
+        
+        # Reset auto-increment sequences if they exist
         try:
-            conn.execute("ALTER SEQUENCE email_id_seq RESTART WITH 1")
-        except Exception as seq_error:
-            logging.warning(f"Could not reset sequence: {seq_error}")
+            conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('emails', 'cases', 'flagged_senders')")
+        except:
+            # Ignore if sequences don't exist or if not using SQLite
+            pass
         
         conn.close()
 
@@ -2310,7 +2328,7 @@ def api_admin_clear_all_data():
         })
     except Exception as e:
         logging.error(f"Clear all data error: {e}")
-        return jsonify({'error': 'Failed to clear all data'}), 500
+        return jsonify({'error': f'Failed to clear all data: {str(e)}'}), 500
 
 @app.route('/api/admin/database-stats')
 def api_admin_database_stats():
