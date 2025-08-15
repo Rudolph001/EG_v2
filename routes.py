@@ -1152,23 +1152,65 @@ def api_classify_email():
 @app.route('/api/generate-report', methods=['POST'])
 def api_generate_report():
     """Generate report in PDF or Excel format"""
-    data = request.json or {}
-    report_type = data.get('type', 'pdf')
-    date_from = data.get('date_from')
-    date_to = data.get('date_to')
-
     try:
+        data = request.json or {}
+        report_type = data.get('type', 'pdf')
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+
+        # Validate input parameters
+        if not report_type or report_type not in ['pdf', 'excel']:
+            return jsonify({'error': 'Invalid or missing report type. Must be "pdf" or "excel"'}), 400
+
+        # Validate date format if provided
+        if date_from:
+            try:
+                datetime.strptime(date_from, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid date_from format. Use YYYY-MM-DD'}), 400
+
+        if date_to:
+            try:
+                datetime.strptime(date_to, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid date_to format. Use YYYY-MM-DD'}), 400
+
+        # Check if date range is reasonable (not more than 1 year)
+        if date_from and date_to:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d')
+            to_date = datetime.strptime(date_to, '%Y-%m-%d')
+            if (to_date - from_date).days > 365:
+                return jsonify({'error': 'Date range too large. Maximum 365 days allowed'}), 400
+            if from_date > to_date:
+                return jsonify({'error': 'Start date must be before end date'}), 400
+
+        # Generate report
         if report_type == 'pdf':
             filename = generate_pdf_report(date_from, date_to)
         elif report_type == 'excel':
             filename = generate_excel_report(date_from, date_to)
-        else:
-            return jsonify({'error': 'Invalid report type'}), 400
+
+        # Verify file was created and has content
+        if not os.path.exists(filename):
+            return jsonify({'error': 'Report file was not created'}), 500
+
+        if os.path.getsize(filename) == 0:
+            return jsonify({'error': 'Report file is empty'}), 500
 
         return send_file(filename, as_attachment=True)
+
+    except FileNotFoundError as e:
+        logging.error(f"Report file not found: {e}")
+        return jsonify({'error': 'Report file not found after generation'}), 500
+    except MemoryError as e:
+        logging.error(f"Memory error during report generation: {e}")
+        return jsonify({'error': 'Report too large. Try a smaller date range'}), 500
+    except PermissionError as e:
+        logging.error(f"Permission error during report generation: {e}")
+        return jsonify({'error': 'File system permission error'}), 500
     except Exception as e:
         logging.error(f"Report generation error: {e}")
-        return jsonify({'error': 'Report generation failed'}), 500
+        return jsonify({'error': f'Report generation failed: {str(e)}'}), 500
 
 @app.route('/api/generate-summary-report', methods=['POST'])
 def api_generate_summary_report():

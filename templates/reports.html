@@ -415,20 +415,48 @@ function generateReport(type, form) {
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
 
+    // Add timeout to prevent endless requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
     fetch('/api/generate-report', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        signal: controller.signal
     })
     .then(response => {
+        clearTimeout(timeoutId);
+        
+        // Check if response is actually JSON error instead of blob
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json().then(errorData => {
+                throw new Error(errorData.error || 'Report generation failed');
+            });
+        }
+        
         if (response.ok) {
             return response.blob();
         }
-        throw new Error('Report generation failed');
+        
+        // Handle HTTP error status codes
+        if (response.status === 500) {
+            throw new Error('Server error during report generation');
+        } else if (response.status === 404) {
+            throw new Error('Report generation endpoint not found');
+        } else {
+            throw new Error(`Report generation failed with status: ${response.status}`);
+        }
     })
     .then(blob => {
+        // Validate that we actually got a blob
+        if (!blob || blob.size === 0) {
+            throw new Error('Empty report file received');
+        }
+
         // Create download link
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -439,46 +467,82 @@ function generateReport(type, form) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        button.disabled = false;
-        button.innerHTML = originalText;
-
         // Show success message
-        alert(`${type.toUpperCase()} report generated and downloaded successfully!`);
+        showAlert('success', `${type.toUpperCase()} report generated and downloaded successfully!`);
     })
     .catch(error => {
+        clearTimeout(timeoutId);
         console.error('Report generation error:', error);
+        
+        let errorMessage = 'Failed to generate report. Please try again.';
+        if (error.name === 'AbortError') {
+            errorMessage = 'Report generation timed out. Please try again with a smaller date range.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showAlert('danger', errorMessage);
+    })
+    .finally(() => {
+        // Always restore button state
         button.disabled = false;
         button.innerHTML = originalText;
-        alert('Failed to generate report. Please try again.');
     });
 }
 
 function generateQuickReport(type) {
-    const today = new Date();
-    let fromDate, toDate = today.toISOString().split('T')[0];
+    try {
+        const today = new Date();
+        let fromDate, toDate = today.toISOString().split('T')[0];
 
-    switch(type) {
-        case 'daily':
-            fromDate = today.toISOString().split('T')[0];
-            break;
-        case 'weekly':
-            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-            fromDate = lastWeek.toISOString().split('T')[0];
-            break;
-        case 'monthly':
-            const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            fromDate = lastMonth.toISOString().split('T')[0];
-            break;
-        case 'risk':
-            const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-            fromDate = last30Days.toISOString().split('T')[0];
-            break;
+        switch(type) {
+            case 'daily':
+                fromDate = today.toISOString().split('T')[0];
+                break;
+            case 'weekly':
+                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                fromDate = lastWeek.toISOString().split('T')[0];
+                break;
+            case 'monthly':
+                const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                fromDate = lastMonth.toISOString().split('T')[0];
+                break;
+            case 'risk':
+                const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                fromDate = last30Days.toISOString().split('T')[0];
+                break;
+            default:
+                showAlert('warning', 'Invalid report type selected');
+                return;
+        }
+
+        // Validate date range
+        if (!fromDate || !toDate) {
+            showAlert('danger', 'Invalid date range calculated');
+            return;
+        }
+
+        // Set form values and trigger PDF generation
+        const pdfDateFromElement = document.getElementById('pdfDateFrom');
+        const pdfDateToElement = document.getElementById('pdfDateTo');
+        const pdfFormElement = document.getElementById('pdfReportForm');
+
+        if (!pdfDateFromElement || !pdfDateToElement || !pdfFormElement) {
+            showAlert('danger', 'Report form elements not found');
+            return;
+        }
+
+        pdfDateFromElement.value = fromDate;
+        pdfDateToElement.value = toDate;
+        
+        // Dispatch submit event with error handling
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+        pdfFormElement.dispatchEvent(submitEvent);
+        
+    } catch (error) {
+        console.error('Quick report generation error:', error);
+        showAlert('danger', 'Failed to generate quick report');
     }
-
-    // Set form values and trigger PDF generation
-    document.getElementById('pdfDateFrom').value = fromDate;
-    document.getElementById('pdfDateTo').value = toDate;
-    document.getElementById('pdfReportForm').dispatchEvent(new Event('submit'));
 }
 
 function generateSummaryReport(summaryType) {
@@ -535,57 +599,86 @@ function generateSummaryReport(summaryType) {
 }
 
 function initializeCharts() {
-    // Volume Trend Chart
-    const volumeCtx = document.getElementById('volumeTrendChart').getContext('2d');
-    new Chart(volumeCtx, {
-        type: 'line',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            datasets: [{
-                label: 'Email Volume',
-                data: [450, 520, 380, 670, 590, 320, 280],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+    try {
+        // Volume Trend Chart with error boundary
+        const volumeCanvas = document.getElementById('volumeTrendChart');
+        if (volumeCanvas) {
+            try {
+                const volumeCtx = volumeCanvas.getContext('2d');
+                new Chart(volumeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Email Volume',
+                            data: [450, 520, 380, 670, 590, 320, 280],
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to initialize volume trend chart:', error);
+                volumeCanvas.style.display = 'none';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-warning';
+                errorDiv.textContent = 'Chart temporarily unavailable';
+                volumeCanvas.parentNode.appendChild(errorDiv);
             }
         }
-    });
 
-    // Risk Distribution Chart
-    const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
-    new Chart(riskCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
-            datasets: [{
-                data: [12, 45, 143],
-                backgroundColor: [
-                    '#dc3545',
-                    '#ffc107',
-                    '#198754'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
+        // Risk Distribution Chart with error boundary
+        const riskCanvas = document.getElementById('riskDistributionChart');
+        if (riskCanvas) {
+            try {
+                const riskCtx = riskCanvas.getContext('2d');
+                new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+                        datasets: [{
+                            data: [12, 45, 143],
+                            backgroundColor: [
+                                '#dc3545',
+                                '#ffc107',
+                                '#198754'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to initialize risk distribution chart:', error);
+                riskCanvas.style.display = 'none';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-warning';
+                errorDiv.textContent = 'Chart temporarily unavailable';
+                riskCanvas.parentNode.appendChild(errorDiv);
             }
         }
-    });
+    } catch (error) {
+        console.error('Chart initialization failed:', error);
+        showAlert('warning', 'Some charts may not be available');
+    }
 }
 
 function viewDepartmentDetails(department) {
@@ -597,18 +690,51 @@ function retrainModel() {
         return;
     }
 
-    fetch('/api/train-model', { method: 'POST' })
-    .then(response => response.json())
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+
+    // Add timeout for model training
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout
+
+    fetch('/api/train-model', { 
+        method: 'POST',
+        signal: controller.signal
+    })
+    .then(response => {
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`Training failed with status: ${response.status}`);
+        }
+        
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
-            alert(result.message);
+            showAlert('success', result.message || 'Model retrained successfully');
         } else {
-            alert('Error: ' + result.error);
+            showAlert('danger', result.error || 'Model training failed');
         }
     })
     .catch(error => {
+        clearTimeout(timeoutId);
         console.error('Model training error:', error);
-        alert('Failed to retrain model.');
+        
+        let errorMessage = 'Failed to retrain model.';
+        if (error.name === 'AbortError') {
+            errorMessage = 'Model training timed out. This may indicate a server issue.';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showAlert('danger', errorMessage);
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
     });
 }
 
