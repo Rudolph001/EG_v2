@@ -110,10 +110,46 @@
 .chart-container {
     position: relative;
     height: 300px;
+    max-height: 300px;
     margin-bottom: 1rem;
     background: var(--gray-50);
     border-radius: 8px;
     padding: 1rem;
+    overflow: hidden;
+}
+
+/* Prevent canvas from growing beyond container */
+.chart-container canvas {
+    max-width: 100% !important;
+    max-height: 280px !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Risk distribution specific fixes */
+#riskDistributionChart {
+    max-width: 300px !important;
+    max-height: 300px !important;
+    width: 300px !important;
+    height: 300px !important;
+}
+
+/* Volume trend chart height limit */
+#volumeTrendChart {
+    max-height: 300px !important;
+}
+
+/* Chart error states */
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    background: var(--gray-50);
+    border: 2px dashed var(--gray-300);
+    border-radius: 8px;
+    color: var(--gray-500);
+    text-align: center;
 }
 
 /* Professional Table Styling */
