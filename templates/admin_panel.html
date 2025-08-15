@@ -1,0 +1,937 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel - Email Guardian</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-primary" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-shield-alt"></i> Email Guardian
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('emails') }}">
+                            <i class="fas fa-envelope"></i> Emails
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cases') }}">
+                            <i class="fas fa-exclamation-triangle"></i> Cases
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('analytics') }}">
+                            <i class="fas fa-chart-line"></i> Analytics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_panel') }}">
+                            <i class="fas fa-cogs"></i> Admin Panel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_rules') }}">
+                            <i class="fas fa-list"></i> Admin Rules
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-cogs text-primary"></i> Admin Control Panel
+                    </h1>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="viewSystemLogs()">
+                            <i class="fas fa-file-alt"></i> System Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-tachometer-alt"></i> Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies" type="button" role="tab">
+                    <i class="fas fa-shield-alt"></i> Current Policies
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="violations-tab" data-bs-toggle="tab" data-bs-target="#violations" type="button" role="tab">
+                    <i class="fas fa-exclamation-triangle"></i> Policy Violations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="keywords-tab" data-bs-toggle="tab" data-bs-target="#keywords" type="button" role="tab">
+                    <i class="fas fa-key"></i> Keywords
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="whitelist-tab" data-bs-toggle="tab" data-bs-target="#whitelist" type="button" role="tab">
+                    <i class="fas fa-check-circle"></i> Whitelist
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ml-tab" data-bs-toggle="tab" data-bs-target="#ml" type="button" role="tab">
+                    <i class="fas fa-brain"></i> ML Settings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" type="button" role="tab">
+                    <i class="fas fa-database"></i> Data Management
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row g-4 mt-3">
+                    <!-- System Stats Cards -->
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Exclusion Rules</h6>
+                                        <h3 class="mb-0">{{ stats.exclusion_rules or 0 }}</h3>
+                                    </div>
+                                    <i class="fas fa-filter fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Whitelist Rules</h6>
+                                        <h3 class="mb-0">{{ stats.whitelist_rules or 0 }}</h3>
+                                    </div>
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">Security Rules</h6>
+                                        <h3 class="mb-0">{{ stats.security_rules or 0 }}</h3>
+                                    </div>
+                                    <i class="fas fa-shield-alt fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title">ML Models</h6>
+                                        <h3 class="mb-0">{{ stats.ml_models or 0 }}</h3>
+                                    </div>
+                                    <i class="fas fa-brain fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ML Status Section -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-robot"></i> Machine Learning Status
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Last Training:</strong> {{ ml_status.last_trained or 'Never' }}</p>
+                                        <p><strong>Model Accuracy:</strong> {{ ml_status.accuracy or 0 }}%</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary" onclick="trainMLModel()">
+                                            <i class="fas fa-play"></i> Train Model
+                                        </button>
+                                        <button class="btn btn-secondary ms-2" onclick="resetMLModel()">
+                                            <i class="fas fa-redo"></i> Reset Model
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Policies Tab -->
+            <div class="tab-pane fade" id="policies" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-shield-alt"></i> Current Policies
+                                </h5>
+                                <button type="button" class="btn btn-primary" onclick="viewAllPolicies()">
+                                    <i class="fas fa-list"></i> View All Policies
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="policiesContent">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading policies...</span>
+                                        </div>
+                                        <p class="mt-2">Loading current policies...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Policy Violations Tab -->
+            <div class="tab-pane fade" id="violations" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i> Policy Violations
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="violationsContent">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border text-warning" role="status">
+                                            <span class="visually-hidden">Loading violations...</span>
+                                        </div>
+                                        <p class="mt-2">Loading policy violations...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keywords Tab -->
+            <div class="tab-pane fade" id="keywords" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i> Risk Keywords
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="riskKeywordInput" placeholder="Add risk keyword">
+                                    <button class="btn btn-danger" onclick="addKeyword('risk')">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="riskKeywordsList" class="keywords-list">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-danger" role="status"></div>
+                                        <small class="d-block mt-1">Loading keywords...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-filter text-secondary"></i> Exclusion Keywords
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="excludeKeywordInput" placeholder="Add exclusion keyword">
+                                    <button class="btn btn-secondary" onclick="addKeyword('exclude')">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="excludeKeywordsList" class="keywords-list">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                                        <small class="d-block mt-1">Loading keywords...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Whitelist Tab -->
+            <div class="tab-pane fade" id="whitelist" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-user-check text-success"></i> Whitelisted Senders
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="email" class="form-control" id="whitelistSenderInput" placeholder="Add sender email">
+                                    <button class="btn btn-success" onclick="addWhitelist('sender')">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="whitelistSendersList" class="whitelist-list">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                                        <small class="d-block mt-1">Loading senders...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-globe text-success"></i> Whitelisted Domains
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="whitelistDomainInput" placeholder="Add domain (e.g., company.com)">
+                                    <button class="btn btn-success" onclick="addWhitelist('domain')">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="whitelistDomainsList" class="whitelist-list">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                                        <small class="d-block mt-1">Loading domains...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Settings Tab -->
+            <div class="tab-pane fade" id="ml" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-brain"></i> Machine Learning Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="mlSettingsForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="riskThreshold" class="form-label">Risk Threshold (%)</label>
+                                                <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70">
+                                                <small class="text-muted">Current: <span id="riskThresholdValue">70</span>%</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="confidenceThreshold" class="form-label">Confidence Threshold (%)</label>
+                                                <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85">
+                                                <small class="text-muted">Current: <span id="confidenceThresholdValue">85</span>%</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="retrainFrequency" class="form-label">Retrain Frequency</label>
+                                                <select class="form-select" id="retrainFrequency">
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly" selected>Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="manual">Manual Only</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
+                                                    <label class="form-check-label" for="enableMLOverride">
+                                                        Enable ML Override
+                                                    </label>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
+                                                    <label class="form-check-label" for="enableAutoEscalation">
+                                                        Enable Auto-Escalation
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <button type="button" class="btn btn-secondary" onclick="resetMLSettings()">
+                                            <i class="fas fa-undo"></i> Reset to Defaults
+                                        </button>
+                                        <button type="button" class="btn btn-primary ms-2" onclick="saveMLSettings()">
+                                            <i class="fas fa-save"></i> Save Settings
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management Tab -->
+            <div class="tab-pane fade" id="data" role="tabpanel">
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-database"></i> Data Management
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="d-grid">
+                                            <button class="btn btn-outline-danger" onclick="clearEmails()">
+                                                <i class="fas fa-trash"></i> Clear All Emails
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-grid">
+                                            <button class="btn btn-outline-warning" onclick="clearCases()">
+                                                <i class="fas fa-folder-minus"></i> Clear All Cases
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-grid">
+                                            <button class="btn btn-outline-secondary" onclick="clearFlaggedSenders()">
+                                                <i class="fas fa-user-times"></i> Clear Flagged Senders
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-grid">
+                                            <button class="btn btn-danger" onclick="clearAllData()">
+                                                <i class="fas fa-exclamation-triangle"></i> Clear ALL Data
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-grid">
+                                            <button class="btn btn-info" onclick="exportDatabase()">
+                                                <i class="fas fa-download"></i> Export Database
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div id="databaseStats" class="text-muted">
+                                        <small>Loading database statistics...</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize admin panel
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin panel loaded');
+            loadPolicies();
+            loadViolations();
+            loadKeywords();
+            loadWhitelist();
+            loadMLSettings();
+            loadDatabaseStats();
+            
+            // Setup range sliders
+            setupRangeSliders();
+        });
+
+        // Range slider setup
+        function setupRangeSliders() {
+            const riskThreshold = document.getElementById('riskThreshold');
+            const confidenceThreshold = document.getElementById('confidenceThreshold');
+            
+            riskThreshold.addEventListener('input', function() {
+                document.getElementById('riskThresholdValue').textContent = this.value;
+            });
+            
+            confidenceThreshold.addEventListener('input', function() {
+                document.getElementById('confidenceThresholdValue').textContent = this.value;
+            });
+        }
+
+        // Load functions
+        function loadPolicies() {
+            fetch('/api/admin/policies')
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('policiesContent');
+                    if (data.length === 0) {
+                        content.innerHTML = '<div class="text-center py-4"><p class="text-muted">No policies configured</p></div>';
+                    } else {
+                        let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Policy Name</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+                        data.forEach(policy => {
+                            html += `<tr>
+                                <td>${policy.policy_name}</td>
+                                <td><span class="badge ${policy.is_active ? 'bg-success' : 'bg-secondary'}">${policy.is_active ? 'Active' : 'Inactive'}</span></td>
+                                <td>${policy.created_at}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editPolicy(${policy.id})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table></div>';
+                        content.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading policies:', error);
+                    document.getElementById('policiesContent').innerHTML = '<div class="alert alert-danger">Error loading policies</div>';
+                });
+        }
+
+        function loadViolations() {
+            fetch('/api/admin/policy-violations-data')
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('violationsContent');
+                    if (data.length === 0) {
+                        content.innerHTML = '<div class="text-center py-4"><p class="text-muted">No policy violations detected</p></div>';
+                    } else {
+                        let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Policy Name</th><th>Violations</th><th>Percentage</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+                        data.forEach(violation => {
+                            html += `<tr>
+                                <td>${violation.policy_name}</td>
+                                <td><span class="badge bg-warning">${violation.count}</span></td>
+                                <td>${violation.percentage}%</td>
+                                <td><span class="badge ${violation.is_active ? 'bg-success' : 'bg-secondary'}">${violation.is_active ? 'Active' : 'Disabled'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm ${violation.is_active ? 'btn-outline-danger' : 'btn-outline-success'}" 
+                                            onclick="togglePolicyViolation('${violation.policy_name}', ${!violation.is_active})">
+                                        <i class="fas ${violation.is_active ? 'fa-ban' : 'fa-check'}"></i>
+                                        ${violation.is_active ? 'Disable' : 'Enable'}
+                                    </button>
+                                </td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table></div>';
+                        content.innerHTML = html;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading violations:', error);
+                    document.getElementById('violationsContent').innerHTML = '<div class="alert alert-danger">Error loading violations</div>';
+                });
+        }
+
+        function loadKeywords() {
+            // Load risk keywords
+            fetch('/api/admin/keywords/risk')
+                .then(response => response.json())
+                .then(data => {
+                    displayKeywords('riskKeywordsList', data, 'risk');
+                })
+                .catch(error => console.error('Error loading risk keywords:', error));
+
+            // Load exclude keywords
+            fetch('/api/admin/keywords/exclude')
+                .then(response => response.json())
+                .then(data => {
+                    displayKeywords('excludeKeywordsList', data, 'exclude');
+                })
+                .catch(error => console.error('Error loading exclude keywords:', error));
+        }
+
+        function loadWhitelist() {
+            // Load whitelisted senders
+            fetch('/api/admin/whitelist/sender')
+                .then(response => response.json())
+                .then(data => {
+                    displayWhitelist('whitelistSendersList', data, 'sender');
+                })
+                .catch(error => console.error('Error loading whitelisted senders:', error));
+
+            // Load whitelisted domains
+            fetch('/api/admin/whitelist/domain')
+                .then(response => response.json())
+                .then(data => {
+                    displayWhitelist('whitelistDomainsList', data, 'domain');
+                })
+                .catch(error => console.error('Error loading whitelisted domains:', error));
+        }
+
+        function loadMLSettings() {
+            fetch('/api/admin/ml-settings')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('riskThreshold').value = data.risk_threshold || 70;
+                    document.getElementById('riskThresholdValue').textContent = data.risk_threshold || 70;
+                    document.getElementById('confidenceThreshold').value = data.confidence_threshold || 85;
+                    document.getElementById('confidenceThresholdValue').textContent = data.confidence_threshold || 85;
+                    document.getElementById('retrainFrequency').value = data.retrain_frequency || 'weekly';
+                    document.getElementById('enableMLOverride').checked = data.enable_ml_override !== false;
+                    document.getElementById('enableAutoEscalation').checked = data.enable_auto_escalation !== false;
+                })
+                .catch(error => console.error('Error loading ML settings:', error));
+        }
+
+        function loadDatabaseStats() {
+            fetch('/api/admin/database-stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('databaseStats').innerHTML = `
+                        <small>
+                            Emails: ${data.emails || 0} | 
+                            Cases: ${data.cases || 0} | 
+                            Flagged Senders: ${data.flagged_senders || 0} | 
+                            Admin Rules: ${data.admin_rules || 0}
+                        </small>
+                    `;
+                })
+                .catch(error => console.error('Error loading database stats:', error));
+        }
+
+        // Display functions
+        function displayKeywords(containerId, keywords, type) {
+            const container = document.getElementById(containerId);
+            if (keywords.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-3">No keywords added</p>';
+            } else {
+                let html = '';
+                keywords.forEach(keyword => {
+                    html += `<span class="badge bg-secondary me-1 mb-1">
+                        ${keyword}
+                        <button type="button" class="btn-close btn-close-white ms-1" onclick="removeKeyword('${type}', '${keyword}')"></button>
+                    </span>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        function displayWhitelist(containerId, items, type) {
+            const container = document.getElementById(containerId);
+            if (items.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center py-3">No items added</p>';
+            } else {
+                let html = '';
+                items.forEach(item => {
+                    html += `<span class="badge bg-success me-1 mb-1">
+                        ${item}
+                        <button type="button" class="btn-close btn-close-white ms-1" onclick="removeWhitelist('${type}', '${item}')"></button>
+                    </span>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        // Action functions
+        function addKeyword(type) {
+            const input = document.getElementById(type + 'KeywordInput');
+            const keyword = input.value.trim();
+            if (!keyword) return;
+
+            fetch('/api/admin/add-keyword', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type, keyword: keyword})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadKeywords();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error adding keyword:', error));
+        }
+
+        function removeKeyword(type, keyword) {
+            fetch('/api/admin/remove-keyword', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type, keyword: keyword})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadKeywords();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error removing keyword:', error));
+        }
+
+        function addWhitelist(type) {
+            const input = document.getElementById('whitelist' + type.charAt(0).toUpperCase() + type.slice(1) + 'Input');
+            const value = input.value.trim();
+            if (!value) return;
+
+            fetch('/api/admin/add-whitelist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type, value: value})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadWhitelist();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error adding whitelist item:', error));
+        }
+
+        function removeWhitelist(type, value) {
+            fetch('/api/admin/remove-whitelist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({type: type, value: value})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadWhitelist();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error removing whitelist item:', error));
+        }
+
+        function saveMLSettings() {
+            const settings = {
+                risk_threshold: parseInt(document.getElementById('riskThreshold').value),
+                confidence_threshold: parseInt(document.getElementById('confidenceThreshold').value),
+                retrain_frequency: document.getElementById('retrainFrequency').value,
+                enable_ml_override: document.getElementById('enableMLOverride').checked,
+                enable_auto_escalation: document.getElementById('enableAutoEscalation').checked
+            };
+
+            fetch('/api/admin/save-ml-settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('ML settings saved successfully');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error saving ML settings:', error));
+        }
+
+        function trainMLModel() {
+            fetch('/api/train-model', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => console.error('Error training model:', error));
+        }
+
+        function resetMLModel() {
+            if (confirm('Are you sure you want to reset the ML model? This cannot be undone.')) {
+                fetch('/api/admin/reset-model', {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Model reset successfully');
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error resetting model:', error));
+            }
+        }
+
+        function clearEmails() {
+            if (confirm('Are you sure you want to clear all email records? This cannot be undone.')) {
+                fetch('/api/admin/clear-emails', {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            loadDatabaseStats();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error clearing emails:', error));
+            }
+        }
+
+        function clearCases() {
+            if (confirm('Are you sure you want to clear all case records? This cannot be undone.')) {
+                fetch('/api/admin/clear-cases', {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            loadDatabaseStats();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error clearing cases:', error));
+            }
+        }
+
+        function clearFlaggedSenders() {
+            if (confirm('Are you sure you want to clear all flagged sender records? This cannot be undone.')) {
+                fetch('/api/admin/clear-flagged-senders', {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            loadDatabaseStats();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error clearing flagged senders:', error));
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This will remove emails, cases, flagged senders, and cannot be undone.')) {
+                fetch('/api/admin/clear-all-data', {method: 'POST'})
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message + '\n' + data.summary);
+                            loadDatabaseStats();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error clearing all data:', error));
+            }
+        }
+
+        function exportDatabase() {
+            window.location.href = '/api/admin/export-database';
+        }
+
+        function togglePolicyViolation(policyName, isActive) {
+            fetch('/api/admin/toggle-policy-violation', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({policy_name: policyName, is_active: isActive})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadViolations();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error toggling policy:', error));
+        }
+
+        function viewAllPolicies() {
+            window.location.href = '/admin-rules';
+        }
+
+        function editPolicy(policyId) {
+            window.location.href = '/admin-rules#edit-' + policyId;
+        }
+
+        function refreshDashboard() {
+            location.reload();
+        }
+
+        function viewSystemLogs() {
+            alert('System logs viewer not implemented yet');
+        }
+
+        function resetMLSettings() {
+            if (confirm('Reset ML settings to defaults?')) {
+                loadMLSettings();
+            }
+        }
+    </script>
+</body>
+</html>
