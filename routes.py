@@ -1320,7 +1320,7 @@ def api_move_to_case_management(email_id):
         # Update email status to 'escalated' so it doesn't show in main dashboard
         conn.execute("""
             UPDATE emails 
-            SET final_outcome = 'escalated', updated_at = CURRENT_TIMESTAMP 
+            SET final_outcome = 'escalated' 
             WHERE id = ?
         """, [email_id])
         
