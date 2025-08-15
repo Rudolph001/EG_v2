@@ -56,11 +56,17 @@ def init_database():
         # Create flagged_senders table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS flagged_senders (
-                id INTEGER PRIMARY KEY,
-                sender VARCHAR UNIQUE,
-                reason TEXT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender TEXT NOT NULL,
+                reason TEXT NOT NULL,
                 flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+
+        # Create index for better performance
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_flagged_senders_sender 
+            ON flagged_senders(sender)
         """)
 
         # Create admin_rules table

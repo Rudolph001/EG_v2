@@ -397,38 +397,96 @@ def cleared_emails():
 @app.route('/flagged-senders')
 def flagged_senders():
     """Flagged Senders Dashboard: monitor flagged senders across imports"""
-    conn = get_db_connection()
+    try:
+        conn = get_db_connection()
 
-    # Get flagged senders with email counts
-    senders = conn.execute("""
-        SELECT fs.*, 
-               COUNT(e.id) as email_count,
-               MAX(e._time) as last_email_date,
-               COUNT(CASE WHEN e.final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count
-        FROM flagged_senders fs
-        LEFT JOIN emails e ON fs.sender = e.sender
-        GROUP BY fs.id, fs.sender, fs.reason, fs.flagged_at
-        ORDER BY fs.flagged_at DESC
-    """).fetchall()
+        # Get flagged senders with email counts - simplified query
+        try:
+            senders_raw = conn.execute("""
+                SELECT id, sender, reason, flagged_at
+                FROM flagged_senders
+                ORDER BY flagged_at DESC
+            """).fetchall()
+            
+            # Process each sender to get email counts
+            senders = []
+            for sender_row in senders_raw:
+                try:
+                    # Get email count for this sender
+                    email_count = conn.execute("""
+                        SELECT COUNT(*) FROM emails WHERE sender = ?
+                    """, [sender_row[1]]).fetchone()[0]
+                    
+                    # Get last email date
+                    last_email = conn.execute("""
+                        SELECT MAX(_time) FROM emails WHERE sender = ?
+                    """, [sender_row[1]]).fetchone()[0]
+                    
+                    # Get high risk count
+                    high_risk_count = conn.execute("""
+                        SELECT COUNT(*) FROM emails 
+                        WHERE sender = ? AND final_outcome IN ('escalated', 'high_risk')
+                    """, [sender_row[1]]).fetchone()[0]
+                    
+                    # Create enhanced sender record
+                    sender_dict = {
+                        0: sender_row[0],  # id
+                        1: sender_row[1],  # sender
+                        2: sender_row[2],  # reason
+                        3: sender_row[3],  # flagged_at
+                        'email_count': email_count,
+                        'last_email_date': last_email,
+                        'high_risk_count': high_risk_count
+                    }
+                    senders.append(sender_dict)
+                    
+                except Exception as e:
+                    logging.error(f"Error processing sender {sender_row[1]}: {e}")
+                    # Add basic sender info even if email stats fail
+                    sender_dict = {
+                        0: sender_row[0],
+                        1: sender_row[1],
+                        2: sender_row[2],
+                        3: sender_row[3],
+                        'email_count': 0,
+                        'last_email_date': None,
+                        'high_risk_count': 0
+                    }
+                    senders.append(sender_dict)
+                    
+        except Exception as e:
+            logging.error(f"Error getting flagged senders: {e}")
+            senders = []
 
-    # Get domain statistics
-    domain_stats = conn.execute("""
-        SELECT 
-            SUBSTR(sender, POSITION('@' IN sender) + 1) as domain,
-            COUNT(*) as count
-        FROM emails e
-        JOIN flagged_senders fs ON e.sender = fs.sender
-        WHERE POSITION('@' IN sender) > 0
-        GROUP BY SUBSTR(sender, POSITION('@' IN sender) + 1)
-        ORDER BY count DESC
-        LIMIT 10
-    """).fetchall()
+        # Get domain statistics - simplified approach
+        try:
+            # Get all flagged senders first
+            flagged_senders_list = conn.execute("SELECT sender FROM flagged_senders").fetchall()
+            domain_counts = {}
+            
+            for sender_row in flagged_senders_list:
+                sender = sender_row[0]
+                if '@' in sender:
+                    domain = sender.split('@')[1].lower()
+                    domain_counts[domain] = domain_counts.get(domain, 0) + 1
+            
+            # Sort by count and limit to top 10
+            domain_stats = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+            
+        except Exception as e:
+            logging.error(f"Error getting domain stats: {e}")
+            domain_stats = []
 
-    conn.close()
+        conn.close()
 
-    return render_template('flagged_senders.html', 
-                         senders=senders,
-                         domain_stats=dict(domain_stats))
+        return render_template('flagged_senders.html', 
+                             senders=senders,
+                             domain_stats=dict(domain_stats))
+                             
+    except Exception as e:
+        logging.error(f"Flagged senders dashboard error: {e}")
+        flash(f'Error loading flagged senders: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/analytics')
 def analytics():
