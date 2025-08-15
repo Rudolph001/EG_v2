@@ -413,82 +413,120 @@ def flagged_senders():
 @app.route('/analytics')
 def analytics():
     """Analytics Dashboard: charts for policy violations, escalations, risk categories"""
-    conn = get_db_connection()
+    try:
+        conn = get_db_connection()
 
-    # Policy violations data
-    policy_violations = conn.execute("""
-        SELECT policy_name, COUNT(*) as count
-        FROM emails 
-        WHERE policy_name IS NOT NULL
-        GROUP BY policy_name
-        ORDER BY count DESC
-        LIMIT 10
-    """).fetchall()
+        # Policy violations data
+        try:
+            policy_violations = conn.execute("""
+                SELECT policy_name, COUNT(*) as count
+                FROM emails 
+                WHERE policy_name IS NOT NULL AND policy_name != ''
+                GROUP BY policy_name
+                ORDER BY count DESC
+                LIMIT 10
+            """).fetchall()
+        except Exception as e:
+            logging.error(f"Policy violations query error: {e}")
+            policy_violations = []
 
-    # Escalations over time (last 30 days)
-    escalations_timeline = conn.execute("""
-        SELECT DATE(_time) as date, COUNT(*) as count
-        FROM emails 
-        WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
-        AND _time >= (CURRENT_DATE - INTERVAL 30 DAY)
-        GROUP BY DATE(_time)
-        ORDER BY date
-    """).fetchall()
+        # Escalations over time (last 30 days)
+        try:
+            escalations_timeline = conn.execute("""
+                SELECT DATE(_time) as date, COUNT(*) as count
+                FROM emails 
+                WHERE final_outcome IN ('escalated', 'high_risk', 'pending_review')
+                AND _time >= (CURRENT_DATE - INTERVAL '30 days')
+                GROUP BY DATE(_time)
+                ORDER BY date
+            """).fetchall()
+        except Exception as e:
+            logging.error(f"Escalations timeline query error: {e}")
+            escalations_timeline = []
 
-    # Risk categories distribution
-    risk_categories = conn.execute("""
-        SELECT 
-            CASE 
-                WHEN final_outcome IN ('high_risk', 'escalated') THEN 'High Risk'
-                WHEN final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
-                WHEN final_outcome IN ('cleared', 'approved') THEN 'Low Risk'
-                ELSE 'Unknown'
-            END as risk_level,
-            COUNT(*) as count
-        FROM emails
-        WHERE final_outcome IS NOT NULL
-        GROUP BY risk_level
-        ORDER BY count DESC
-    """).fetchall()
+        # Risk categories distribution - simplified
+        try:
+            risk_categories = conn.execute("""
+                SELECT 
+                    CASE 
+                        WHEN final_outcome IN ('high_risk', 'escalated') THEN 'High Risk'
+                        WHEN final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
+                        WHEN final_outcome IN ('cleared', 'approved') THEN 'Low Risk'
+                        ELSE 'Unknown'
+                    END as risk_level,
+                    COUNT(*) as count
+                FROM emails
+                WHERE final_outcome IS NOT NULL
+                GROUP BY CASE 
+                    WHEN final_outcome IN ('high_risk', 'escalated') THEN 'High Risk'
+                    WHEN final_outcome IN ('medium_risk', 'warning') THEN 'Medium Risk'
+                    WHEN final_outcome IN ('cleared', 'approved') THEN 'Low Risk'
+                    ELSE 'Unknown'
+                END
+                ORDER BY count DESC
+            """).fetchall()
+        except Exception as e:
+            logging.error(f"Risk categories query error: {e}")
+            risk_categories = []
 
-    # Department risk analysis
-    dept_risk = conn.execute("""
-        SELECT 
-            department,
-            COUNT(*) as total_emails,
-            COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count,
-            ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) * 100.0 / COUNT(*), 2) as risk_percentage
-        FROM emails
-        WHERE department IS NOT NULL
-        GROUP BY department
-        HAVING COUNT(*) > 10
-        ORDER BY risk_percentage DESC
-        LIMIT 10
-    """).fetchall()
+        # Department risk analysis
+        try:
+            dept_risk = conn.execute("""
+                SELECT 
+                    department,
+                    COUNT(*) as total_emails,
+                    COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as high_risk_count,
+                    ROUND(COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) * 100.0 / COUNT(*), 2) as risk_percentage
+                FROM emails
+                WHERE department IS NOT NULL AND department != ''
+                GROUP BY department
+                HAVING COUNT(*) > 5
+                ORDER BY risk_percentage DESC
+                LIMIT 10
+            """).fetchall()
+        except Exception as e:
+            logging.error(f"Department risk query error: {e}")
+            dept_risk = []
 
-    # Monthly trend data
-    monthly_trends = conn.execute("""
-        SELECT 
-            strftime('%Y-%m', _time) as month,
-            COUNT(*) as total_emails,
-            COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
-        FROM emails
-        WHERE _time >= (CURRENT_DATE - INTERVAL 12 MONTH)
-        GROUP BY strftime('%Y-%m', _time)
-        ORDER BY month
-    """).fetchall()
+        # Monthly trend data - simplified
+        try:
+            monthly_trends = conn.execute("""
+                SELECT 
+                    strftime('%Y-%m', _time) as month,
+                    COUNT(*) as total_emails,
+                    COUNT(CASE WHEN final_outcome IN ('escalated', 'high_risk') THEN 1 END) as escalated_emails
+                FROM emails
+                WHERE _time >= date('now', '-12 months')
+                GROUP BY strftime('%Y-%m', _time)
+                ORDER BY month
+            """).fetchall()
+        except Exception as e:
+            logging.error(f"Monthly trends query error: {e}")
+            monthly_trends = []
 
-    conn.close()
+        conn.close()
 
-    analytics_data = {
-        'policy_violations': policy_violations,
-        'escalations_timeline': escalations_timeline,
-        'risk_categories': risk_categories,
-        'dept_risk': dept_risk,
-        'monthly_trends': monthly_trends
-    }
+        analytics_data = {
+            'policy_violations': policy_violations,
+            'escalations_timeline': escalations_timeline,
+            'risk_categories': risk_categories,
+            'dept_risk': dept_risk,
+            'monthly_trends': monthly_trends
+        }
 
-    return render_template('analytics.html', analytics=analytics_data)
+        return render_template('analytics.html', analytics=analytics_data)
+    
+    except Exception as e:
+        logging.error(f"Analytics dashboard error: {e}")
+        # Return empty analytics data to prevent template errors
+        analytics_data = {
+            'policy_violations': [],
+            'escalations_timeline': [],
+            'risk_categories': [],
+            'dept_risk': [],
+            'monthly_trends': []
+        }
+        return render_template('analytics.html', analytics=analytics_data)
 
 @app.route('/admin-rules')
 def admin_rules():
@@ -1096,7 +1134,7 @@ def api_dashboard_stats():
             'department_data': [],
             'timeline_data': [],
             'error': 'Failed to load dashboard statistics'
-        }), 500
+        })
 
 @app.route('/api/classify-email', methods=['POST'])
 def api_classify_email():

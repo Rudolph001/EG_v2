@@ -200,7 +200,7 @@ class ReportGenerator:
                 SELECT 
                     c.status,
                     COUNT(*) as count,
-                    AVG(JULIANDAY(COALESCE(c.updated_at, datetime('now'))) - JULIANDAY(c.created_at)) as avg_resolution_days
+                    AVG(EXTRACT(EPOCH FROM (COALESCE(c.updated_at, CURRENT_TIMESTAMP) - c.created_at)) / 86400.0) as avg_resolution_days
                 FROM cases c
                 JOIN emails e ON c.email_id = e.id
                 WHERE DATE(c.created_at) BETWEEN '{date_from}' AND '{date_to}'
