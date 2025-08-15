@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -364,69 +363,103 @@
             <!-- ML Settings Tab -->
             <div class="tab-pane fade" id="ml" role="tabpanel">
                 <div class="row mt-3">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
+                    <!-- ML Settings Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-info h-100">
+                            <div class="card-header bg-info text-white">
                                 <h5 class="mb-0">
-                                    <i class="fas fa-brain"></i> Machine Learning Configuration
+                                    <i class="fas fa-brain"></i>
+                                    Machine Learning Settings
                                 </h5>
                             </div>
                             <div class="card-body">
-                                <form id="mlSettingsForm">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="riskThreshold" class="form-label">Risk Threshold (%)</label>
-                                                <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70">
-                                                <small class="text-muted">Current: <span id="riskThresholdValue">70</span>%</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="confidenceThreshold" class="form-label">Confidence Threshold (%)</label>
-                                                <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85">
-                                                <small class="text-muted">Current: <span id="confidenceThresholdValue">85</span>%</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="retrainFrequency" class="form-label">Retrain Frequency</label>
-                                                <select class="form-select" id="retrainFrequency">
-                                                    <option value="daily">Daily</option>
-                                                    <option value="weekly" selected>Weekly</option>
-                                                    <option value="monthly">Monthly</option>
-                                                    <option value="manual">Manual Only</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
-                                                    <label class="form-check-label" for="enableMLOverride">
-                                                        Enable ML Override
-                                                    </label>
-                                                </div>
-                                                <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
-                                                    <label class="form-check-label" for="enableAutoEscalation">
-                                                        Enable Auto-Escalation
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="text-end">
-                                        <button type="button" class="btn btn-secondary" onclick="resetMLSettings()">
-                                            <i class="fas fa-undo"></i> Reset to Defaults
-                                        </button>
-                                        <button type="button" class="btn btn-primary ms-2" onclick="saveMLSettings()">
-                                            <i class="fas fa-save"></i> Save Settings
-                                        </button>
-                                    </div>
-                                </form>
+                                <div class="mb-3">
+                                    <label for="riskThreshold" class="form-label">Risk Threshold: <span id="riskThresholdValue">70</span>%</label>
+                                    <input type="range" class="form-range" id="riskThreshold" min="0" max="100" value="70" 
+                                           onchange="updateThresholdValue('riskThreshold', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confidenceThreshold" class="form-label">Confidence Threshold: <span id="confidenceThresholdValue">85</span>%</label>
+                                    <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="85"
+                                           onchange="updateThresholdValue('confidenceThreshold', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="retrainFrequency" class="form-label">Retrain Frequency</label>
+                                    <select class="form-select" id="retrainFrequency">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly" selected>Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableMLOverride" checked>
+                                    <label class="form-check-label" for="enableMLOverride">
+                                        Enable ML Override
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableAutoEscalation" checked>
+                                    <label class="form-check-label" for="enableAutoEscalation">
+                                        Auto-Escalate High Risk
+                                    </label>
+                                </div>
+                                <button type="button" class="btn btn-info btn-sm me-2" onclick="saveMLSettings()">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                                <button type="button" class="btn btn-warning btn-sm" onclick="resetMLModel()">
+                                    <i class="fas fa-refresh"></i> Reset Model
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ML Processor Configuration Card -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-success h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-cogs"></i>
+                                    Risk Scoring Configuration
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="flaggedSenderScore" class="form-label">Flagged Sender Score: <span id="flaggedSenderScoreValue">40</span></label>
+                                    <input type="range" class="form-range" id="flaggedSenderScore" min="0" max="100" value="40" 
+                                           onchange="updateProcessorValue('flaggedSenderScore', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="leaverScore" class="form-label">Leaver Score: <span id="leaverScoreValue">35</span></label>
+                                    <input type="range" class="form-range" id="leaverScore" min="0" max="100" value="35"
+                                           onchange="updateProcessorValue('leaverScore', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="suspiciousAttachmentScore" class="form-label">Suspicious Attachment Score: <span id="suspiciousAttachmentScoreValue">30</span></label>
+                                    <input type="range" class="form-range" id="suspiciousAttachmentScore" min="0" max="100" value="30"
+                                           onchange="updateProcessorValue('suspiciousAttachmentScore', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="policyViolationScore" class="form-label">Policy Violation Score: <span id="policyViolationScoreValue">30</span></label>
+                                    <input type="range" class="form-range" id="policyViolationScore" min="0" max="100" value="30"
+                                           onchange="updateProcessorValue('policyViolationScore', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="personalDomainScore" class="form-label">Personal Domain Score: <span id="personalDomainScoreValue">15</span></label>
+                                    <input type="range" class="form-range" id="personalDomainScore" min="0" max="50" value="15"
+                                           onchange="updateProcessorValue('personalDomainScore', this.value)">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="autoClearThreshold" class="form-label">Auto-Clear Threshold: <span id="autoClearThresholdValue">20</span></label>
+                                    <input type="range" class="form-range" id="autoClearThreshold" min="0" max="50" value="20"
+                                           onchange="updateProcessorValue('autoClearThreshold', this.value)">
+                                    <small class="text-muted">Emails below this score are automatically cleared</small>
+                                </div>
+                                <button type="button" class="btn btn-success btn-sm me-2" onclick="saveProcessorSettings()">
+                                    <i class="fas fa-save"></i> Save Risk Settings
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="loadProcessorSettings()">
+                                    <i class="fas fa-sync"></i> Reload Settings
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -509,7 +542,8 @@
             loadWhitelist();
             loadMLSettings();
             loadDatabaseStats();
-            
+            loadProcessorSettings(); // Load processor settings on init
+
             // Setup range sliders
             setupRangeSliders();
         });
@@ -518,11 +552,11 @@
         function setupRangeSliders() {
             const riskThreshold = document.getElementById('riskThreshold');
             const confidenceThreshold = document.getElementById('confidenceThreshold');
-            
+
             riskThreshold.addEventListener('input', function() {
                 document.getElementById('riskThresholdValue').textContent = this.value;
             });
-            
+
             confidenceThreshold.addEventListener('input', function() {
                 document.getElementById('confidenceThresholdValue').textContent = this.value;
             });
@@ -933,13 +967,13 @@
                         statusBadge.className = `badge ${isActive ? 'bg-success' : 'bg-secondary'}`;
                         statusBadge.textContent = isActive ? 'Active' : 'Disabled';
                     }
-                    
+
                     // Update button text and class
                     button.className = `btn btn-outline-${isActive ? 'danger' : 'success'}`;
                     button.innerHTML = `<i class="fas ${isActive ? 'fa-ban' : 'fa-check'}"></i> ${isActive ? 'Disable' : 'Enable'}`;
                     button.onclick = () => togglePolicyViolation(policyName, !isActive);
                     button.disabled = false;
-                    
+
                     // Also reload the violations to ensure consistency
                     setTimeout(() => loadViolations(), 500);
                 } else {
@@ -1005,6 +1039,82 @@
             if (confirm('Reset ML settings to defaults?')) {
                 loadMLSettings();
             }
+        }
+
+        // Helper function for toast notifications (optional, if you have a toast system)
+        function showToast(message, type) {
+            console.log(`Toast (${type}): ${message}`);
+            // Implement your toast notification logic here, e.g., using Bootstrap Toasts or a library
+            alert(`${type.toUpperCase()}: ${message}`); // Fallback to alert
+        }
+
+        function updateThresholdValue(elementId, value) {
+            document.getElementById(elementId + 'Value').textContent = value;
+        }
+
+        function updateProcessorValue(elementId, value) {
+            document.getElementById(elementId + 'Value').textContent = value;
+        }
+
+        function saveProcessorSettings() {
+            const settings = {
+                flagged_sender_score: parseInt(document.getElementById('flaggedSenderScore').value),
+                leaver_score: parseInt(document.getElementById('leaverScore').value),
+                suspicious_attachment_score: parseInt(document.getElementById('suspiciousAttachmentScore').value),
+                policy_violation_score: parseInt(document.getElementById('policyViolationScore').value),
+                personal_domain_score: parseInt(document.getElementById('personalDomainScore').value),
+                auto_clear_threshold: parseInt(document.getElementById('autoClearThreshold').value)
+            };
+
+            fetch('/api/admin/save-processor-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Risk scoring settings saved successfully!', 'success');
+                } else {
+                    showToast('Error saving settings: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving processor settings:', error);
+                showToast('Failed to save processor settings', 'error');
+            });
+        }
+
+        function loadProcessorSettings() {
+            fetch('/api/admin/processor-settings')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.flagged_sender_score !== undefined) {
+                        document.getElementById('flaggedSenderScore').value = data.flagged_sender_score;
+                        updateProcessorValue('flaggedSenderScore', data.flagged_sender_score);
+                    }
+                    if (data.leaver_score !== undefined) {
+                        document.getElementById('leaverScore').value = data.leaver_score;
+                        updateProcessorValue('leaverScore', data.leaver_score);
+                    }
+                    if (data.suspicious_attachment_score !== undefined) {
+                        document.getElementById('suspiciousAttachmentScore').value = data.suspicious_attachment_score;
+                        updateProcessorValue('suspiciousAttachmentScore', data.suspicious_attachment_score);
+                    }
+                    if (data.policy_violation_score !== undefined) {
+                        document.getElementById('policyViolationScore').value = data.policy_violation_score;
+                        updateProcessorValue('policyViolationScore', data.policy_violation_score);
+                    }
+                    if (data.personal_domain_score !== undefined) {
+                        document.getElementById('personalDomainScore').value = data.personal_domain_score;
+                        updateProcessorValue('personalDomainScore', data.personal_domain_score);
+                    }
+                    if (data.auto_clear_threshold !== undefined) {
+                        document.getElementById('autoClearThreshold').value = data.auto_clear_threshold;
+                        updateProcessorValue('autoClearThreshold', data.auto_clear_threshold);
+                    }
+                })
+                .catch(error => console.error('Error loading processor settings:', error));
         }
     </script>
 </body>

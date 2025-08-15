@@ -1491,6 +1491,77 @@ def api_admin_reset_model():
         logging.error(f"Reset model error: {e}")
         return jsonify({'error': 'Failed to reset model'}), 500
 
+@app.route('/api/admin/save-processor-settings', methods=['POST'])
+def api_admin_save_processor_settings():
+    """Save processor configuration settings"""
+    try:
+        data = request.json or {}
+        
+        # Save settings to admin_rules table as configuration
+        conn = get_db_connection()
+        
+        # Remove existing processor settings
+        conn.execute("DELETE FROM admin_rules WHERE rule_type = 'processor_config'")
+        
+        # Save new settings
+        settings_json = json.dumps(data)
+        conn.execute("""
+            INSERT INTO admin_rules (rule_type, conditions, action, is_active, created_at) 
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, ['processor_config', settings_json, 'configure', True])
+        
+        conn.close()
+        
+        logging.info(f"Processor settings saved: {data}")
+        return jsonify({'success': True, 'message': 'Processor settings saved successfully'})
+    except Exception as e:
+        logging.error(f"Save processor settings error: {e}")
+        return jsonify({'error': 'Failed to save processor settings'}), 500
+
+@app.route('/api/admin/processor-settings')
+def api_admin_get_processor_settings():
+    """Get current processor settings"""
+    try:
+        conn = get_db_connection()
+        
+        # Get settings from admin_rules table
+        settings_row = conn.execute("""
+            SELECT conditions FROM admin_rules 
+            WHERE rule_type = 'processor_config' AND is_active = true
+            ORDER BY created_at DESC LIMIT 1
+        """).fetchone()
+        
+        conn.close()
+        
+        if settings_row and settings_row[0]:
+            try:
+                settings = json.loads(settings_row[0])
+            except json.JSONDecodeError:
+                settings = {}
+        else:
+            # Return default settings if none saved
+            settings = {}
+        
+        # Merge with defaults
+        default_settings = {
+            'flagged_sender_score': 40,
+            'leaver_score': 35,
+            'suspicious_attachment_score': 30,
+            'policy_violation_score': 30,
+            'personal_domain_score': 15,
+            'auto_clear_threshold': 20
+        }
+        
+        # Use saved settings or defaults
+        for key, default_value in default_settings.items():
+            if key not in settings:
+                settings[key] = default_value
+        
+        return jsonify(settings)
+    except Exception as e:
+        logging.error(f"Get processor settings error: {e}")
+        return jsonify({'error': 'Failed to load processor settings'}), 500
+
 @app.route('/api/dashboard-stats')
 def api_dashboard_stats():
     """API endpoint for dashboard statistics"""

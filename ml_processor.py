@@ -2,6 +2,7 @@ import os
 import pickle
 import pandas as pd
 import numpy as np
+import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
@@ -12,6 +13,50 @@ import logging
 
 MODEL_PATH = 'ml_models/email_classifier.pkl'
 VECTORIZER_PATH = 'ml_models/vectorizer.pkl'
+
+def load_processor_settings():
+    """Load processor configuration settings from database"""
+    try:
+        conn = get_db_connection()
+        settings_row = conn.execute("""
+            SELECT conditions FROM admin_rules 
+            WHERE rule_type = 'processor_config' AND is_active = true
+            ORDER BY created_at DESC LIMIT 1
+        """).fetchone()
+        conn.close()
+        
+        if settings_row and settings_row[0]:
+            try:
+                settings = json.loads(settings_row[0])
+                logging.debug(f"Loaded processor settings: {settings}")
+                return settings
+            except json.JSONDecodeError:
+                logging.warning("Failed to parse processor settings JSON")
+                pass
+        
+        # Return default settings if none found
+        default_settings = {
+            'flagged_sender_score': 40,
+            'leaver_score': 35,
+            'suspicious_attachment_score': 30,
+            'policy_violation_score': 30,
+            'personal_domain_score': 15,
+            'auto_clear_threshold': 20
+        }
+        logging.debug("Using default processor settings")
+        return default_settings
+        
+    except Exception as e:
+        logging.error(f"Error loading processor settings: {e}")
+        # Return defaults on error
+        return {
+            'flagged_sender_score': 40,
+            'leaver_score': 35,
+            'suspicious_attachment_score': 30,
+            'policy_violation_score': 30,
+            'personal_domain_score': 15,
+            'auto_clear_threshold': 20
+        }
 
 def load_model():
     """Load the trained ML model"""
@@ -146,6 +191,9 @@ def get_risk_score(email_data):
     try:
         risk_score = 0
         
+        # Load configurable settings
+        settings = load_processor_settings()
+        
         # Check for flagged sender
         conn = get_db_connection()
         flagged = conn.execute(
@@ -154,18 +202,18 @@ def get_risk_score(email_data):
         ).fetchone()[0]
         
         if flagged > 0:
-            risk_score += 40
+            risk_score += settings.get('flagged_sender_score', 40)
         
         # Check if sender is a leaver
         if email_data.get('leaver') == 'Yes' or email_data.get('leaver') == True:
-            risk_score += 35
+            risk_score += settings.get('leaver_score', 35)
         
         # Check for suspicious attachments
         attachments = email_data.get('attachments', '')
         if attachments and attachments != '-':
             suspicious_extensions = ['.exe', '.zip', '.rar', '.bat', '.scr']
             if any(ext in attachments.lower() for ext in suspicious_extensions):
-                risk_score += 30
+                risk_score += settings.get('suspicious_attachment_score', 30)
             else:
                 risk_score += 10  # Any attachment adds some risk
         
@@ -182,11 +230,11 @@ def get_risk_score(email_data):
             # Check for suspicious recipient domains
             suspicious_domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'protonmail.com']
             if any(domain in recipients.lower() for domain in suspicious_domains):
-                risk_score += 15  # Personal email domains are higher risk
+                risk_score += settings.get('personal_domain_score', 15)  # Personal email domains are higher risk
         
         # Policy violations
         if email_data.get('policy_name'):
-            risk_score += 30
+            risk_score += settings.get('policy_violation_score', 30)
         
         # Department-based risk
         department = email_data.get('department', '').lower()
@@ -199,13 +247,15 @@ def get_risk_score(email_data):
         if text.strip():
             classification = classify_email(text)
             
-            # Modify these classifications and scores to change clearing behavior
+            # Use configurable thresholds for classifications
             if classification in ['high_risk', 'suspicious', 'escalated']:
-                risk_score += 35  # Lower this to be less strict
+                risk_score += 35  # Could be made configurable
             elif classification in ['medium_risk', 'warning', 'pending_review']:
-                risk_score += 20  # Lower this to be less strict
+                risk_score += 20  # Could be made configurable
             elif classification in ['cleared', 'approved', 'safe', 'low_risk']:
-                risk_score = max(0, risk_score - 15)  # Increase reduction for more clearing
+                # Use configurable auto-clear threshold for reduction
+                reduction = settings.get('auto_clear_threshold', 15)
+                risk_score = max(0, risk_score - reduction)
             
             # Keyword analysis
             high_risk_keywords = ['urgent', 'confidential', 'personal', 'private', 'secret', 'transfer', 'payment', 'invoice']
