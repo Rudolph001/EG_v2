@@ -664,6 +664,12 @@ function clearEmails() {
         return;
     }
 
+    // Show loading state
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<span class="loading-spinner"></span> Clearing...';
+    button.disabled = true;
+
     fetch('/api/admin/clear-emails', {
         method: 'POST',
         headers: {
@@ -682,6 +688,11 @@ function clearEmails() {
     .catch(error => {
         console.error('Error:', error);
         showAlert('Failed to clear email data', 'danger');
+    })
+    .finally(() => {
+        // Restore button state
+        button.innerHTML = originalText;
+        button.disabled = false;
     });
 }
 
@@ -786,16 +797,6 @@ function clearAllData() {
         // Restore button state
         button.innerHTML = originalText;
         button.disabled = false;
-    });s) {
-            showAlert(`Database reset complete. Deleted: ${result.summary}`, 'warning');
-            refreshDatabaseStats();
-        } else {
-            showAlert('Error: ' + result.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Failed to reset database', 'danger');
     });
 }
 
