@@ -335,59 +335,64 @@ def escalated_emails():
 @app.route('/cleared-emails')
 def cleared_emails():
     """Cleared Emails Dashboard: lists cleared emails"""
-    page = request.args.get('page', 1, type=int)
-    per_page = 25
-    search = request.args.get('search', '')
-    department = request.args.get('department', '')
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = 25
+        search = request.args.get('search', '')
+        department = request.args.get('department', '')
 
-    conn = get_db_connection()
+        conn = get_db_connection()
 
-    # Build query for cleared emails
-    where_conditions = ["final_outcome IN ('cleared', 'approved', 'resolved')"]
-    params = []
+        # Build query for cleared emails
+        where_conditions = ["final_outcome IN ('cleared', 'approved', 'resolved')"]
+        params = []
 
-    if search:
-        where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
-        params.extend([f'%{search}%', f'%{search}%'])
+        if search:
+            where_conditions.append("(sender LIKE ? OR subject LIKE ?)")
+            params.extend([f'%{search}%', f'%{search}%'])
 
-    if department:
-        where_conditions.append("department = ?")
-        params.append(department)
+        if department:
+            where_conditions.append("department = ?")
+            params.append(department)
 
-    where_clause = "WHERE " + " AND ".join(where_conditions)
+        where_clause = "WHERE " + " AND ".join(where_conditions)
 
-    # Get total count
-    count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
-    total = conn.execute(count_query, params).fetchone()[0]
+        # Get total count
+        count_query = f"SELECT COUNT(*) FROM emails {where_clause}"
+        total = conn.execute(count_query, params).fetchone()[0]
 
-    # Get paginated results
-    offset = (page - 1) * per_page
-    query = f"""
-        SELECT * FROM emails {where_clause}
-        ORDER BY _time DESC
-        LIMIT {per_page} OFFSET {offset}
-    """
+        # Get paginated results
+        offset = (page - 1) * per_page
+        query = f"""
+            SELECT * FROM emails {where_clause}
+            ORDER BY _time DESC
+            LIMIT {per_page} OFFSET {offset}
+        """
 
-    emails = conn.execute(query, params).fetchall()
+        emails = conn.execute(query, params).fetchall()
 
-    # Get departments for filter
-    departments = conn.execute("SELECT DISTINCT department FROM emails WHERE department IS NOT NULL ORDER BY department").fetchall()
+        # Get departments for filter
+        departments = conn.execute("SELECT DISTINCT department FROM emails WHERE department IS NOT NULL ORDER BY department").fetchall()
 
-    conn.close()
+        conn.close()
 
-    # Calculate pagination
-    has_prev = page > 1
-    has_next = offset + per_page < total
+        # Calculate pagination
+        has_prev = page > 1
+        has_next = offset + per_page < total
 
-    return render_template('cleared_emails.html', 
-                         emails=emails,
-                         page=page, 
-                         has_prev=has_prev, 
-                         has_next=has_next,
-                         departments=departments,
-                         search=search,
-                         department=department,
-                         total=total)
+        return render_template('cleared_emails.html', 
+                             emails=emails,
+                             page=page, 
+                             has_prev=has_prev, 
+                             has_next=has_next,
+                             departments=departments,
+                             search=search,
+                             department=department,
+                             total=total)
+    except Exception as e:
+        logging.error(f"Cleared emails dashboard error: {e}")
+        flash(f'Error loading cleared emails: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/flagged-senders')
 def flagged_senders():
