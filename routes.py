@@ -1215,30 +1215,36 @@ def api_dashboard_stats():
     try:
         stats = get_dashboard_stats()
         
-        # Ensure all values are serializable
+        # Ensure all values are serializable and handle None values
         clean_stats = {
-            'total_emails': int(stats.get('total_emails', 0)),
-            'active_cases': int(stats.get('active_cases', 0)),
-            'flagged_senders': int(stats.get('flagged_senders', 0)),
-            'todays_emails': int(stats.get('todays_emails', 0)),
-            'department_data': list(stats.get('department_data', [])[:10]),  # Limit to prevent endless growth
-            'timeline_data': list(stats.get('timeline_data', [])[:30]),  # Limit to last 30 days
+            'total_emails': int(stats.get('total_emails', 0)) if stats.get('total_emails') is not None else 0,
+            'active_cases': int(stats.get('active_cases', 0)) if stats.get('active_cases') is not None else 0,
+            'flagged_senders': int(stats.get('flagged_senders', 0)) if stats.get('flagged_senders') is not None else 0,
+            'todays_emails': int(stats.get('todays_emails', 0)) if stats.get('todays_emails') is not None else 0,
+            'excluded_whitelisted': int(stats.get('excluded_whitelisted', 0)) if stats.get('excluded_whitelisted') is not None else 0,
+            'cleared': int(stats.get('cleared', 0)) if stats.get('cleared') is not None else 0,
+            'department_data': list(stats.get('department_data', [])[:10]) if stats.get('department_data') else [],
+            'timeline_data': list(stats.get('timeline_data', [])[:30]) if stats.get('timeline_data') else [],
             'success': True
         }
         
         return jsonify(clean_stats)
     except Exception as e:
-        logging.error(f"Dashboard stats error: {e}")
-        return jsonify({
+        logging.error(f"Dashboard stats API error: {e}")
+        # Return a valid JSON response even on error
+        error_response = {
             'total_emails': 0,
             'active_cases': 0,
             'flagged_senders': 0,
             'todays_emails': 0,
+            'excluded_whitelisted': 0,
+            'cleared': 0,
             'department_data': [],
             'timeline_data': [],
             'success': False,
-            'error': 'Failed to load dashboard statistics'
-        }), 500
+            'error': str(e)
+        }
+        return jsonify(error_response), 200  # Return 200 to prevent JSON parsing errors
 
 @app.route('/api/classify-email', methods=['POST'])
 def api_classify_email():
