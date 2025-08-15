@@ -32,8 +32,8 @@ def dashboard():
 
     conn = get_db_connection()
 
-    # Build query for non-excluded/whitelisted emails
-    where_conditions = ["(final_outcome IS NULL OR final_outcome NOT IN ('excluded', 'whitelisted'))"]
+    # Build query for non-excluded/whitelisted/escalated emails
+    where_conditions = ["(final_outcome IS NULL OR final_outcome NOT IN ('excluded', 'whitelisted', 'escalated'))"]
     params = []
 
     if search:
@@ -1292,6 +1292,48 @@ def api_update_email_status(email_id):
     except Exception as e:
         logging.error(f"Update email status error: {e}")
         return jsonify({'error': 'Failed to update email status'}), 500
+
+@app.route('/api/move-to-case-management/<int:email_id>', methods=['POST'])
+def api_move_to_case_management(email_id):
+    """Move email to case management system"""
+    try:
+        conn = get_db_connection()
+        
+        # Check if email exists and get details
+        email_data = conn.execute("SELECT * FROM emails WHERE id = ?", [email_id]).fetchone()
+        if not email_data:
+            conn.close()
+            return jsonify({'error': 'Email not found'}), 404
+        
+        # Check if case already exists for this email
+        existing_case = conn.execute("SELECT id FROM cases WHERE email_id = ?", [email_id]).fetchone()
+        
+        if not existing_case:
+            # Create a case for this email
+            escalation_reason = f"Moved to case management from main dashboard. Sender: {email_data[2]}, Subject: {email_data[3][:100]}"
+            
+            conn.execute("""
+                INSERT INTO cases (email_id, escalation_reason, status) 
+                VALUES (?, ?, ?)
+            """, [email_id, escalation_reason, 'open'])
+        
+        # Update email status to 'escalated' so it doesn't show in main dashboard
+        conn.execute("""
+            UPDATE emails 
+            SET final_outcome = 'escalated', updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        """, [email_id])
+        
+        conn.close()
+
+        return jsonify({
+            'success': True, 
+            'message': 'Email moved to case management successfully'
+        })
+        
+    except Exception as e:
+        logging.error(f"Move to case management error: {e}")
+        return jsonify({'error': 'Failed to move email to case management'}), 500
 
 @app.route('/api/generate-followup/<int:email_id>', methods=['POST'])
 def api_generate_followup(email_id):

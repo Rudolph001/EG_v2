@@ -289,8 +289,8 @@
                                         <button class="btn btn-primary btn-sm" onclick="showEmailDetails({{ email[0] }})">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <button class="btn btn-warning btn-sm" data-action="create-case" data-email-id="{{ email[0] }}">
-                                            <i class="fas fa-exclamation-triangle"></i>
+                                        <button class="btn btn-warning btn-sm" onclick="moveToCase({{ email[0] }})" title="Move to Case Management">
+                                            <i class="fas fa-briefcase"></i>
                                         </button>
                                         <button class="btn btn-danger btn-sm" data-action="flag-sender" data-sender="{{ email[2] }}">
                                             <i class="fas fa-flag"></i>
@@ -482,6 +482,53 @@ function updateEmailStatus(emailId, status) {
         console.error('Error updating email status:', error);
         window.EmailGuardian.showNotification('Failed to update email status', 'error');
     });
+}
+
+function moveToCase(emailId) {
+    if (confirm('Move this email to Case Management? It will be removed from the main dashboard.')) {
+        fetch(`/api/move-to-case-management/${emailId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                window.EmailGuardian.showNotification(result.message, 'success');
+                // Remove the row from the table
+                const row = document.querySelector(`tr[data-email-id="${emailId}"]`);
+                if (row) {
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => {
+                        row.remove();
+                        // Update total count if displayed
+                        updateTotalCount();
+                    }, 300);
+                }
+            } else {
+                window.EmailGuardian.showNotification(result.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error moving email to case management:', error);
+            window.EmailGuardian.showNotification('Failed to move email to case management', 'error');
+        });
+    }
+}
+
+function updateTotalCount() {
+    const totalElement = document.querySelector('.card-header h5');
+    if (totalElement) {
+        const currentText = totalElement.textContent;
+        const match = currentText.match(/\((\d+) total\)/);
+        if (match) {
+            const currentTotal = parseInt(match[1]);
+            const newTotal = currentTotal - 1;
+            totalElement.textContent = currentText.replace(/\(\d+ total\)/, `(${newTotal} total)`);
+        }
+    }
 }
 </script>
 {% endblock %}
