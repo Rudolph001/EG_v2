@@ -2264,30 +2264,65 @@ def api_admin_clear_emails():
             logging.warning(f"Could not count cases: {e}")
             cases_count = 0
         
-        # Clear cases first (due to foreign key constraints)
+        # Get flagged senders count
+        try:
+            flagged_result = conn.execute("SELECT COUNT(*) FROM flagged_senders").fetchone()
+            flagged_count = flagged_result[0] if flagged_result else 0
+            logging.info(f"Found {flagged_count} flagged senders to delete")
+        except Exception as e:
+            logging.warning(f"Could not count flagged senders: {e}")
+            flagged_count = 0
+        
+        # Disable foreign key constraints temporarily for cleanup
+        try:
+            conn.execute("PRAGMA foreign_keys = OFF")
+            logging.info("Temporarily disabled foreign key constraints")
+        except Exception as e:
+            logging.warning(f"Could not disable foreign keys: {e}")
+        
+        # Clear all tables in order to avoid constraint issues
         try:
             conn.execute("DELETE FROM cases")
             logging.info("Successfully cleared cases table")
         except Exception as e:
             logging.warning(f"Failed to clear cases: {e}")
         
-        # Clear emails table
+        try:
+            conn.execute("DELETE FROM flagged_senders")
+            logging.info("Successfully cleared flagged senders table")
+        except Exception as e:
+            logging.warning(f"Failed to clear flagged senders: {e}")
+        
         try:
             conn.execute("DELETE FROM emails")
             logging.info("Successfully cleared emails table")
         except Exception as e:
             logging.error(f"Failed to clear emails: {e}")
-            conn.close()
-            return jsonify({'error': f'Failed to clear emails: {str(e)}'}), 500
+            # Try alternative approach - truncate instead of delete
+            try:
+                conn.execute("TRUNCATE emails")
+                logging.info("Successfully truncated emails table")
+            except Exception as e2:
+                logging.error(f"Failed to truncate emails: {e2}")
+                conn.close()
+                return jsonify({'error': f'Failed to clear emails: {str(e2)}'}), 500
+        
+        # Re-enable foreign key constraints
+        try:
+            conn.execute("PRAGMA foreign_keys = ON")
+            logging.info("Re-enabled foreign key constraints")
+        except Exception as e:
+            logging.warning(f"Could not re-enable foreign keys: {e}")
         
         conn.close()
         logging.info("Email clearing process completed successfully")
 
         return jsonify({
             'success': True,
-            'message': f'Cleared {deleted_count} email records and {cases_count} associated cases',
+            'message': f'Cleared {deleted_count} email records, {cases_count} cases, and {flagged_count} flagged senders',
             'deleted_count': deleted_count,
-            'cases_cleared': cases_count
+            'cases_cleared': cases_count,
+            'flagged_cleared': flagged_count
         })
     except Exception as e:
         logging.error(f"Clear emails error: {e}")
