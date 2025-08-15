@@ -908,9 +908,16 @@
         }
 
         function togglePolicyViolation(policyName, isActive) {
-            if (!confirm(`Are you sure you want to ${isActive ? 'enable' : 'disable'} the policy "${policyName}"?`)) {
+            const action = isActive ? 'enable' : 'disable';
+            if (!confirm(`Are you sure you want to ${action} the policy "${policyName}"?`)) {
                 return;
             }
+
+            // Show loading state
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            button.disabled = true;
 
             fetch('/api/admin/toggle-policy-violation', {
                 method: 'POST',
@@ -920,15 +927,32 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    loadViolations();
+                    // Force immediate UI update before reloading
+                    const statusBadge = button.closest('tr').querySelector('.badge');
+                    if (statusBadge) {
+                        statusBadge.className = `badge ${isActive ? 'bg-success' : 'bg-secondary'}`;
+                        statusBadge.textContent = isActive ? 'Active' : 'Disabled';
+                    }
+                    
+                    // Update button text and class
+                    button.className = `btn btn-outline-${isActive ? 'danger' : 'success'}`;
+                    button.innerHTML = `<i class="fas ${isActive ? 'fa-ban' : 'fa-check'}"></i> ${isActive ? 'Disable' : 'Enable'}`;
+                    button.onclick = () => togglePolicyViolation(policyName, !isActive);
+                    button.disabled = false;
+                    
+                    // Also reload the violations to ensure consistency
+                    setTimeout(() => loadViolations(), 500);
                 } else {
                     alert('Error: ' + data.error);
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Error toggling policy:', error);
                 alert('Network error: Failed to toggle policy');
+                button.innerHTML = originalHTML;
+                button.disabled = false;
             });
         }
 
