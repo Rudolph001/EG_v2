@@ -2378,15 +2378,13 @@ def api_admin_get_policy_violations_data():
             logging.warning(f"Failed to get policy violations: {e}")
             violations = []
         
-        # Get policy active status with better handling for different rule types
+        # Get policy active status with safe JSON handling for different rule types
         try:
             policy_status = conn.execute("""
                 SELECT 
                     CASE 
-                        WHEN rule_type = 'policy' THEN JSON_EXTRACT(conditions, '$.policy_name')
-                        WHEN rule_type = 'policy_control' THEN JSON_EXTRACT(conditions, '$.policy_name')
-                        WHEN rule_type = 'policy_disable' THEN conditions
-                        WHEN rule_type = 'policy_enable' THEN conditions
+                        WHEN rule_type = 'policy' AND conditions LIKE '%"policy_name"%' THEN JSON_EXTRACT(conditions, '$.policy_name')
+                        WHEN rule_type = 'policy_control' AND conditions LIKE '%"policy_name"%' THEN JSON_EXTRACT(conditions, '$.policy_name')
                         ELSE conditions
                     END as policy_name, 
                     CASE 
@@ -2398,6 +2396,10 @@ def api_admin_get_policy_violations_data():
                     created_at
                 FROM admin_rules 
                 WHERE rule_type IN ('policy', 'policy_control', 'policy_disable', 'policy_enable')
+                AND (
+                    (conditions LIKE '%"policy_name"%') OR 
+                    (rule_type IN ('policy_disable', 'policy_enable'))
+                )
                 ORDER BY created_at DESC
             """).fetchall()
         except Exception as e:
@@ -2461,14 +2463,21 @@ def api_admin_toggle_policy_violation():
         conn = get_db_connection()
         
         # First, try to find any existing rule for this policy
+        # Handle both JSON and plain text conditions safely
         existing_rules = conn.execute("""
             SELECT id, rule_type, conditions, is_active FROM admin_rules 
             WHERE (
-                (rule_type = 'policy' AND JSON_EXTRACT(conditions, '$.policy_name') = ?) OR
-                (rule_type = 'policy_control' AND JSON_EXTRACT(conditions, '$.policy_name') = ?) OR
+                (rule_type = 'policy' AND (
+                    (conditions LIKE '%"policy_name"%' AND JSON_EXTRACT(conditions, '$.policy_name') = ?) OR
+                    conditions = ?
+                )) OR
+                (rule_type = 'policy_control' AND (
+                    (conditions LIKE '%"policy_name"%' AND JSON_EXTRACT(conditions, '$.policy_name') = ?) OR
+                    conditions = ?
+                )) OR
                 (rule_type IN ('policy_disable', 'policy_enable') AND conditions = ?)
             )
-        """, [policy_name, policy_name, policy_name]).fetchall()
+        """, [policy_name, policy_name, policy_name, policy_name, policy_name]).fetchall()
         
         updated_existing = False
         
