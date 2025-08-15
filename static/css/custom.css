@@ -813,89 +813,153 @@ footer {
     box-shadow: 0 4px 8px rgba(3, 105, 161, 0.3);
 }
 
-/* COMPLETELY REDESIGNED ADMIN PANEL TABS - HIGH CONTRAST */
+/* ULTRA HIGH CONTRAST ADMIN PANEL TABS - MAXIMUM VISIBILITY */
+/* Reset all existing tab styles first */
+.nav-tabs, .nav-tabs .nav-link, .nav-tabs .nav-item .nav-link {
+    all: unset !important;
+}
+
+/* Container for admin tabs - bright background */
+#adminTabs {
+    background: #ffff00 !important; /* Bright yellow background */
+    padding: 20px !important;
+    border: 8px solid #000000 !important;
+    border-radius: 0 !important;
+    margin-bottom: 30px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 15px !important;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8) !important;
+}
+
+/* Individual tab buttons - extreme contrast */
 #adminTabs .nav-link {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 4px solid #000000 !important;
-    margin: 0 8px 0 0 !important;
-    font-weight: 900 !important;
-    padding: 16px 24px !important;
-    border-radius: 0 !important;
-    text-decoration: none !important;
-    font-size: 16px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    transition: none !important;
-    box-shadow: 4px 4px 0 #000000 !important;
-}
-
-#adminTabs .nav-link.active {
-    background: #000000 !important;
+    display: inline-block !important;
+    background: linear-gradient(45deg, #000000 0%, #333333 100%) !important;
     color: #ffffff !important;
-    border: 4px solid #000000 !important;
-    box-shadow: inset 4px 4px 0 #333333 !important;
-}
-
-#adminTabs .nav-link:hover:not(.active) {
-    background: #eeeeee !important;
-    color: #000000 !important;
-    border: 4px solid #000000 !important;
-    box-shadow: 2px 2px 0 #000000 !important;
-}
-
-#adminTabs .nav-link:focus {
-    outline: 4px solid #ff0000 !important;
-    outline-offset: 2px !important;
-}
-
-/* Make the entire nav tabs container more visible */
-.nav-tabs {
-    border-bottom: 4px solid #000000 !important;
-    margin-bottom: 24px !important;
-    background: #f0f0f0 !important;
-    padding: 16px !important;
+    border: 6px solid #ffffff !important;
+    padding: 20px 30px !important;
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    text-decoration: none !important;
     border-radius: 0 !important;
+    box-shadow: 0 8px 0 #666666, 0 0 15px rgba(0,0,0,0.5) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    min-width: 200px !important;
+    text-align: center !important;
+    position: relative !important;
 }
 
-/* Tab content with high contrast */
+/* Active tab - bright red background */
+#adminTabs .nav-link.active {
+    background: linear-gradient(45deg, #ff0000 0%, #cc0000 100%) !important;
+    color: #ffffff !important;
+    border: 6px solid #ffffff !important;
+    box-shadow: 0 4px 0 #990000, 0 0 25px rgba(255,0,0,0.8) !important;
+    transform: translateY(4px) !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* Hover effect for non-active tabs */
+#adminTabs .nav-link:not(.active):hover {
+    background: linear-gradient(45deg, #0066ff 0%, #0044cc 100%) !important;
+    color: #ffffff !important;
+    border: 6px solid #ffffff !important;
+    box-shadow: 0 6px 0 #003399, 0 0 20px rgba(0,102,255,0.6) !important;
+    transform: translateY(2px) !important;
+}
+
+/* Focus state for accessibility */
+#adminTabs .nav-link:focus {
+    outline: 8px solid #ff00ff !important;
+    outline-offset: 4px !important;
+    z-index: 1000 !important;
+}
+
+/* Tab content area - high contrast white */
 .tab-content .tab-pane {
     background: #ffffff !important;
-    border: 4px solid #000000 !important;
-    padding: 32px !important;
+    border: 8px solid #000000 !important;
+    padding: 40px !important;
     border-radius: 0 !important;
-    box-shadow: 8px 8px 0 #cccccc !important;
-    margin-top: 16px !important;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2), 0 0 30px rgba(0,0,0,0.3) !important;
+    margin-top: 20px !important;
+    min-height: 400px !important;
 }
 
-/* Override ALL other nav-tabs styling to ensure visibility */
+/* Override Bootstrap nav-tabs completely */
+.nav-tabs {
+    border: none !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+}
+
+/* Make sure no other styles interfere */
+ul.nav-tabs, 
+ul.nav-tabs li, 
+ul.nav-tabs li .nav-link,
+.nav-tabs .nav-item .nav-link {
+    all: unset !important;
+    display: block !important;
+}
+
+/* Container level overrides */
+ul.nav-tabs {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    background: #ffff00 !important;
+    padding: 20px !important;
+    border: 8px solid #000000 !important;
+    gap: 15px !important;
+    margin-bottom: 30px !important;
+}
+
+ul.nav-tabs li {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+}
+
 ul.nav-tabs li .nav-link {
-    background: #ffffff !important;
-    color: #000000 !important;
-    border: 4px solid #000000 !important;
-    margin-right: 8px !important;
+    display: inline-block !important;
+    background: linear-gradient(45deg, #000000 0%, #333333 100%) !important;
+    color: #ffffff !important;
+    border: 6px solid #ffffff !important;
+    padding: 20px 30px !important;
+    font-size: 18px !important;
     font-weight: 900 !important;
-    padding: 16px 24px !important;
-    border-radius: 0 !important;
-    text-decoration: none !important;
-    font-size: 16px !important;
     text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    box-shadow: 4px 4px 0 #000000 !important;
+    letter-spacing: 2px !important;
+    text-decoration: none !important;
+    border-radius: 0 !important;
+    box-shadow: 0 8px 0 #666666, 0 0 15px rgba(0,0,0,0.5) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    min-width: 200px !important;
+    text-align: center !important;
 }
 
 ul.nav-tabs li .nav-link.active {
-    background: #000000 !important;
+    background: linear-gradient(45deg, #ff0000 0%, #cc0000 100%) !important;
     color: #ffffff !important;
-    border: 4px solid #000000 !important;
-    box-shadow: inset 4px 4px 0 #333333 !important;
+    border: 6px solid #ffffff !important;
+    box-shadow: 0 4px 0 #990000, 0 0 25px rgba(255,0,0,0.8) !important;
+    transform: translateY(4px) !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8) !important;
 }
 
-ul.nav-tabs li .nav-link:hover:not(.active) {
-    background: #eeeeee !important;
-    color: #000000 !important;
-    border: 4px solid #000000 !important;
-    box-shadow: 2px 2px 0 #000000 !important;
+ul.nav-tabs li .nav-link:not(.active):hover {
+    background: linear-gradient(45deg, #0066ff 0%, #0044cc 100%) !important;
+    color: #ffffff !important;
+    border: 6px solid #ffffff !important;
+    box-shadow: 0 6px 0 #003399, 0 0 20px rgba(0,102,255,0.6) !important;
+    transform: translateY(2px) !important;
 }
 
 /* Button group radio button styling for better visibility */
